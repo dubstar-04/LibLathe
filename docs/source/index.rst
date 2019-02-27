@@ -1,20 +1,41 @@
-.. liblathe documentation master file, created by
-   sphinx-quickstart on Tue Feb 26 20:22:51 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to liblathe's documentation!
-====================================
+Welcome to LibLathe
+===================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+   
+   pages/tooling
+   pages/Geometry
+   pages/GCode
+   pages/Operations
+   pages/Usage
 
 
+About LibLathe
+--------------
+LibLathe is an opensource `python`_  library for generating `CNC`_  machining
+paths and outputting `GCode`_
 
-Indices and tables
-==================
+.. _python: https://www.python.org/
+.. _CNC: https://en.wikipedia.org/wiki/Numerical_control
+.. _GCode: https://en.wikipedia.org/wiki/G-code
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
+.. figure:: /LL_static/images/liblathepawn.png
+    :align: center
+    :figwidth: 300px
+    :target: /LL_static/images/liblathepawn.png
+    
+    LibLathe profile operation generated in `FreeCAD`_ 
+    
+    .. _FreeCAD: https://www.freecadweb.org/
+    
+    
+Getting LibLathe
+++++++++++++++++
+LibLathe is opensource making it free to use, change and redistrubute. 
+LibLathe sourcecode can be found at `GitHub`_
+
+.. _GitHub: https://github.com/dubstar-04/LibLathe 
+

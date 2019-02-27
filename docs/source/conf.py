@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u'liblathe'
+project = u'LibLathe'
 copyright = u'2019, Daniel Wood'
 author = u'Daniel Wood'
 
@@ -39,13 +39,10 @@ release = u'0.0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.todo',
-    'sphinx.ext.imgmath',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['LL_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -77,7 +74,8 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+#html_theme = 'alabaster'
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -88,7 +86,7 @@ html_theme = 'alabaster'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['LL_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -104,7 +102,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'liblathedoc'
+htmlhelp_basename = 'LibLathedoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -131,7 +129,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'liblathe.tex', u'liblathe Documentation',
+    (master_doc, 'LibLathe.tex', u'LibLathe Documentation',
      u'Daniel Wood', 'manual'),
 ]
 
@@ -141,7 +139,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'liblathe', u'liblathe Documentation',
+    (master_doc, 'liblathe', u'LibLathe Documentation',
      [author], 1)
 ]
 
@@ -152,8 +150,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'liblathe', u'liblathe Documentation',
-     author, 'liblathe', 'One line description of project.',
+    (master_doc, 'LibLathe', u'LibLathe Documentation',
+     author, 'LibLathe', 'One line description of project.',
      'Miscellaneous'),
 ]
 
@@ -174,11 +172,3 @@ epub_title = project
 
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
-
-
-# -- Extension configuration -------------------------------------------------
-
-# -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
