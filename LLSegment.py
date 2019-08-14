@@ -1,6 +1,6 @@
 import math 
-from LLPoint import Point
-from LLVector import Vector
+from LibLathe.LLPoint import Point
+from LibLathe.LLVector import Vector
 
 ##########################################################
 # Based on Paper :An offset algorithm for polyline curves

@@ -4,9 +4,9 @@
 #import Path
 import math 
 #import FreeCAD
-import LLUtils as utils
-from LLPoint import Point
-from LLSegment import Segment
+import LibLathe.LLUtils as utils
+from LibLathe.LLPoint import Point
+from LibLathe.LLSegment import Segment
 
 
 class Profile:

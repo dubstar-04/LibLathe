@@ -1,5 +1,5 @@
 
-from LLPoint import Point
+from LibLathe.LLPoint import Point
 import math
 
 class Vector:

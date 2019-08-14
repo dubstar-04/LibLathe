@@ -1,8 +1,9 @@
-import Path
-import math 
-from LLPoint import Point
-from LLSegment import Segment
-from LLVector import Vector
+#import Path
+#import math 
+from LibLathe.LLPoint import Point
+from LibLathe.LLSegment import Segment
+from LibLathe.LLVector import Vector
+from LibLathe.LLCommand import Command
 
 def get_tool_cutting_angle():
     return 275   
@@ -173,7 +174,7 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
 
     cmds = []
     #cmd = Path.Command('G17')  #xy plane
-    cmd = Path.Command('G18')   #xz plane
+    cmd = Command('G18')   #xz plane
     #cmd = Path.Command('G19')  #yz plane
     cmds.append(cmd)
 
@@ -182,23 +183,23 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
        
         if segments.index(seg) == 0:
             params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
-            rapid =  Path.Command('G0', params)
+            rapid =  Command('G0', params)
             cmds.append(rapid)    
 
             params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z, 'F': hSpeed}
-            rapid =  Path.Command('G0', params)
+            rapid =  Command('G0', params)
             cmds.append(rapid)  
         
         if seg.bulge == 0:
             #if edges.index(edge) == 1:
             pt = seg.start #edge.valueAt(edge.FirstParameter) 
             params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
-            cmd =  [Path.Command('G0', params)]
+            cmd =  Command('G0', params)
             cmds.append(cmd)
             
             pt = seg.end #edge.valueAt(edge.LastParameter)
             params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
-            cmd =  Path.Command('G1', params)
+            cmd =  Command('G1', params)
 
         if seg.bulge != 0:
             #TODO: define arctype from bulge sign +/-
@@ -213,19 +214,19 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
                 
             cen = seg.get_centre_point().sub(pt1) 
             #print('toPathCommand arc cen', seg.get_centre_point().X, seg.get_centre_point().Z)          
-            params = ({'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': hSpeed})
+            params = {'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': hSpeed}
             #print('toPathCommand', params)
-            cmd =  Path.Command(arcType, params)
+            cmd =  Command(arcType, params)
 
         cmds.append(cmd)
 
         if segments.index(seg) == len(segments)-1:
             params = {'X': seg.end.X - step_over, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
-            rapid =  Path.Command('G0', params)
+            rapid =  Command('G0', params)
             cmds.append(rapid)
 
             params = {'X': seg.end.X - step_over, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
-            rapid =  Path.Command('G0', params)
+            rapid =  Command('G0', params)
             cmds.append(rapid)
            
     return cmds
