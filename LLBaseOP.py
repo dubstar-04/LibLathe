@@ -3,16 +3,12 @@ import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 
-__title__ = "Base class for all turning operations."
-__author__ = "dubstar-04 (Daniel Wood)"
-__url__ = "http://www.freecadweb.org"
-__doc__ = "Base class and properties implementation for all liblathe operations."
-
 class BaseOP:
     def __init__(self):
 
         self.stock = None
         self.part = None
+        self.part_edges = None
 
         self.offset_edges = []
         self.clearing_paths = []
@@ -54,8 +50,8 @@ class BaseOP:
         '''
         
         if not self.allow_grooving:
-            self.part = utils.remove_the_groove(self.part, self.stock.ZMin)
-            self.offset_edges.append(self.part)    
+            self.part_edges = utils.remove_the_groove(self.part_edges, self.stock.ZMin)
+            self.offset_edges.append(self.part_edges)    
         
         #path_profile = Part.makePolygon(profile_points)
        # path_profile = Part.makeCompound(self.part)
@@ -71,7 +67,7 @@ class BaseOP:
         f_pass = 1
         while f_pass != self.finish_passes:
             print('fpass', f_pass, self.finish_passes)
-            f_pass_geom = utils.offsetPath(self.part, self.step_over * f_pass)  
+            f_pass_geom = utils.offsetPath(self.part_edges, self.step_over * f_pass)  
             self.offset_edges.append(f_pass_geom)
             f_pass += 1
         
@@ -104,9 +100,7 @@ class BaseOP:
             Path.append(rough)
 
         return Path
-
-
-                 
+    
     def set_options(self, min_dia, max_dia, start, end, allow_grooving, allow_facing, step_over, finishing_passes):
         self.min_dia = min_dia
         self.extra_dia = max_dia
@@ -118,9 +112,13 @@ class BaseOP:
         self.finish_passes = finishing_passes
         #self.generate_path()
         
-    def add_part(self, part_edges):
+    def add_part(self, part_bb):
         #print('Add_part', part_edges)
-        self.part = part_edges
+        self.part = part_bb
+
+    def add_part_edges(self, part_edges):
+        #print('Add_part', part_edges)
+        self.part_edges = part_edges
         
     def add_stock(self, stock_bb):
         self.stock = stock_bb

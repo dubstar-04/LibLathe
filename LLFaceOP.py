@@ -2,7 +2,7 @@ import LibLathe.LLBaseOP
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 
-class ProfileOP(LibLathe.LLBaseOP.BaseOP):
+class FaceOP(LibLathe.LLBaseOP.BaseOP):
     
     def generate_path(self):
         '''
@@ -12,17 +12,24 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         zmax = self.stock.ZMax + self.start_offset            
         
         self.clearing_paths = []
-        length = self.stock.ZLength + self.end_offset + self.start_offset 
-        width = self.stock.XLength/2 - self.min_dia + self.extra_dia 
+        length = zmax - self.part.ZMax
+        #width = self.stock.XLength/2 - self.min_dia + self.extra_dia 
         step_over = self.step_over
-        line_count = width / step_over
+        line_count = length / step_over
+
+        print('line count', line_count)
            
         counter = 0
         while counter < line_count:
-            xpt = xmin + counter * self.step_over
-            pt1 = Point(xpt, 0 , zmax)
-            pt2 = Point(xpt , 0 , zmax-length)
+            zpt = zmax - counter * self.step_over
+
+            print('zpt:', zpt)
+
+            pt1 = Point(xmin, 0 , zpt)
+            pt2 = Point(0 , 0 , zpt)
             path_line = Segment(pt1, pt2)
+
+            '''
               
             roughing_boundary = self.offset_edges[-1]
             
@@ -38,7 +45,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                     #    path_line = Segment(pt1, point)
                         
                         #break
-            
+            '''
             self.clearing_paths.append(path_line)
             counter += 1
  

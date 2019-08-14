@@ -144,13 +144,13 @@ def join_edges(segments):
             seg2 = segments[i+1]
             intersect2, pt = seg2.intersect(segments[i], extend=True) 
             if intersect2:
-                print('intersect2')
+               # print('intersect2')
                 if type(pt) is list:
-                    print('join_edges type of', type(pt))
+                    #print('join_edges type of', type(pt))
                     pt = pt2.nearest(pt)
                 pt2 = pt 
 
-            print('join_edges', i, pt1, pt2, pt2.X, pt2.Z) 
+            #print('join_edges', i, pt1, pt2, pt2.X, pt2.Z) 
                          
 
         if pt1 and pt2:

@@ -1,5 +1,3 @@
-import math 
-
 class Tool:
     def __init__(self, tool_string = None):
         self.shape = None
@@ -11,7 +9,7 @@ class Tool:
         self.nose_radius = None
         self.direction = None #LH / RH
 
-    def set_tool (self, tool_string)
+    def set_tool(self, tool_string):
         pass
 
 
