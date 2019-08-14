@@ -1,3 +1,5 @@
+import math 
+
 import LibLathe.LLBaseOP
 import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
@@ -9,26 +11,28 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         '''
         Generate the path for the profile operation
         '''
-        xmin = self.stock.XMin - self.extra_dia 
-        zmax = self.stock.ZMax + self.start_offset            
-        
+        xmin = self.stock.XMin - self.extra_dia
+        xmax = 0 - self.min_dia 
+        zmax = self.stock.ZMax + self.start_offset
+
         self.clearing_paths = []
         length = zmax - self.part.ZMax
         #width = self.stock.XLength/2 - self.min_dia + self.extra_dia 
         step_over = self.step_over
-        line_count = length / step_over
+        line_count = math.ceil(length / step_over)
 
-        #print('line count', line_count)
+        zstart = self.part.ZMax + step_over * line_count
+
+        print("line count", line_count) 
            
         counter = 0
-        while counter < line_count:
-            zpt = zmax - counter * self.step_over
+        while counter < line_count + 1:
+            zpt = zstart - counter * self.step_over
             pt1 = Point(xmin, 0 , zpt)
-            pt2 = Point(0 , 0 , zpt)
+            pt2 = Point(xmax, 0 , zpt)
             path_line = Segment(pt1, pt2)
 
-            '''
-              
+            '''     
             roughing_boundary = self.offset_edges[-1]
             
             for seg in roughing_boundary:

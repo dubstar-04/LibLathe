@@ -1,3 +1,5 @@
+import math 
+
 import LibLathe.LLBaseOP
 import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
@@ -9,20 +11,20 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         '''
         Generate the path for the profile operation
         '''
-        xmin = self.stock.XMin - self.extra_dia 
+        #xmin = self.stock.XMin - self.extra_dia
         zmax = self.stock.ZMax + self.start_offset            
         
         self.clearing_paths = []
         length = self.stock.ZLength + self.end_offset + self.start_offset 
         width = self.stock.XLength/2 - self.min_dia + self.extra_dia 
         step_over = self.step_over
-        line_count = width / step_over
+        line_count = math.ceil(width / step_over)
 
-        print("Step over", step_over, self.step_over)
+        xstart = 0 - (step_over * line_count + self.min_dia)
            
         counter = 0
-        while counter < line_count:
-            xpt = xmin + counter * self.step_over
+        while counter < line_count + 1:
+            xpt = xstart + counter * self.step_over
             pt1 = Point(xpt, 0 , zmax)
             pt2 = Point(xpt , 0 , zmax-length)
             path_line = Segment(pt1, pt2)

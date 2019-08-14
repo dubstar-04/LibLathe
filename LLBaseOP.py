@@ -36,7 +36,7 @@ class BaseOP:
         '''
         Base function for all turning operations
         '''
-        print('LathePath - generate_path')
+        #print('[LLBaseOP] - get_gcode')
         self.remove_the_groove()
         self.offset_part_outline()
         self.generate_path()
@@ -90,19 +90,7 @@ class BaseOP:
         Generate Gcode for the op segments
         '''
         return ""
-    
-    def set_options(self, min_dia, max_dia, start, end, allow_grooving, allow_facing, step_over, finishing_passes):
-        self.min_dia = min_dia
-        self.extra_dia = max_dia
-        self.start_offset = start
-        self.end_offset = end
-        self.allow_grooving = allow_grooving
-        self.allow_facing = allow_facing
-        self.step_over = step_over
-        self.finish_passes = finishing_passes
-        print("[LLBASEOP] - set_options - Updated")
-        #self.generate_path()
-        
+           
     def add_part(self, part_bb):
         #print('Add_part', part_edges)
         self.part = part_bb
