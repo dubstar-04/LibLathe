@@ -1,4 +1,5 @@
 import LibLathe.LLBaseOP
+import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 
@@ -17,14 +18,11 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         step_over = self.step_over
         line_count = length / step_over
 
-        print('line count', line_count)
+        #print('line count', line_count)
            
         counter = 0
         while counter < line_count:
             zpt = zmax - counter * self.step_over
-
-            print('zpt:', zpt)
-
             pt1 = Point(xmin, 0 , zpt)
             pt2 = Point(0 , 0 , zpt)
             path_line = Segment(pt1, pt2)
@@ -53,7 +51,19 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         #Part.show(clearing_lines, 'clearing_path')
         
 
+    def generate_gcode(self):
+        '''
+        Generate Gcode for the op segments
+        '''
+        Path = []
+        #for path in self.offset_edges:   
+        #    finish = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
+        #    Path.append(finish)
+        for path in self.clearing_paths: 
+            rough = utils.toPathCommand([path],  self.step_over, self.hfeed,  self.vfeed)
+            Path.append(rough)
 
+        return Path
 
 
 

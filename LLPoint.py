@@ -30,7 +30,7 @@ class Point:
             if self.distance_to(pt) < distance:
                 distance = self.distance_to(pt)
                 nearest = pt
-        print('nearest', nearest.X, nearest.Z)
+        #print('nearest', nearest.X, nearest.Z)
         return nearest
         
     def sub(self, pt):

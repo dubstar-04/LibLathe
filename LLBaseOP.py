@@ -26,8 +26,8 @@ class BaseOP:
 
     def set_params(self, params):
         for param in params:
-            print(param, params[param])
-        pass
+            setattr(self, param, params[param])
+            #print(param, params[param])
 
     def get_params(self):
         pass
@@ -54,7 +54,7 @@ class BaseOP:
             self.offset_edges.append(self.part_edges)    
         
         #path_profile = Part.makePolygon(profile_points)
-       # path_profile = Part.makeCompound(self.part)
+        #path_profile = Part.makeCompound(self.part)
         #Part.show(path_profile, 'Final_pass')    
         
  
@@ -66,7 +66,7 @@ class BaseOP:
         '''
         f_pass = 1
         while f_pass != self.finish_passes:
-            print('fpass', f_pass, self.finish_passes)
+            #print('fpass', f_pass, self.finish_passes)
             f_pass_geom = utils.offsetPath(self.part_edges, self.step_over * f_pass)  
             self.offset_edges.append(f_pass_geom)
             f_pass += 1
@@ -87,19 +87,9 @@ class BaseOP:
          
     def generate_gcode(self):
         '''
-        ####################
-        # 7. Wires To GCode
-        ####################
+        Generate Gcode for the op segments
         '''
-        Path = []
-        for path in self.offset_edges:   
-            finish = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
-            Path.append(finish)
-        for path in self.clearing_paths: 
-            rough = utils.toPathCommand([path],  self.step_over, self.hfeed,  self.vfeed)
-            Path.append(rough)
-
-        return Path
+        return ""
     
     def set_options(self, min_dia, max_dia, start, end, allow_grooving, allow_facing, step_over, finishing_passes):
         self.min_dia = min_dia
@@ -110,6 +100,7 @@ class BaseOP:
         self.allow_facing = allow_facing
         self.step_over = step_over
         self.finish_passes = finishing_passes
+        print("[LLBASEOP] - set_options - Updated")
         #self.generate_path()
         
     def add_part(self, part_bb):

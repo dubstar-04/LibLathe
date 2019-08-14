@@ -67,12 +67,12 @@ def find_next_good_edge(segments, current_index, stock_zmin):
     while index < len(segments):
         intersect, point = seg.intersect(segments[index])    
         if intersect:
-            print('Utils intersect:', point.X)
+            #print('Utils intersect:', point.X)
             return index, point
 
         index += 1
     #No solution :(
-    print('find_next_good_edge: FAILED')
+    #print('find_next_good_edge: FAILED')
     return False, stock_pt    
             
 def offsetPath(segs, step_over):
@@ -165,7 +165,7 @@ def join_edges(segments):
                 segments_out.append(Segment(pt1, pt2))
         else:
             #No Intersections found. Return the segment in its current state
-            print('join_edges - No Intersection found for index:', i)
+            #print('join_edges - No Intersection found for index:', i)
             segments_out.append(segments[i])
 
     return segments_out

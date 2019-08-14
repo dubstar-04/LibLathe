@@ -1,4 +1,5 @@
 import LibLathe.LLBaseOP
+import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 
@@ -16,6 +17,8 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         width = self.stock.XLength/2 - self.min_dia + self.extra_dia 
         step_over = self.step_over
         line_count = width / step_over
+
+        print("Step over", step_over, self.step_over)
            
         counter = 0
         while counter < line_count:
@@ -45,7 +48,19 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         #clearing_lines = Part.makeCompound(self.clearing_paths)
         #Part.show(clearing_lines, 'clearing_path')
         
+    def generate_gcode(self):
+        '''
+        Generate Gcode for the op segments
+        '''
+        Path = []
+        for path in self.offset_edges:   
+            finish = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
+            Path.append(finish)
+        for path in self.clearing_paths: 
+            rough = utils.toPathCommand([path],  self.step_over, self.hfeed,  self.vfeed)
+            Path.append(rough)
 
+        return Path
 
 
 

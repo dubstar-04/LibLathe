@@ -209,7 +209,7 @@ class Segment:
         if not extend:
             for pnt in pts:
                 pnt_ang = round(c.angle_to(pnt),0)
-                print('arc stuff', sa, ea, pnt_ang, pnt.X, pnt.Z)
+                #print('arc stuff', sa, ea, pnt_ang, pnt.X, pnt.Z)
 
                 if pnt_ang  >= sa and pnt_ang  <= ea:
                     #print('point', pnt.X, pnt.Z)
