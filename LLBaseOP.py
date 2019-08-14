@@ -1,15 +1,14 @@
-#from FreeCAD import Vector
-#import DraftGeomUtils
-#import Part
-#import Path
 import math 
-#import FreeCAD
 import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 
+__title__ = "Base class for all turning operations."
+__author__ = "dubstar-04 (Daniel Wood)"
+__url__ = "http://www.freecadweb.org"
+__doc__ = "Base class and properties implementation for all liblathe operations."
 
-class Profile:
+class BaseOP:
     def __init__(self):
 
         self.stock = None
@@ -39,23 +38,19 @@ class Profile:
 
     def get_gcode(self):
         '''
-        ####################
-        # 1. Get Stock Silhoutte
-        ####################
+        Base function for all turning operations
         '''
         print('LathePath - generate_path')
         self.remove_the_groove()
         self.offset_part_outline()
-        self.generate_clearing()
+        self.generate_path()
         Path = self.generate_gcode()
         #self.clean_up()
         return Path
         
     def remove_the_groove(self):
         '''
-        ####################
-        # 4. Remove The Groove
-        ####################
+        Remove grooves and undercuts from part geometry
         '''
         
         if not self.allow_grooving:
@@ -88,48 +83,11 @@ class Profile:
             #offset_profile = Part.makeCompound(finish_path)
             #Part.show(offset_profile, 'finishing_pass')
     
-    def generate_clearing(self):
+    def generate_path(self):
         '''
-        ####################
-        # 6. Generate Wires For Remaining Stock
-        ####################
+        Main processing function for each op
         '''
-        xmin = self.stock.XMin - self.extra_dia 
-        zmax = self.stock.ZMax + self.start_offset            
-        
-        self.clearing_paths = []
-        length = self.stock.ZLength + self.end_offset + self.start_offset 
-        width = self.stock.XLength/2 - self.min_dia + self.extra_dia 
-        step_over = self.step_over
-        line_count = width / step_over
-           
-        counter = 0
-        while counter < line_count:
-            xpt = xmin + counter * self.step_over
-            pt1 = Point(xpt, 0 , zmax)
-            pt2 = Point(xpt , 0 , zmax-length)
-            path_line = Segment(pt1, pt2)
-              
-            roughing_boundary = self.offset_edges[-1]
-            
-            for seg in roughing_boundary:
-                #if roughing_boundary.index(seg) == 0:
-                #print(roughing_boundary.index(seg), counter)
-                intersect, point = seg.intersect(path_line) 
-                if intersect:
-                    if type(point) is list:
-                        point = pt1.nearest(point)
-                    path_line = Segment(pt1, point)
-                    #if utils.online(seg, point):
-                    #    path_line = Segment(pt1, point)
-                        
-                        #break
-            
-            self.clearing_paths.append(path_line)
-            counter += 1
- 
-        #clearing_lines = Part.makeCompound(self.clearing_paths)
-        #Part.show(clearing_lines, 'clearing_path')
+        pass
          
     def generate_gcode(self):
         '''
