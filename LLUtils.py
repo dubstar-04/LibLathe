@@ -1,5 +1,3 @@
-#import Path
-#import math 
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 from LibLathe.LLVector import Vector
