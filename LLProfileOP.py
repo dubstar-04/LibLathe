@@ -21,32 +21,54 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         line_count = math.ceil(width / step_over)
 
         xstart = 0 - (step_over * line_count + self.min_dia)
+
+        #roughing_boundary = self.offset_edges[-1]
+        roughing_boundary = utils.offsetPath(self.part_edges, self.step_over * self.finish_passes)
+        self.offset_edges.append(roughing_boundary)
            
-        counter = 0
-        while counter < line_count + 1:
-            xpt = xstart + counter * self.step_over
+        #counter = 0
+        #while counter < line_count + 1:
+        for roughing_pass in range(line_count + 1):
+            xpt = xstart + roughing_pass * self.step_over
             pt1 = Point(xpt, 0 , zmax)
             pt2 = Point(xpt , 0 , zmax-length)
             path_line = Segment(pt1, pt2)
-              
-            roughing_boundary = self.offset_edges[-1]
             
+            intersections = []
             for seg in roughing_boundary:
                 #if roughing_boundary.index(seg) == 0:
                 #print(roughing_boundary.index(seg), counter)
                 intersect, point = seg.intersect(path_line) 
                 if intersect:
                     if type(point) is list:
-                        point = pt1.nearest(point)
-                    path_line = Segment(pt1, point)
-                    #if utils.online(seg, point):
-                    #    path_line = Segment(pt1, point)
-                        
-                        #break
+                        intersections.extend(point)
+                    else: 
+                        intersections.append(point)
+
+            if not intersections:
+                self.clearing_paths.append(path_line)
+                #counter += 1
+
+            if len(intersections) == 1:
+                ## Only one intersection, trim line to intersection. 
+                path_line = Segment(pt1, intersections[0])
+                self.clearing_paths.append(path_line)
+                #counter += 1
             
-            self.clearing_paths.append(path_line)
-            counter += 1
- 
+            if len(intersections) > 1:
+                ## more than one intersection
+                intersections.insert(0, pt1)
+                intersections.append(pt2)
+
+                intersections = utils.sortPointsByZ(intersections)
+
+                for i in range(len(intersections)):
+                    if i + 1 < len(intersections) and i % 2 == 0:
+                        print('intersection:', i, 'of', len(intersections), i % 2)
+                        path_line = Segment(intersections[i], intersections[i+1])
+                        self.clearing_paths.append(path_line)
+                        #counter += 1
+                    
         #clearing_lines = Part.makeCompound(self.clearing_paths)
         #Part.show(clearing_lines, 'clearing_path')
         
