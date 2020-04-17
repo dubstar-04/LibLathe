@@ -4,7 +4,11 @@ from LibLathe.LLVector import Vector
 from LibLathe.LLCommand import Command
 
 def get_tool_cutting_angle():
-    return 275   
+    return 275
+
+def sortPointsByZ(listOfPoints):
+    sortedPoints = sorted(listOfPoints, key=lambda p: p.Z, reverse=True)
+    return sortedPoints
 
 def remove_the_groove(segments, stock_zmin):
 
