@@ -48,13 +48,18 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                         intersection = utils.Intersection(point, seg)
                         intersections.append(intersection)
 
+            ## build list of segments
+            segments = []
+
             if not intersections:
-                self.clearing_paths.append(path_line)
+                pass
+                seg = path_line
+                segments.append(seg)
 
             if len(intersections) == 1:
                 ## Only one intersection, trim line to intersection. 
-                path_line = Segment(pt1, intersections[0].point)
-                self.clearing_paths.append(path_line)
+                seg = Segment(pt1, intersections[0].point)
+                segments.append(seg)
             
             if len(intersections) > 1:
                 ## more than one intersection
@@ -67,7 +72,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                 intersections = utils.sortPointsByZ(intersections)
 
                 for i in range(len(intersections)):
-
                     if i + 1 < len(intersections):
                         if intersections[i].seg:
                             if intersections[i].seg.is_same(intersections[i+1].seg):
@@ -80,18 +84,16 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
 
                                 path_line = Segment(intersections[i].point, intersections[i+1].point)
                                 path_line.set_bulge_from_radius(rad)
-                                
-                                self.clearing_paths.append(path_line)
+
+                                segments.append(path_line)
 
                         if i % 2 == 0:
                             #print('intersection:', i, 'of', len(intersections), i % 2)
                             path_line = Segment(intersections[i].point, intersections[i+1].point)
+                            segments.append(path_line)
 
-                            if intersections[i].seg:
-                                if intersections[i].seg.is_same(intersections[i+1].seg):
-                                    print('segments Match')
-
-                            self.clearing_paths.append(path_line)
+            if len(segments):
+                self.clearing_paths.append(segments)
                     
         #clearing_lines = Part.makeCompound(self.clearing_paths)
         #Part.show(clearing_lines, 'clearing_path')
@@ -101,12 +103,13 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         Generate Gcode for the op segments
         '''
         Path = []
+
+        for path in self.clearing_paths: 
+            rough = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
+            Path.append(rough)
         for path in self.offset_edges:   
             finish = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
             Path.append(finish)
-        for path in self.clearing_paths: 
-            rough = utils.toPathCommand([path],  self.step_over, self.hfeed,  self.vfeed)
-            Path.append(rough)
 
         return Path
 
