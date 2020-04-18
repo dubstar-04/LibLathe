@@ -180,6 +180,21 @@ def join_edges(segments):
     
 def toPathCommand(segments, step_over, hSpeed, vSpeed):
 
+    def previousSegmentConnected(seg, segments):
+
+        currentIdx = segments.index(seg)
+        previousIdx = currentIdx - 1
+
+        if not currentIdx == 0:
+            currentStartPt = seg.start
+            previousEndPt = segments[previousIdx].end
+
+            if currentStartPt.is_same(previousEndPt):
+                print('segs are connected')
+                return True
+
+        return False 
+
     cmds = []
     #cmd = Path.Command('G17')  #xy plane
     #cmd = Command('(start of section)')
@@ -188,8 +203,8 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
     cmds.append(cmd)
 
 
-    for seg in segments:
-       
+    for seg in segments:  
+             
         if segments.index(seg) == 0:
             params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
             rapid =  Command('G0', params)
@@ -200,11 +215,12 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
             cmds.append(rapid)  
         
         if seg.bulge == 0:
-            #if edges.index(edge) == 1:
-            pt = seg.start #edge.valueAt(edge.FirstParameter) 
-            params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
-            cmd =  Command('G0', params)
-            cmds.append(cmd)
+            if not previousSegmentConnected(seg, segments):
+                #if edges.index(edge) == 1:
+                pt = seg.start #edge.valueAt(edge.FirstParameter) 
+                params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                cmd =  Command('G0', params)
+                cmds.append(cmd)
             
             pt = seg.end #edge.valueAt(edge.LastParameter)
             params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
