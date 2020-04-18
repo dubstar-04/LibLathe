@@ -3,11 +3,17 @@ from LibLathe.LLSegment import Segment
 from LibLathe.LLVector import Vector
 from LibLathe.LLCommand import Command
 
+
+class Intersection:
+    def __init__(self, point, segment):
+        self.point = point
+        self.seg = segment 
+
 def get_tool_cutting_angle():
     return 275
 
 def sortPointsByZ(listOfPoints):
-    sortedPoints = sorted(listOfPoints, key=lambda p: p.Z, reverse=True)
+    sortedPoints = sorted(listOfPoints, key=lambda p: p.point.Z, reverse=True)
     return sortedPoints
 
 def remove_the_groove(segments, stock_zmin):
@@ -176,8 +182,9 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
 
     cmds = []
     #cmd = Path.Command('G17')  #xy plane
+    #cmd = Command('(start of section)')
     cmd = Command('G18')   #xz plane
-    #cmd = Path.Command('G19')  #yz plane
+    #cmd = Command('G19')  #yz plane
     cmds.append(cmd)
 
 
