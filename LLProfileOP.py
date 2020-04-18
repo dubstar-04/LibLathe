@@ -4,6 +4,7 @@ import LibLathe.LLBaseOP
 import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
+from LibLathe.LLSegmentGroup import SegmentGroup
 
 class ProfileOP(LibLathe.LLBaseOP.BaseOP):
     
@@ -23,7 +24,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         xstart = 0 - (step_over * line_count + self.min_dia)
 
         #roughing_boundary = self.offset_edges[-1]
-        roughing_boundary = utils.offsetPath(self.part_edges, self.step_over * self.finish_passes)
+        roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
         self.offset_edges.append(roughing_boundary)
            
         #counter = 0
@@ -34,7 +35,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             pt2 = Point(xpt , 0 , zmax-length)
             path_line = Segment(pt1, pt2)
             intersections = []
-            for seg in roughing_boundary:
+            for seg in roughing_boundary.get_segments():
                 #if roughing_boundary.index(seg) == 0:
                 #print(roughing_boundary.index(seg), counter)
                 intersect, point = seg.intersect(path_line) 
@@ -49,17 +50,17 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                         intersections.append(intersection)
 
             ## build list of segments
-            segments = []
+            segmentGroup = SegmentGroup()
 
             if not intersections:
                 pass
                 seg = path_line
-                segments.append(seg)
+                segmentGroup.add_segment(seg)
 
             if len(intersections) == 1:
                 ## Only one intersection, trim line to intersection. 
                 seg = Segment(pt1, intersections[0].point)
-                segments.append(seg)
+                segmentGroup.add_segment(seg)
             
             if len(intersections) > 1:
                 ## more than one intersection
@@ -75,7 +76,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                     if i + 1 < len(intersections):
                         if intersections[i].seg:
                             if intersections[i].seg.is_same(intersections[i+1].seg):
-                                print('segments Match')
+                                #print('segments Match')
                                 seg = intersections[i].seg
                                 rad = seg.get_radius()
 
@@ -85,15 +86,15 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                                 path_line = Segment(intersections[i].point, intersections[i+1].point)
                                 path_line.set_bulge_from_radius(rad)
 
-                                segments.append(path_line)
+                                segmentGroup.add_segment(path_line)
 
                         if i % 2 == 0:
                             #print('intersection:', i, 'of', len(intersections), i % 2)
                             path_line = Segment(intersections[i].point, intersections[i+1].point)
-                            segments.append(path_line)
+                            segmentGroup.add_segment(path_line)
 
-            if len(segments):
-                self.clearing_paths.append(segments)
+            if segmentGroup.count():
+                self.clearing_paths.append(segmentGroup)
                     
         #clearing_lines = Part.makeCompound(self.clearing_paths)
         #Part.show(clearing_lines, 'clearing_path')
@@ -104,11 +105,11 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         '''
         Path = []
 
-        for path in self.clearing_paths: 
-            rough = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
+        for segmentGroup in self.clearing_paths: 
+            rough = utils.toPathCommand(segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
             Path.append(rough)
-        for path in self.offset_edges:   
-            finish = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
+        for segmentGroup in self.offset_edges:   
+            finish = utils.toPathCommand(segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
             Path.append(finish)
 
         return Path

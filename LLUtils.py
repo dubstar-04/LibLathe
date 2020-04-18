@@ -1,5 +1,6 @@
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
+from LibLathe.LLSegmentGroup import SegmentGroup
 from LibLathe.LLVector import Vector
 from LibLathe.LLCommand import Command
 
@@ -16,9 +17,10 @@ def sortPointsByZ(listOfPoints):
     sortedPoints = sorted(listOfPoints, key=lambda p: p.point.Z, reverse=True)
     return sortedPoints
 
-def remove_the_groove(segments, stock_zmin):
+def remove_the_groove(segmentGroupIn, stock_zmin):
 
-    segs_out = []
+    segments = segmentGroupIn.get_segments()
+    segs_out = SegmentGroup()
     index = 0
     while index < len(segments):
         seg = segments[index]
@@ -27,7 +29,7 @@ def remove_the_groove(segments, stock_zmin):
             if seg.bulge > 0: 
                 seg = Segment(seg.start, seg.end)
 
-            segs_out.append(seg)
+            segs_out.add_segment(seg)
 
         if seg.bulge == 0:
             pt1 = seg.start 
@@ -37,22 +39,22 @@ def remove_the_groove(segments, stock_zmin):
                 next_index, pt = find_next_good_edge(segments, index, stock_zmin)
                 if next_index == False:
                     seg = Segment(pt1, pt)
-                    segs_out.append(seg)
+                    segs_out.add_segment(seg)
                     break
                 if next_index != index: 
                     seg = Segment(pt1, pt)
-                    segs_out.append(seg)                  
+                    segs_out.add_segment(seg)                  
                     next_pt1 = segments[next_index].start
                     next_pt2 = segments[next_index].end 
                 if next_pt1 != pt:
                     seg = Segment(pt1, next_pt2)
-                    segs_out.append(seg) 
+                    segs_out.add_segment(seg) 
                     next_index +=1
                             
                 index = next_index
                 continue
             else:
-                segs_out.append(seg)
+                segs_out.add_segment(seg)
             
         index += 1 
     return segs_out    
@@ -83,10 +85,12 @@ def find_next_good_edge(segments, current_index, stock_zmin):
     #print('find_next_good_edge: FAILED')
     return False, stock_pt    
             
-def offsetPath(segs, step_over):
+def offsetPath(segGroupIn, step_over):
 
     #TODO Sort Edges to ensure they're in order.  See: Part.__sortEdges__()
-    nedges = []  
+    #nedges = []  
+    segs = segGroupIn.get_segments()
+    segmentGroup = SegmentGroup()
 
     for i in range(len(segs)):
         seg = segs[i]
@@ -113,26 +117,31 @@ def offsetPath(segs, step_over):
                 new_end = pt2.add(seg.end)
                 rad = seg.get_radius() + step_over #seg.get_centre_point().distance_to(new_start)
            
-            nedge = Segment(new_start, new_end)
+            segment = Segment(new_start, new_end)
 
             
             if seg.bulge < 0:
                 rad = 0 - rad
-            nedge.set_bulge_from_radius(rad)
+            segment.set_bulge_from_radius(rad)
 
         if seg.bulge == 0:         
             vec = Vector().normalise(seg.start, seg.end)
             vec = vec.rotate_x(-1.570796)
             pt = vec.multiply(step_over)
-            nedge = Segment(pt.add(seg.start), pt.add(seg.end))
+            segment = Segment(pt.add(seg.start), pt.add(seg.end))
               
-        nedges.append(nedge)
+        segmentGroup.add_segment(segment)
         
-    return join_edges(nedges)          
         
-def join_edges(segments):
+    joinedSegmentsGroup = join_edges(segmentGroup) 
+        
+    return joinedSegmentsGroup
+        
+def join_edges(segmentGroupIn):
 
-    segments_out = []
+    segments = segmentGroupIn.get_segments()
+
+    segmentGroupOut = SegmentGroup()
     
     for i in range(len(segments)):
 
@@ -160,7 +169,6 @@ def join_edges(segments):
 
             #print('join_edges', i, pt1, pt2, pt2.X, pt2.Z) 
                          
-
         if pt1 and pt2:
             if segments[i].bulge != 0:               
                 nseg = Segment(pt1, pt2)
@@ -168,17 +176,19 @@ def join_edges(segments):
                 if segments[i].bulge < 0:
                     rad = 0 - rad
                 nseg.set_bulge_from_radius(rad)
-                segments_out.append(nseg) 
+                segmentGroupOut.add_segment(nseg) 
             else:
-                segments_out.append(Segment(pt1, pt2))
+                segmentGroupOut.add_segment(Segment(pt1, pt2))
         else:
             #No Intersections found. Return the segment in its current state
             #print('join_edges - No Intersection found for index:', i)
-            segments_out.append(segments[i])
+            segmentGroupOut.add_segment(segments[i])
 
-    return segments_out
+    return segmentGroupOut
     
-def toPathCommand(segments, step_over, hSpeed, vSpeed):
+def toPathCommand(segmentGroup, step_over, hSpeed, vSpeed):
+
+    segments = segmentGroup.get_segments()
 
     def previousSegmentConnected(seg, segments):
 
@@ -190,7 +200,7 @@ def toPathCommand(segments, step_over, hSpeed, vSpeed):
             previousEndPt = segments[previousIdx].end
 
             if currentStartPt.is_same(previousEndPt):
-                print('segs are connected')
+                #print('segs are connected')
                 return True
 
         return False 
