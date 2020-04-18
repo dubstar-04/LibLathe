@@ -15,7 +15,7 @@ class Segment:
         self.start = start
         self.end = end
         self.bulge = bulge
-        
+       
     def get_angle(self):
         '''
         Returns the included angle between the start and end points
@@ -96,6 +96,19 @@ class Segment:
         Returns gamma angle
         '''
         return (math.pi - self.get_angle()) / 2
+
+    def is_same(self, seg):
+        '''
+        Returns True is the segment is the same
+        '''
+        if seg:
+            if self.start == seg.start:
+                if self.end == seg.end:
+                    if self.bulge == seg.bulge:
+                        return True
+        
+        return False
+
 
     def intersect (self, seg, extend=False):
 
