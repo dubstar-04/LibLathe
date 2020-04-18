@@ -33,7 +33,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             pt1 = Point(xpt, 0 , zmax)
             pt2 = Point(xpt , 0 , zmax-length)
             path_line = Segment(pt1, pt2)
-            
             intersections = []
             for seg in roughing_boundary:
                 #if roughing_boundary.index(seg) == 0:
@@ -41,33 +40,58 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                 intersect, point = seg.intersect(path_line) 
                 if intersect:
                     if type(point) is list:
-                        intersections.extend(point)
+                        for p in point:
+                            intersection = utils.Intersection(p, seg)
+                            intersections.append(intersection)
                     else: 
-                        intersections.append(point)
+                        #intersections.append(point)
+                        intersection = utils.Intersection(point, seg)
+                        intersections.append(intersection)
 
             if not intersections:
                 self.clearing_paths.append(path_line)
-                #counter += 1
 
             if len(intersections) == 1:
                 ## Only one intersection, trim line to intersection. 
-                path_line = Segment(pt1, intersections[0])
+                path_line = Segment(pt1, intersections[0].point)
                 self.clearing_paths.append(path_line)
-                #counter += 1
             
             if len(intersections) > 1:
                 ## more than one intersection
-                intersections.insert(0, pt1)
-                intersections.append(pt2)
+                intersection = utils.Intersection(pt1, None)
+                intersections.insert(0, intersection)
+
+                intersection2 = utils.Intersection(pt2, None)
+                intersections.append(intersection2)
 
                 intersections = utils.sortPointsByZ(intersections)
 
                 for i in range(len(intersections)):
-                    if i + 1 < len(intersections) and i % 2 == 0:
-                        print('intersection:', i, 'of', len(intersections), i % 2)
-                        path_line = Segment(intersections[i], intersections[i+1])
-                        self.clearing_paths.append(path_line)
-                        #counter += 1
+
+                    if i + 1 < len(intersections):
+                        if intersections[i].seg:
+                            if intersections[i].seg.is_same(intersections[i+1].seg):
+                                print('segments Match')
+                                seg = intersections[i].seg
+                                rad = seg.get_radius()
+
+                                if seg.bulge < 0:
+                                    rad = 0 - rad
+
+                                path_line = Segment(intersections[i].point, intersections[i+1].point)
+                                path_line.set_bulge_from_radius(rad)
+                                
+                                self.clearing_paths.append(path_line)
+
+                        if i % 2 == 0:
+                            #print('intersection:', i, 'of', len(intersections), i % 2)
+                            path_line = Segment(intersections[i].point, intersections[i+1].point)
+
+                            if intersections[i].seg:
+                                if intersections[i].seg.is_same(intersections[i+1].seg):
+                                    print('segments Match')
+
+                            self.clearing_paths.append(path_line)
                     
         #clearing_lines = Part.makeCompound(self.clearing_paths)
         #Part.show(clearing_lines, 'clearing_path')
