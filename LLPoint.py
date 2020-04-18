@@ -32,6 +32,18 @@ class Point:
                 nearest = pt
         #print('nearest', nearest.X, nearest.Z)
         return nearest
+
+    def is_same(self, pt):
+        '''
+        Returns True is the coordinates are the same
+        '''
+        if pt:
+            if self.X == pt.X:
+                if self.Y == pt.Y:
+                    if self.Z == pt.Z:
+                        return True
+        
+        return False
         
     def sub(self, pt):
         p = Point(self.X - pt.X, self.Y - pt.Y, self.Z - pt.Z)
