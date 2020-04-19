@@ -184,7 +184,7 @@ def join_edges(segmentGroupIn):
 
     return segmentGroupOut
     
-def toPathCommand(part_segment_group, segmentGroup, step_over, hSpeed, vSpeed):
+def toPathCommand(part_segment_group, segmentGroup, stock, step_over, hSpeed, vSpeed):
     ''' generates gcode for the geometry within a segment group '''
 
     def previousSegmentConnected(seg, segments):
@@ -244,11 +244,14 @@ def toPathCommand(part_segment_group, segmentGroup, step_over, hSpeed, vSpeed):
 
         min_x_retract = get_min_retract_x(seg, segments, part_segment_group)
         x_retract = min_x_retract - step_over
+        min_z_retract = stock.ZMax
+        z_retract = min_z_retract + step_over
 
         print('min_x_retract:', min_x_retract)
              
         if segments.index(seg) == 0:
-            params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
+            #params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
+            params = {'X': seg.start.X, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
             rapid =  Command('G0', params)
             cmds.append(rapid)    
 
@@ -292,7 +295,9 @@ def toPathCommand(part_segment_group, segmentGroup, step_over, hSpeed, vSpeed):
             rapid =  Command('G0', params)
             cmds.append(rapid)
 
-            params = {'X': x_retract, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
+            #params = {'X': x_retract, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
+            params = {'X': x_retract, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
+            
             rapid =  Command('G0', params)
             cmds.append(rapid)
            
