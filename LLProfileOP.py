@@ -106,10 +106,10 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         Path = []
 
         for segmentGroup in self.clearing_paths: 
-            rough = utils.toPathCommand(segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
+            rough = utils.toPathCommand(self.part_segment_group, segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
             Path.append(rough)
         for segmentGroup in self.offset_edges:   
-            finish = utils.toPathCommand(segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
+            finish = utils.toPathCommand(self.part_segment_group, segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
             Path.append(finish)
 
         return Path
