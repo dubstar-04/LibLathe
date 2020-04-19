@@ -8,16 +8,18 @@ from LibLathe.LLCommand import Command
 class Intersection:
     def __init__(self, point, segment):
         self.point = point
-        self.seg = segment 
+        self.seg = segment
 
-def get_tool_cutting_angle():
-    return 275
-
-def sortPointsByZ(listOfPoints):
-    sortedPoints = sorted(listOfPoints, key=lambda p: p.point.Z, reverse=True)
+def sort_intersections_z(intersections):
+    ''' sort the a list of intersections by their z position '''
+    sortedPoints = sorted(intersections, key=lambda p: p.point.Z, reverse=True)
     return sortedPoints
 
-def remove_the_groove(segmentGroupIn, stock_zmin):
+def get_min_retract_x(from_z, part_edges):
+    ''' return the minimum retract height'''
+    pass
+
+def remove_the_groove(segmentGroupIn, stock_zmin, tool):
 
     segments = segmentGroupIn.get_segments()
     segs_out = SegmentGroup()
@@ -35,8 +37,8 @@ def remove_the_groove(segmentGroupIn, stock_zmin):
             pt1 = seg.start 
             pt2 = seg.end
             #print('seg angle', segments.index(seg), pt1.angle_to(pt2))
-            if pt1.angle_to(pt2) > get_tool_cutting_angle():               
-                next_index, pt = find_next_good_edge(segments, index, stock_zmin)
+            if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():               
+                next_index, pt = find_next_good_edge(segments, index, stock_zmin, tool)
                 if next_index == False:
                     seg = Segment(pt1, pt)
                     segs_out.add_segment(seg)
@@ -59,13 +61,13 @@ def remove_the_groove(segmentGroupIn, stock_zmin):
         index += 1 
     return segs_out    
 
-def find_next_good_edge(segments, current_index, stock_zmin):
+def find_next_good_edge(segments, current_index, stock_zmin, tool):
     index = current_index
     pt1 = segments[index].start
     index += 1    
     while index < len(segments):
         pt2 = segments[index].start       
-        if pt1.angle_to(pt2) < get_tool_cutting_angle():
+        if pt1.angle_to(pt2) < tool.get_tool_cutting_angle():
             return index, pt2          
         index += 1
     
@@ -186,7 +188,8 @@ def join_edges(segmentGroupIn):
 
     return segmentGroupOut
     
-def toPathCommand(segmentGroup, step_over, hSpeed, vSpeed):
+def toPathCommand(part_edges, segmentGroup, step_over, hSpeed, vSpeed):
+    ''' generates gcode for the geometry within a segment group '''
 
     segments = segmentGroup.get_segments()
 

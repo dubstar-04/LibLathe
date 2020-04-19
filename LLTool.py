@@ -12,4 +12,7 @@ class Tool:
     def set_tool(self, tool_string):
         pass
 
+    def get_tool_cutting_angle(self):
+        return 275
+
 
