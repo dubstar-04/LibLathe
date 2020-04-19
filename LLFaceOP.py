@@ -4,6 +4,7 @@ import LibLathe.LLBaseOP
 import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
+from LibLathe.LLSegmentGroup import SegmentGroup
 
 class FaceOP(LibLathe.LLBaseOP.BaseOP):
     
@@ -24,6 +25,9 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         zstart = self.part.ZMax + step_over * line_count
 
         print("line count", line_count) 
+
+        ## build list of segments
+        segmentGroup = SegmentGroup()
            
         counter = 0
         while counter < line_count + 1:
@@ -48,9 +52,13 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
                         
                         #break
             '''
-            self.clearing_paths.append(path_line)
+
+            seg = path_line
+            segmentGroup.add_segment(seg)
             counter += 1
- 
+        
+        self.clearing_paths.append(segmentGroup)
+
         #clearing_lines = Part.makeCompound(self.clearing_paths)
         #Part.show(clearing_lines, 'clearing_path')
         
@@ -63,8 +71,8 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         #for path in self.offset_edges:   
         #    finish = utils.toPathCommand(path,  self.step_over, self.hfeed,  self.vfeed)
         #    Path.append(finish)
-        for path in self.clearing_paths: 
-            rough = utils.toPathCommand([path],  self.step_over, self.hfeed,  self.vfeed)
+        for segmentGroup in self.clearing_paths: 
+            rough = utils.toPathCommand(self.part_segment_group, segmentGroup,  self.step_over, self.hfeed,  self.vfeed)
             Path.append(rough)
 
         return Path
