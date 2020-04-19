@@ -15,10 +15,6 @@ def sort_intersections_z(intersections):
     sortedPoints = sorted(intersections, key=lambda p: p.point.Z, reverse=True)
     return sortedPoints
 
-def get_min_retract_x(from_z, part_edges):
-    ''' return the minimum retract height'''
-    pass
-
 def remove_the_groove(segmentGroupIn, stock_zmin, tool):
 
     segments = segmentGroupIn.get_segments()
@@ -188,12 +184,11 @@ def join_edges(segmentGroupIn):
 
     return segmentGroupOut
     
-def toPathCommand(part_edges, segmentGroup, step_over, hSpeed, vSpeed):
+def toPathCommand(part_segment_group, segmentGroup, step_over, hSpeed, vSpeed):
     ''' generates gcode for the geometry within a segment group '''
 
-    segments = segmentGroup.get_segments()
-
     def previousSegmentConnected(seg, segments):
+        ''' returns true if seg is connect to the previous seg '''
 
         currentIdx = segments.index(seg)
         previousIdx = currentIdx - 1
@@ -208,6 +203,35 @@ def toPathCommand(part_edges, segmentGroup, step_over, hSpeed, vSpeed):
 
         return False 
 
+    def get_min_retract_x(seg, segments, part_segment_group):
+        ''' returns the minimum x retract based on the current segments and the part_segments '''
+        part_segments = part_segment_group.get_segments()
+        currentIdx = segments.index(seg)
+        x_values = []
+
+        ## get the xmax from the current pass segments
+        for idx, segment in enumerate(segments):
+            x_values.append(segment.get_x_max())
+            if idx == currentIdx:
+                break
+
+        ## get the xmax from the part segments up to the z position of the current segment
+        seg_z_max = seg.get_z_max()
+        for part_seg in part_segments:
+
+            part_seg_z_max = part_seg.get_z_max()
+            x_values.append(part_seg.get_x_max())
+
+            if part_seg_z_max < seg_z_max:
+                break
+
+        min_retract_x = max(x_values, key=abs)
+        return min_retract_x
+            
+
+
+    segments = segmentGroup.get_segments()
+
     cmds = []
     #cmd = Path.Command('G17')  #xy plane
     #cmd = Command('(start of section)')
@@ -217,6 +241,11 @@ def toPathCommand(part_edges, segmentGroup, step_over, hSpeed, vSpeed):
 
 
     for seg in segments:  
+
+        min_x_retract = get_min_retract_x(seg, segments, part_segment_group)
+        x_retract = min_x_retract - step_over
+
+        print('min_x_retract:', min_x_retract)
              
         if segments.index(seg) == 0:
             params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
@@ -259,11 +288,11 @@ def toPathCommand(part_edges, segmentGroup, step_over, hSpeed, vSpeed):
         cmds.append(cmd)
 
         if segments.index(seg) == len(segments)-1:
-            params = {'X': seg.end.X - step_over, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
+            params = {'X': x_retract, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
             rapid =  Command('G0', params)
             cmds.append(rapid)
 
-            params = {'X': seg.end.X - step_over, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
+            params = {'X': x_retract, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
             rapid =  Command('G0', params)
             cmds.append(rapid)
            

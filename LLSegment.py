@@ -66,6 +66,40 @@ class Segment:
         #rad = self.get_length() / 4 * (self.bulge + 1 / self.bulge)
         #print('LLSegment radius', rad)
         return rad
+
+    def get_x_max(self):
+        '''
+        Return the maximum x value of the segment
+        '''
+        x_values = []
+        x_values.append(self.start.X)
+        x_values.append(self.end.X)
+
+        if self.bulge != 0:
+            centre_pt_x = self.get_centre_point().X
+            rad = self.get_radius()
+            #TODO: Revisit the sign of the offset here. assumes that all lathes use -x
+            buldge_x = centre_pt_x - rad
+            x_values.append(buldge_x)
+
+        return max(x_values, key=abs)
+
+    def get_z_max(self):
+        '''
+        Return the maximum z value of the segment
+        '''
+        z_values = []
+        z_values.append(self.start.Z)
+        z_values.append(self.end.Z)
+
+        if self.bulge != 0:
+            centre_pt_z = self.get_centre_point().Z
+            rad = self.get_radius()
+            #TODO: Revisit the sign of the offset here. assumes that all lathes use -x
+            buldge_z = centre_pt_z - rad
+            z_values.append(buldge_z)
+
+        return max(z_values, key=abs)
         
     def get_length(self):
         '''
