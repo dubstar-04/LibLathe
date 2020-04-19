@@ -3,12 +3,14 @@ import LibLathe.LLUtils as utils
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 from LibLathe.LLSegmentGroup import SegmentGroup
+from LibLathe.LLTool import Tool
 
 class BaseOP:
     def __init__(self):
 
         self.stock = None
         self.part = None
+        self.tool = Tool()
         #self.part_edges = None
         self.part_segment_group = SegmentGroup()
 
@@ -52,7 +54,7 @@ class BaseOP:
         '''
         
         if not self.allow_grooving:
-            self.part_segment_group = utils.remove_the_groove(self.part_segment_group, self.stock.ZMin)
+            self.part_segment_group = utils.remove_the_groove(self.part_segment_group, self.stock.ZMin, self.tool)
             self.offset_edges.append(self.part_segment_group)    
         
         #path_profile = Part.makePolygon(profile_points)
