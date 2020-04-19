@@ -70,7 +70,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                 intersection2 = utils.Intersection(pt2, None)
                 intersections.append(intersection2)
 
-                intersections = utils.sortPointsByZ(intersections)
+                intersections = utils.sort_intersections_z(intersections)
 
                 for i in range(len(intersections)):
                     if i + 1 < len(intersections):
