@@ -12,7 +12,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         '''
         Generate the path for the profile operation
         '''
-        #xmin = self.stock.XMin - self.extra_dia
         zmax = self.stock.ZMax + self.start_offset            
         
         self.clearing_paths = []
@@ -22,12 +21,9 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         line_count = int(math.ceil(width / step_over))
         xstart = 0 - (step_over * line_count + self.min_dia)
 
-        #roughing_boundary = self.offset_edges[-1]
         roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
         self.offset_edges.append(roughing_boundary)
            
-        #counter = 0
-        #while counter < line_count + 1:
         for roughing_pass in range(line_count + 1):
             xpt = xstart + roughing_pass * self.step_over
             pt1 = Point(xpt, 0 , zmax)
@@ -35,8 +31,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             path_line = Segment(pt1, pt2)
             intersections = []
             for seg in roughing_boundary.get_segments():
-                #if roughing_boundary.index(seg) == 0:
-                #print(roughing_boundary.index(seg), counter)
                 intersect, point = seg.intersect(path_line) 
                 if intersect:
                     if type(point) is list:
@@ -44,7 +38,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                             intersection = utils.Intersection(p, seg)
                             intersections.append(intersection)
                     else: 
-                        #intersections.append(point)
                         intersection = utils.Intersection(point, seg)
                         intersections.append(intersection)
 
@@ -75,7 +68,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                     if i + 1 < len(intersections):
                         if intersections[i].seg:
                             if intersections[i].seg.is_same(intersections[i+1].seg):
-                                #print('segments Match')
                                 seg = intersections[i].seg
                                 rad = seg.get_radius()
 
@@ -88,15 +80,11 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                                 segmentGroup.add_segment(path_line)
 
                         if i % 2 == 0:
-                            #print('intersection:', i, 'of', len(intersections), i % 2)
                             path_line = Segment(intersections[i].point, intersections[i+1].point)
                             segmentGroup.add_segment(path_line)
 
             if segmentGroup.count():
                 self.clearing_paths.append(segmentGroup)
-                    
-        #clearing_lines = Part.makeCompound(self.clearing_paths)
-        #Part.show(clearing_lines, 'clearing_path')
         
     def generate_gcode(self):
         '''
