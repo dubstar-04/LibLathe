@@ -17,10 +17,8 @@ class Point:
         Returns the distance between two points in degrees
         '''
         dX = self.X - pt.X
-        #dY = pt.Y - self.Y
         dZ = self.Z - pt.Z       
         angle = math.degrees(math.atan2(dZ, dX) + math.pi)
-        #print('angle of the dangle:', angle)
         return angle
     
     def nearest(self, pts):
@@ -30,7 +28,6 @@ class Point:
             if self.distance_to(pt) < distance:
                 distance = self.distance_to(pt)
                 nearest = pt
-        #print('nearest', nearest.X, nearest.Z)
         return nearest
 
     def is_same(self, pt):
@@ -46,27 +43,45 @@ class Point:
         return False
         
     def sub(self, pt):
+        '''
+        Returns a point with the difference between self and pt 
+        '''
         p = Point(self.X - pt.X, self.Y - pt.Y, self.Z - pt.Z)
         return p
         
     def add(self, pt):
+        '''
+        Returns a point addition between self and pt 
+        '''
         p = Point(self.X + pt.X, self.Y + pt.Y, self.Z + pt.Z)
         return p
         
     def multiply(self, val):
+        '''
+        Returns a point multiplication between self and pt 
+        '''
         p = Point(self.X * val , self.Y * val, self.Z * val)
         return p
 
     def lerp (self, pt, t):
+        '''
+        Returns a point linear interpolation between self and pt 
+        '''
         p = Point(self.X + (pt.X - self.X) * t, self.Y + (pt.Y - self.Y) * t, self.Z + (pt.Z - self.Z) * t)
         return p
 
     def rotate(self, angle):
+        '''
+        Returns a point rotated by angle degress
+        '''
         x = self.Z * math.sin(angle) + self.X * math.cos(angle)
         z = self.Z * math.cos(angle) + self.X * math.sin(angle)
         return Point(x, self.Y, z)
 
     def mid(self, pt):
+        '''
+        Returns midpoint between self and pt
+        '''
         x = (self.X + pt.X) / 2
         y = (self.Y + pt.Y) / 2
         z = (self.Z + pt.Z) / 2
