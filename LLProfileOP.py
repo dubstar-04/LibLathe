@@ -11,15 +11,11 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
     def generate_path(self):
         '''
         Generate the path for the profile operation
-        '''
-        zmax = self.stock.ZMax + self.start_offset            
-        
-        self.clearing_paths = []
-        length = self.stock.ZLength() + self.end_offset + self.start_offset 
-        width = self.stock.XLength()/2 - self.min_dia + self.extra_dia 
-        step_over = self.step_over
-        line_count = int(math.ceil(width / step_over))
-        xstart = 0 - (step_over * line_count + self.min_dia)
+        '''      
+        self.clearing_paths = []      
+        zmax = self.stock.ZMax + self.start_offset 
+        line_count = int(math.ceil(self.stock.XLength() / self.step_over))
+        xstart = 0 - (self.step_over * line_count + self.min_dia)
 
         roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
         self.offset_edges.append(roughing_boundary)
@@ -27,7 +23,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         for roughing_pass in range(line_count + 1):
             xpt = xstart + roughing_pass * self.step_over
             pt1 = Point(xpt, 0 , zmax)
-            pt2 = Point(xpt , 0 , zmax-length)
+            pt2 = Point(xpt , 0 , zmax-self.stock.ZLength())
             path_line = Segment(pt1, pt2)
             intersections = []
             for seg in roughing_boundary.get_segments():
@@ -45,7 +41,6 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             segmentGroup = SegmentGroup()
 
             if not intersections:
-                pass
                 seg = path_line
                 segmentGroup.add_segment(seg)
 
