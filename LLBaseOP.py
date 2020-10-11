@@ -6,12 +6,13 @@ from LibLathe.LLSegmentGroup import SegmentGroup
 from LibLathe.LLTool import Tool
 
 class BaseOP:
+    '''
+    Base class for all turning operations.
+    '''
     def __init__(self):
 
         self.stock = None
-        self.part = None
         self.tool = Tool()
-        #self.part_edges = None
         self.part_segment_group = SegmentGroup()
 
         self.offset_edges = []
@@ -29,59 +30,45 @@ class BaseOP:
         self.vfeed = 50
 
     def set_params(self, params):
+        '''
+        Set operations parameters
+        '''
         for param in params:
             setattr(self, param, params[param])
-            #print(param, params[param])
 
     def get_params(self):
+        '''
+        Return operations parameters
+        '''
         pass
 
     def get_gcode(self):
         '''
         Base function for all turning operations
         '''
-        #print('[LLBaseOP] - get_gcode')
         self.remove_the_groove()
         self.offset_part_outline()
         self.generate_path()
         Path = self.generate_gcode()
-        #self.clean_up()
         return Path
         
     def remove_the_groove(self):
         '''
         Remove grooves and undercuts from part geometry
         '''
-        
         if not self.allow_grooving:
             self.part_segment_group = utils.remove_the_groove(self.part_segment_group, self.stock.ZMin, self.tool)
-            self.offset_edges.append(self.part_segment_group)    
-        
-        #path_profile = Part.makePolygon(profile_points)
-        #path_profile = Part.makeCompound(self.part)
-        #Part.show(path_profile, 'Final_pass')    
-        
+            self.offset_edges.append(self.part_segment_group)
  
     def offset_part_outline(self):
         '''
-        ####################
-        # 5. Offset Part Outline
-        ####################
+        Offsets the part to generate machining passes
         '''
         f_pass = 1
         while f_pass != self.finish_passes:
-            #print('fpass', f_pass, self.finish_passes)
             segmentGroup = utils.offsetPath(self.part_segment_group, self.step_over * f_pass)  
             self.offset_edges.append(segmentGroup)
             f_pass += 1
-        
-        #if len(self.offset_edges):
-        #    self.finish_path = []
-        #    for path in self.offset_edges:
-        #        for edge in path:
-        #            self.finish_path.append(edge)
-            #offset_profile = Part.makeCompound(finish_path)
-            #Part.show(offset_profile, 'finishing_pass')
     
     def generate_path(self):
         '''
@@ -94,18 +81,18 @@ class BaseOP:
         Generate Gcode for the op segments
         '''
         return ""
-           
-    def add_part(self, part_bb):
-        #print('Add_part', part_edges)
-        self.part = part_bb
 
     def add_part_edges(self, part_edges):
-        #print('Add_part', part_edges)
-        #self.part_edges = part_edges
+        '''
+        Add edges to define the part geometry
+        '''
         for segment in part_edges:
             self.part_segment_group.add_segment(segment)
         
     def add_stock(self, stock_bb):
+        '''
+        Define bounding box for the stock material
+        '''
         self.stock = stock_bb
         
 
