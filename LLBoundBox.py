@@ -10,15 +10,13 @@ class BoundBox:
         self.YMax = None
         self.ZMax = None
         
-        if pt1:
-            self.XMin = pt1.X
-            self.YMin = pt1.Y
-            self.ZMin = pt1.Z
-
-        if pt2:
-            self.XMax = pt2.X
-            self.YMax = pt2.Y
-            self.ZMax = pt2.Z
+        if pt1 and pt2:
+            self.XMin = min(pt1.X, pt2.X) 
+            self.YMin = min(pt1.Y, pt2.Y) 
+            self.ZMin = min(pt1.Z, pt2.Z) 
+            self.XMax = max(pt1.X, pt2.X) 
+            self.YMax = max(pt1.Y, pt2.Y) 
+            self.ZMax = max(pt1.Z, pt2.Z)
 
 
     def XLength(self):
