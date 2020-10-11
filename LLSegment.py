@@ -202,8 +202,10 @@ class Segment:
         pts = []
         ptsout = []
 
-        #print('r', r, 'c', c.X, c.Z, 'a1', a1.X, a1.Z, 'a2', a2.X, a2.Z)
+        if line.get_length() == 0:
+            return intersect, ptsout
 
+        #print('r', r, 'c', c.X, c.Z, 'a1', a1.X, a1.Z, 'a2', a2.X, a2.Z)
         a  = (a2.X - a1.X) * (a2.X - a1.X) + (a2.Z - a1.Z) * (a2.Z - a1.Z)
         b  = 2 * ((a2.X - a1.X) * (a1.X - c.X) + (a2.Z - a1.Z) * (a1.Z - c.Z))
         cc = c.X**2 + c.Z**2 + a1.X**2 + a1.Z**2 - 2 * (c.X * a1.X + c.Z * a1.Z) - r**2
