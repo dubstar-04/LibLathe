@@ -44,7 +44,6 @@ props['hfeed' ]=10
 props['vfeed']=10
 
 # Create Profile Operation
-
 profileOP = ProfileOP()
 profileOP.set_params(props)
 profileOP.add_stock(StockBoundingBox)
