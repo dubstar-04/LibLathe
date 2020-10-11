@@ -247,7 +247,7 @@ def toPathCommand(part_segment_group, segmentGroup, stock, step_over, hSpeed, vS
         min_z_retract = stock.ZMax
         z_retract = min_z_retract + step_over
 
-        print('min_x_retract:', min_x_retract)
+        #print('min_x_retract:', min_x_retract)
              
         if segments.index(seg) == 0:
             #params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
