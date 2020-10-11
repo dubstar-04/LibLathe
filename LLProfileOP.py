@@ -23,7 +23,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         for roughing_pass in range(line_count + 1):
             xpt = xstart + roughing_pass * self.step_over
             pt1 = Point(xpt, 0 , zmax)
-            pt2 = Point(xpt , 0 , zmax-self.stock.ZLength())
+            pt2 = Point(xpt , 0 , zmax - self.stock.ZLength() - self.start_offset)
             path_line = Segment(pt1, pt2)
             intersections = []
             for seg in roughing_boundary.get_segments():
