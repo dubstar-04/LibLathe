@@ -2,7 +2,8 @@
 
 # Add LibLathe is in the Python Path
 import os, sys
-parentFolder = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+thisFolder = os.path.dirname(os.path.abspath(__file__))
+parentFolder = os.path.dirname(os.path.dirname(thisFolder))
 sys.path.append(parentFolder)
 
 from LibLathe.LLPoint import Point
@@ -26,7 +27,7 @@ part_segments.append(Segment(PartPt4, PartPt1))
 
 
 # Define stock bounds
-stockPt1 = Point(0, 0, 0)
+stockPt1 = Point(0, 0, 5)
 stockPt2 = Point(-20, 0, -20)
 StockBoundingBox = BoundBox(stockPt1, stockPt2)
 
@@ -50,6 +51,11 @@ profileOP.add_stock(StockBoundingBox)
 profileOP.add_part_edges(part_segments)
 gcode = profileOP.get_gcode()
 
+# Write the gcode to a file in the Examples folder
+f = open(thisFolder + "/gcode.gcode", "w")
+
 for line in gcode:
     for command in line:
-        print(command.get_movement(), command.get_params())
+        f.write(command.to_string() + "\n")
+
+f.close()
