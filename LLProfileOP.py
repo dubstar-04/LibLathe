@@ -19,8 +19,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         length = self.stock.ZLength() + self.end_offset + self.start_offset 
         width = self.stock.XLength()/2 - self.min_dia + self.extra_dia 
         step_over = self.step_over
-        line_count = math.ceil(width / step_over)
-
+        line_count = int(math.ceil(width / step_over))
         xstart = 0 - (step_over * line_count + self.min_dia)
 
         #roughing_boundary = self.offset_edges[-1]
