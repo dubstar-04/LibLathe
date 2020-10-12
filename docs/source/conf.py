@@ -28,7 +28,6 @@ version = u''
 # The full version, including alpha/beta/rc tags
 release = u'0.0.1'
 
-
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -68,13 +67,12 @@ exclude_patterns = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-#html_theme = 'alabaster'
+# html_theme = 'alabaster'
 html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -104,7 +102,6 @@ html_static_path = ['LL_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'LibLathedoc'
 
-
 # -- Options for LaTeX output ------------------------------------------------
 
 latex_elements = {
@@ -133,7 +130,6 @@ latex_documents = [
      u'Daniel Wood', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -142,7 +138,6 @@ man_pages = [
     (master_doc, 'liblathe', u'LibLathe Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -154,7 +149,6 @@ texinfo_documents = [
      author, 'LibLathe', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
