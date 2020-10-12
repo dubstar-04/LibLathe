@@ -36,7 +36,7 @@ def remove_the_groove(segmentGroupIn, stock_zmin, tool):
             # print('seg angle', segments.index(seg), pt1.angle_to(pt2))
             if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
                 next_index, pt = find_next_good_edge(segments, index, stock_zmin, tool)
-                if next_index == False:
+                if not next_index:
                     seg = Segment(pt1, pt)
                     segs_out.add_segment(seg)
                     break
@@ -210,13 +210,13 @@ def toPathCommand(part_segment_group, segmentGroup, stock, step_over, hSpeed, vS
         currentIdx = segments.index(seg)
         x_values = []
 
-        ## get the xmax from the current pass segments
+        # get the xmax from the current pass segments
         for idx, segment in enumerate(segments):
             x_values.append(segment.get_x_max())
             if idx == currentIdx:
                 break
 
-        ## get the xmax from the part segments up to the z position of the current segment
+        # get the xmax from the part segments up to the z position of the current segment
         seg_z_max = seg.get_z_max()
         for part_seg in part_segments:
 

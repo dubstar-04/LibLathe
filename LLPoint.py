@@ -45,28 +45,28 @@ class Point:
 
     def sub(self, pt):
         '''
-        Returns a point with the difference between self and pt 
+        Returns a point with the difference between self and pt
         '''
         p = Point(self.X - pt.X, self.Y - pt.Y, self.Z - pt.Z)
         return p
 
     def add(self, pt):
         '''
-        Returns a point addition between self and pt 
+        Returns a point addition between self and pt
         '''
         p = Point(self.X + pt.X, self.Y + pt.Y, self.Z + pt.Z)
         return p
 
     def multiply(self, val):
         '''
-        Returns a point multiplication between self and pt 
+        Returns a point multiplication between self and pt
         '''
         p = Point(self.X * val, self.Y * val, self.Z * val)
         return p
 
     def lerp(self, pt, t):
         '''
-        Returns a point linear interpolation between self and pt 
+        Returns a point linear interpolation between self and pt
         '''
         p = Point(self.X + (pt.X - self.X) * t, self.Y + (pt.Y - self.Y) * t, self.Z + (pt.Z - self.Z) * t)
         return p

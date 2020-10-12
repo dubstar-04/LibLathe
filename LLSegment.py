@@ -226,13 +226,11 @@ class Segment:
                     if extend:
                         pt = a1.lerp(a2, u1)
                         pt = a1.lerp(a2, u2)
-                
-                else:             
+                else:
                 #inside
                     if extend:
                         pt = a1.lerp(a2, u1)
                         pt = a1.lerp(a2, u2)
-                
         else:
         '''
 

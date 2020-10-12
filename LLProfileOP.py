@@ -38,7 +38,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                         intersection = utils.Intersection(point, seg)
                         intersections.append(intersection)
 
-            ## build list of segments
+            # build list of segments
             segmentGroup = SegmentGroup()
 
             if not intersections:
@@ -46,12 +46,12 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                 segmentGroup.add_segment(seg)
 
             if len(intersections) == 1:
-                ## Only one intersection, trim line to intersection. 
+                # Only one intersection, trim line to intersection.
                 seg = Segment(pt1, intersections[0].point)
                 segmentGroup.add_segment(seg)
 
             if len(intersections) > 1:
-                ## more than one intersection
+                # more than one intersection
                 intersection = utils.Intersection(pt1, None)
                 intersections.insert(0, intersection)
 
