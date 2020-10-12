@@ -59,13 +59,13 @@ class BaseOP:
         '''
         if not self.allow_grooving:
             self.part_segment_group = utils.remove_the_groove(self.part_segment_group, self.stock.ZMin, self.tool)
-            
+
     def offset_part_outline(self):
         '''
         Offsets the part to generate machining passes
         '''
         if self.allow_finishing:
-            # If we are allowed finishing passes, add the part segment group to the finishing paths. 
+            # If we are allowed finishing passes, add the part segment group to the finishing paths.
             self.finishing_paths.append(self.part_segment_group)
             f_pass = 1
             while f_pass != self.finish_passes:

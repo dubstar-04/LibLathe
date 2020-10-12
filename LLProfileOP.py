@@ -46,9 +46,8 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             segmentGroup = SegmentGroup()
 
             if not intersections:
-                pass
-                #seg = path_line
-                #segmentGroup.add_segment(seg)
+                seg = path_line
+                segmentGroup.add_segment(seg)
 
             if len(intersections) == 1:
                 # Only one intersection, trim line to intersection.
