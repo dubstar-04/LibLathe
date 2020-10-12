@@ -1,7 +1,4 @@
-import math
 import LibLathe.LLUtils as utils
-from LibLathe.LLPoint import Point
-from LibLathe.LLSegment import Segment
 from LibLathe.LLSegmentGroup import SegmentGroup
 from LibLathe.LLTool import Tool
 
