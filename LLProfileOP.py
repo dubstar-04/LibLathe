@@ -20,7 +20,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
         self.offset_edges.append(roughing_boundary)
            
-        for roughing_pass in range(line_count + 1):
+        for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over
             pt1 = Point(xpt, 0 , zmax)
             pt2 = Point(xpt , 0 , zmax - self.stock.ZLength() - self.start_offset)
