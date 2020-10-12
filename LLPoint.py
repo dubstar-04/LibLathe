@@ -1,26 +1,27 @@
-import math 
+import math
+
 
 class Point:
     def __init__(self, x=0.0, y=0.0, z=0.0):
         self.X = x
         self.Y = y
         self.Z = z
-        
+
     def distance_to(self, pt):
         '''
         Returns the distance between two points
         '''
-        return math.sqrt((pt.X - self.X)**2 + (pt.Y - self.Y)**2 + (pt.Z - self.Z)**2)
-        
+        return math.sqrt((pt.X - self.X) ** 2 + (pt.Y - self.Y) ** 2 + (pt.Z - self.Z) ** 2)
+
     def angle_to(self, pt):
         '''
         Returns the distance between two points in degrees
         '''
         dX = self.X - pt.X
-        dZ = self.Z - pt.Z       
+        dZ = self.Z - pt.Z
         angle = math.degrees(math.atan2(dZ, dX) + math.pi)
         return angle
-    
+
     def nearest(self, pts):
         nearest = Point()
         distance = float('inf')
@@ -39,31 +40,31 @@ class Point:
                 if self.Y == pt.Y:
                     if self.Z == pt.Z:
                         return True
-        
+
         return False
-        
+
     def sub(self, pt):
         '''
         Returns a point with the difference between self and pt 
         '''
         p = Point(self.X - pt.X, self.Y - pt.Y, self.Z - pt.Z)
         return p
-        
+
     def add(self, pt):
         '''
         Returns a point addition between self and pt 
         '''
         p = Point(self.X + pt.X, self.Y + pt.Y, self.Z + pt.Z)
         return p
-        
+
     def multiply(self, val):
         '''
         Returns a point multiplication between self and pt 
         '''
-        p = Point(self.X * val , self.Y * val, self.Z * val)
+        p = Point(self.X * val, self.Y * val, self.Z * val)
         return p
 
-    def lerp (self, pt, t):
+    def lerp(self, pt, t):
         '''
         Returns a point linear interpolation between self and pt 
         '''
@@ -87,4 +88,3 @@ class Point:
         z = (self.Z + pt.Z) / 2
         p = Point(x, y, z)
         return p
-
