@@ -73,7 +73,7 @@ class Point:
 
     def rotate(self, angle):
         '''
-        Returns a point rotated by angle degress
+        Returns a point rotated by angle degrees
         '''
         x = self.Z * math.sin(angle) + self.X * math.cos(angle)
         z = self.Z * math.cos(angle) + self.X * math.sin(angle)
