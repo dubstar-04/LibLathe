@@ -13,13 +13,17 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
         '''
         Generate the path for the profile operation
         '''
+
+        if not self.allow_roughing:
+            return
+
         self.clearing_paths = []
         zmax = self.stock.ZMax + self.start_offset
         line_count = int(math.ceil(self.stock.XLength() / self.step_over))
         xstart = 0 - (self.step_over * line_count + self.min_dia)
 
         roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
-        self.offset_edges.append(roughing_boundary)
+        self.finishing_paths.append(roughing_boundary)
 
         for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over
@@ -42,8 +46,9 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             segmentGroup = SegmentGroup()
 
             if not intersections:
-                seg = path_line
-                segmentGroup.add_segment(seg)
+                pass
+                #seg = path_line
+                #segmentGroup.add_segment(seg)
 
             if len(intersections) == 1:
                 # Only one intersection, trim line to intersection.
@@ -92,7 +97,7 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
             rough = utils.toPathCommand(self.part_segment_group, segmentGroup, self.stock, self.step_over, self.hfeed,
                                         self.vfeed)
             Path.append(rough)
-        for segmentGroup in self.offset_edges:
+        for segmentGroup in self.finishing_paths:
             finish = utils.toPathCommand(self.part_segment_group, segmentGroup, self.stock, self.step_over, self.hfeed,
                                          self.vfeed)
             Path.append(finish)
