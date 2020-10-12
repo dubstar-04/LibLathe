@@ -1,4 +1,8 @@
-# LibLathe Example 1
+"""
+LibLathe Example 1
+This example creates a profile turning operation 
+and writes the resulting gcode to a file.
+"""
 
 # Add LibLathe is in the Python Path
 import os, sys
@@ -52,7 +56,7 @@ profileOP.add_part_edges(part_segments)
 gcode = profileOP.get_gcode()
 
 # Write the gcode to a file in the Examples folder
-f = open(thisFolder + "/gcode.gcode", "w")
+f = open(thisFolder + "/profile.gcode", "w")
 
 for line in gcode:
     for command in line:
