@@ -10,7 +10,7 @@ The Segment
 The segment is the fundamental representation of LibLathe geometry. The segment 
 can represent one of two basic forms; A line segment or an arc segment.
 
-Grouping the geometry into a single type is posible as both lines and arcs can
+Grouping the geometry into a single type is possible as both lines and arcs can
 be defined by three components: 
 
 - Start Point
@@ -29,7 +29,7 @@ the buldge value is always equal to zero for line segments.
 
 Arc Segments
 ------------
-Arc segements are more complicated than line segments, however using the segment
+Arc segments are more complicated than line segments, however using the segment
 method arcs can be simplified to a three component representation.
 As with lines arcs also need start and end points, arcs however require a non-zero 
 bulge value

@@ -1,6 +1,6 @@
 class BoundBox:
     '''
-    Generic bounding box implimentation
+    Generic bounding box implementation
     '''
 
     def __init__(self, pt1=None, pt2=None):

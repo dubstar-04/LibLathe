@@ -2,7 +2,7 @@ GCode
 =====
 
 The fundamental purpose of LibLathe is to generate a program code or tool path
-commonly refered to as `GCode`_.
+commonly referred to as `GCode`_.
 
 .. _GCode: https://en.wikipedia.org/wiki/G-code
 
