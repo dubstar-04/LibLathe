@@ -1,7 +1,7 @@
 # LibLathe
 LibLathe is an opensource standalone python library for generating lathe paths and gcode for use with cnc lathes.
 
-**LibLathe is currently experimental / Proof of concept**  
+| :warning: WARNING: LibLathe is currently experimental / Proof of concept and only suitable for testing. |
 
 ## Examples 
 Generating a roughing / profiling operation:
