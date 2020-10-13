@@ -131,48 +131,45 @@ class SegmentGroup:
 
         return False
 
+    def get_min_retract_x(self, segment, part_segment_group):
+        ''' returns the minimum x retract based on the current segments and the part_segments '''
+        part_segments = part_segment_group.get_segments()
+        currentIdx = self.segments.index(segment)
+        x_values = []
+
+        # get the xmax from the current pass segments
+        for idx, seg in enumerate(self.segments):
+            x_values.append(seg.get_extent_max('X'))
+            if idx == currentIdx:
+                break
+
+        # get the xmax from the part segments up to the z position of the current segment
+        seg_z_max = segment.get_extent_max('Z')
+        for part_seg in part_segments:
+
+            part_seg_z_max = part_seg.get_extent_max('Z')
+            x_values.append(part_seg.get_extent_max('X'))
+
+            if part_seg_z_max < seg_z_max:
+                break
+
+        min_retract_x = max(x_values, key=abs)
+        return min_retract_x
+
     def to_commands(self, part_segment_group, stock, step_over, hSpeed, vSpeed):
         """
         converts segmentgroup to gcode commands
         """
 
-        def get_min_retract_x(seg, segments, part_segment_group):
-            ''' returns the minimum x retract based on the current segments and the part_segments '''
-            part_segments = part_segment_group.get_segments()
-            currentIdx = segments.index(seg)
-            x_values = []
-
-            # get the xmax from the current pass segments
-            for idx, segment in enumerate(segments):
-                x_values.append(segment.get_extent_max('X'))
-                if idx == currentIdx:
-                    break
-
-            # get the xmax from the part segments up to the z position of the current segment
-            seg_z_max = seg.get_extent_max('Z')
-            for part_seg in part_segments:
-
-                part_seg_z_max = part_seg.get_extent_max('Z')
-                x_values.append(part_seg.get_extent_max('X'))
-
-                if part_seg_z_max < seg_z_max:
-                    break
-
-            min_retract_x = max(x_values, key=abs)
-            return min_retract_x
-
         segments = self.get_segments()
 
         cmds = []
-        # cmd = Path.Command('G17')  #xy plane
-        # cmd = Command('(start of section)')
+        # TODO: Move the G18 to a PATH Class? it doent need to be added to every segment group
         cmd = Command('G18')  # xz plane
-        # cmd = Command('G19')  #yz plane
         cmds.append(cmd)
 
         for seg in segments:
-
-            min_x_retract = get_min_retract_x(seg, segments, part_segment_group)
+            min_x_retract = self.get_min_retract_x(seg, part_segment_group)
             x_retract = min_x_retract - step_over
             min_z_retract = stock.ZMax
             z_retract = min_z_retract + step_over
