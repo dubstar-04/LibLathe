@@ -67,39 +67,59 @@ class Segment:
         # print('LLSegment radius', rad)
         return rad
 
-    def get_x_max(self):
+    def get_extent_min(self, direction):
         '''
-        Return the maximum x value of the segment
+        Return the minimum value of the segment in direction
+        direction is a string for the axis of interest, X, Y, Z
         '''
-        x_values = []
-        x_values.append(self.start.X)
-        x_values.append(self.end.X)
+        values = []
+        values.append(getattr(self.start, direction))
+        values.append(getattr(self.end, direction))
 
         if self.bulge != 0:
-            centre_pt_x = self.get_centre_point().X
+            centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge_x = centre_pt_x - rad
-            x_values.append(buldge_x)
+            buldge = centre_pt - rad
+            values.append(buldge)
 
-        return max(x_values, key=abs)
+        return min(values, key=abs)
 
-    def get_z_max(self):
+    def get_extent_max(self, direction):
         '''
-        Return the maximum z value of the segment
+        Return the maximum value of the segment in direction
+        direction is a string for the axis of interest, X, Y, Z
         '''
-        z_values = []
-        z_values.append(self.start.Z)
-        z_values.append(self.end.Z)
+        values = []
+        values.append(getattr(self.start, direction))
+        values.append(getattr(self.end, direction))
 
         if self.bulge != 0:
-            centre_pt_z = self.get_centre_point().Z
+            centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge_z = centre_pt_z - rad
-            z_values.append(buldge_z)
+            buldge = centre_pt - rad
+            values.append(buldge)
 
-        return max(z_values, key=abs)
+        return max(values, key=abs)
+
+    def get_all_axis_positions(self, direction):
+        '''
+        Return an array of the axis positions in direction
+        direction is a string for the axis of interest, X, Y, Z
+        '''
+        values = []
+        values.append(getattr(self.start, direction))
+        values.append(getattr(self.end, direction))
+
+        if self.bulge != 0:
+            centre_pt = getattr(self.get_centre_point(), direction)
+            rad = self.get_radius()
+            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
+            buldge = centre_pt - rad
+            values.append(buldge)
+
+        return values
 
     def get_length(self):
         '''
