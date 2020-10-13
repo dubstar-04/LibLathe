@@ -114,26 +114,27 @@ class SegmentGroup:
 
         self.segments = segmentGroupOut.get_segments()
 
+    def previous_segment_connected(self, segment):
+        """
+        returns bool if segment is connect to the previous segment
+        """
+
+        currentIdx = self.segments.index(segment)
+        previousIdx = currentIdx - 1
+
+        if not currentIdx == 0:
+            currentStartPt = segment.start
+            previousEndPt = self.segments[previousIdx].end
+
+            if currentStartPt.is_same(previousEndPt):
+                return True
+
+        return False
+
     def to_commands(self, part_segment_group, stock, step_over, hSpeed, vSpeed):
         """
         converts segmentgroup to gcode commands
         """
-
-        def previousSegmentConnected(seg, segments):
-            ''' returns true if seg is connect to the previous seg '''
-
-            currentIdx = segments.index(seg)
-            previousIdx = currentIdx - 1
-
-            if not currentIdx == 0:
-                currentStartPt = seg.start
-                previousEndPt = segments[previousIdx].end
-
-                if currentStartPt.is_same(previousEndPt):
-                    # print('segs are connected')
-                    return True
-
-            return False
 
         def get_min_retract_x(seg, segments, part_segment_group):
             ''' returns the minimum x retract based on the current segments and the part_segments '''
@@ -189,7 +190,7 @@ class SegmentGroup:
                 cmds.append(rapid)
 
             if seg.bulge == 0:
-                if not previousSegmentConnected(seg, segments):
+                if not self.previous_segment_connected(seg):
                     # if edges.index(edge) == 1:
                     pt = seg.start  # edge.valueAt(edge.FirstParameter)
                     params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
