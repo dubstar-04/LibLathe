@@ -1,4 +1,5 @@
 from LibLathe.LLBoundBox import BoundBox
+from LibLathe.LLCommand import Command
 from LibLathe.LLPoint import Point
 from LibLathe.LLSegment import Segment
 
@@ -112,3 +113,121 @@ class SegmentGroup:
                 segmentGroupOut.add_segment(segments[i])
 
         self.segments = segmentGroupOut.get_segments()
+
+    def to_commands(self, part_segment_group, stock, step_over, hSpeed, vSpeed):
+        """
+        converts segmentgroup to gcode commands
+        """
+
+        def previousSegmentConnected(seg, segments):
+            ''' returns true if seg is connect to the previous seg '''
+
+            currentIdx = segments.index(seg)
+            previousIdx = currentIdx - 1
+
+            if not currentIdx == 0:
+                currentStartPt = seg.start
+                previousEndPt = segments[previousIdx].end
+
+                if currentStartPt.is_same(previousEndPt):
+                    # print('segs are connected')
+                    return True
+
+            return False
+
+        def get_min_retract_x(seg, segments, part_segment_group):
+            ''' returns the minimum x retract based on the current segments and the part_segments '''
+            part_segments = part_segment_group.get_segments()
+            currentIdx = segments.index(seg)
+            x_values = []
+
+            # get the xmax from the current pass segments
+            for idx, segment in enumerate(segments):
+                x_values.append(segment.get_extent_max('X'))
+                if idx == currentIdx:
+                    break
+
+            # get the xmax from the part segments up to the z position of the current segment
+            seg_z_max = seg.get_extent_max('Z')
+            for part_seg in part_segments:
+
+                part_seg_z_max = part_seg.get_extent_max('Z')
+                x_values.append(part_seg.get_extent_max('X'))
+
+                if part_seg_z_max < seg_z_max:
+                    break
+
+            min_retract_x = max(x_values, key=abs)
+            return min_retract_x
+
+        segments = self.get_segments()
+
+        cmds = []
+        # cmd = Path.Command('G17')  #xy plane
+        # cmd = Command('(start of section)')
+        cmd = Command('G18')  # xz plane
+        # cmd = Command('G19')  #yz plane
+        cmds.append(cmd)
+
+        for seg in segments:
+
+            min_x_retract = get_min_retract_x(seg, segments, part_segment_group)
+            x_retract = min_x_retract - step_over
+            min_z_retract = stock.ZMax
+            z_retract = min_z_retract + step_over
+
+            # print('min_x_retract:', min_x_retract)
+
+            if segments.index(seg) == 0:
+                # params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
+                params = {'X': seg.start.X, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
+                rapid = Command('G0', params)
+                cmds.append(rapid)
+
+                params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z, 'F': hSpeed}
+                rapid = Command('G0', params)
+                cmds.append(rapid)
+
+            if seg.bulge == 0:
+                if not previousSegmentConnected(seg, segments):
+                    # if edges.index(edge) == 1:
+                    pt = seg.start  # edge.valueAt(edge.FirstParameter)
+                    params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                    cmd = Command('G0', params)
+                    cmds.append(cmd)
+
+                pt = seg.end  # edge.valueAt(edge.LastParameter)
+                params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                cmd = Command('G1', params)
+
+            if seg.bulge != 0:
+                # TODO: define arctype from bulge sign +/-
+
+                pt1 = seg.start
+                pt2 = seg.end
+                # print('toPathCommand - bulge', seg.bulge )
+                if seg.bulge < 0:
+                    arcType = 'G2'
+                else:
+                    arcType = 'G3'
+
+                cen = seg.get_centre_point().sub(pt1)
+                # print('toPathCommand arc cen', seg.get_centre_point().X, seg.get_centre_point().Z)
+                params = {'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': hSpeed}
+                # print('toPathCommand', params)
+                cmd = Command(arcType, params)
+
+            cmds.append(cmd)
+
+            if segments.index(seg) == len(segments) - 1:
+                params = {'X': x_retract, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
+                rapid = Command('G0', params)
+                cmds.append(rapid)
+
+                # params = {'X': x_retract, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
+                params = {'X': x_retract, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
+
+                rapid = Command('G0', params)
+                cmds.append(rapid)
+
+        return cmds
