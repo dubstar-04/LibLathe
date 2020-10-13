@@ -131,58 +131,9 @@ def offsetPath(segGroupIn, step_over):
 
         segmentGroup.add_segment(segment)
 
-    joinedSegmentsGroup = join_edges(segmentGroup)
+    segmentGroup.join_segments()
 
-    return joinedSegmentsGroup
-
-
-def join_edges(segmentGroupIn):
-    segments = segmentGroupIn.get_segments()
-
-    segmentGroupOut = SegmentGroup()
-
-    for i in range(len(segments)):
-
-        pt1 = segments[i].start
-        pt2 = segments[i].end
-
-        seg1 = segments[i]
-        if i != 0:
-            seg1 = segments[i - 1]
-            intersect, pt = seg1.intersect(segments[i], extend=True)
-            if intersect:
-                if type(pt) is list:
-                    pt = pt1.nearest(pt)
-                pt1 = pt
-
-        if i != len(segments) - 1:
-            seg2 = segments[i + 1]
-            intersect2, pt = seg2.intersect(segments[i], extend=True)
-            if intersect2:
-                # print('intersect2')
-                if type(pt) is list:
-                    # print('join_edges type of', type(pt))
-                    pt = pt2.nearest(pt)
-                pt2 = pt
-
-                # print('join_edges', i, pt1, pt2, pt2.X, pt2.Z)
-
-        if pt1 and pt2:
-            if segments[i].bulge != 0:
-                nseg = Segment(pt1, pt2)
-                rad = segments[i].get_centre_point().distance_to(pt1)
-                if segments[i].bulge < 0:
-                    rad = 0 - rad
-                nseg.set_bulge_from_radius(rad)
-                segmentGroupOut.add_segment(nseg)
-            else:
-                segmentGroupOut.add_segment(Segment(pt1, pt2))
-        else:
-            # No Intersections found. Return the segment in its current state
-            # print('join_edges - No Intersection found for index:', i)
-            segmentGroupOut.add_segment(segments[i])
-
-    return segmentGroupOut
+    return segmentGroup
 
 
 def toPathCommand(part_segment_group, segmentGroup, stock, step_over, hSpeed, vSpeed):

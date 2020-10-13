@@ -1,5 +1,6 @@
 from LibLathe.LLBoundBox import BoundBox
 from LibLathe.LLPoint import Point
+from LibLathe.LLSegment import Segment
 
 
 class SegmentGroup:
@@ -60,3 +61,54 @@ class SegmentGroup:
         segmentGroupBoundBox = BoundBox(pt1, pt2)
 
         return segmentGroupBoundBox
+
+    def join_segments(self):
+        """
+        join segments of the segmentgroup
+        """
+
+        segments = self.get_segments()
+        segmentGroupOut = SegmentGroup()
+
+        for i in range(len(segments)):
+
+            pt1 = segments[i].start
+            pt2 = segments[i].end
+
+            seg1 = segments[i]
+            if i != 0:
+                seg1 = segments[i - 1]
+                intersect, pt = seg1.intersect(segments[i], extend=True)
+                if intersect:
+                    if type(pt) is list:
+                        pt = pt1.nearest(pt)
+                    pt1 = pt
+
+            if i != len(segments) - 1:
+                seg2 = segments[i + 1]
+                intersect2, pt = seg2.intersect(segments[i], extend=True)
+                if intersect2:
+                    # print('intersect2')
+                    if type(pt) is list:
+                        # print('join_segments type of', type(pt))
+                        pt = pt2.nearest(pt)
+                    pt2 = pt
+
+                    # print('join_segments', i, pt1, pt2, pt2.X, pt2.Z)
+
+            if pt1 and pt2:
+                if segments[i].bulge != 0:
+                    nseg = Segment(pt1, pt2)
+                    rad = segments[i].get_centre_point().distance_to(pt1)
+                    if segments[i].bulge < 0:
+                        rad = 0 - rad
+                    nseg.set_bulge_from_radius(rad)
+                    segmentGroupOut.add_segment(nseg)
+                else:
+                    segmentGroupOut.add_segment(Segment(pt1, pt2))
+            else:
+                # No Intersections found. Return the segment in its current state
+                # print('join_segments - No Intersection found for index:', i)
+                segmentGroupOut.add_segment(segments[i])
+
+        self.segments = segmentGroupOut.get_segments()

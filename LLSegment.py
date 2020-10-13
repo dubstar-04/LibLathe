@@ -275,7 +275,7 @@ class Segment:
 
                 if pnt_ang >= sa and pnt_ang <= ea:
                     # print('point', pnt.X, pnt.Z)
-                    # TODO: Return all points and select the nearest in the join_edges function
+                    # TODO: Return all points and select the nearest in the join_segments function
                     intersect = True
                     ptsout.append(pnt)
         else:
