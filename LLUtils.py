@@ -212,16 +212,16 @@ def toPathCommand(part_segment_group, segmentGroup, stock, step_over, hSpeed, vS
 
         # get the xmax from the current pass segments
         for idx, segment in enumerate(segments):
-            x_values.append(segment.get_x_max())
+            x_values.append(segment.get_extent_max('X'))
             if idx == currentIdx:
                 break
 
         # get the xmax from the part segments up to the z position of the current segment
-        seg_z_max = seg.get_z_max()
+        seg_z_max = seg.get_extent_max('Z')
         for part_seg in part_segments:
 
-            part_seg_z_max = part_seg.get_z_max()
-            x_values.append(part_seg.get_x_max())
+            part_seg_z_max = part_seg.get_extent_max('Z')
+            x_values.append(part_seg.get_extent_max('X'))
 
             if part_seg_z_max < seg_z_max:
                 break
