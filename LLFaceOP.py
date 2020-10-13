@@ -44,8 +44,7 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         '''
         Path = []
         for segmentGroup in self.clearing_paths:
-            rough = utils.toPathCommand(self.part_segment_group, segmentGroup, self.stock, self.step_over, self.hfeed,
-                                        self.vfeed)
+            rough = utils.toPathCommand(self.part_segment_group, segmentGroup, self.stock, self.step_over, self.hfeed, self.vfeed)
             Path.append(rough)
 
         return Path
