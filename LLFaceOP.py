@@ -10,9 +10,8 @@ from LibLathe.LLSegmentGroup import SegmentGroup
 class FaceOP(LibLathe.LLBaseOP.BaseOP):
 
     def generate_path(self):
-        '''
-        Generate the path for the profile operation
-        '''
+        """Generate the path for the profile operation"""
+
         partBoundBox = self.part_segment_group.boundbox()
         xmin = self.stock.XMin - self.extra_dia
         xmax = 0 - self.min_dia
@@ -40,9 +39,8 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         self.clearing_paths.append(segmentGroup)
 
     def generate_gcode(self):
-        '''
-        Generate Gcode for the op segments
-        '''
+        """Generate Gcode for the op segments"""
+
         Path = []
         for segmentGroup in self.clearing_paths:
             rough = segmentGroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)

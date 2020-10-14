@@ -1,7 +1,5 @@
 class BoundBox:
-    '''
-    Generic bounding box implementation
-    '''
+    """Generic bounding box implementation"""
 
     def __init__(self, pt1=None, pt2=None):
         self.XMin = None
@@ -20,19 +18,16 @@ class BoundBox:
             self.ZMax = max(pt1.Z, pt2.Z)
 
     def XLength(self):
-        '''
-        Return length in x direction
-        '''
+        """Return length in x direction"""
+
         return abs(self.XMax - self.XMin)
 
     def YLength(self):
-        '''
-        Return length in y direction
-        '''
+        """Return length in y direction"""
+
         return abs(self.YMax - self.YMin)
 
     def ZLength(self):
-        '''
-        Return length in z direction
-        '''
+        """Return length in z direction"""
+
         return abs(self.ZMax - self.ZMin)
