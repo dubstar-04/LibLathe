@@ -49,6 +49,24 @@ class test_point(unittest.TestCase):
         self.assertEqual(add.Y, self.pt3.Y)
         self.assertEqual(add.Z, self.pt3.Z)
 
+    def test_multiply(self):
+        multiply = Point.multiply(self.pt2, 0)
+        self.assertEqual(multiply.X, self.pt1.X)
+        self.assertEqual(multiply.Y, self.pt1.Y)
+        self.assertEqual(multiply.Z, self.pt1.Z)
+
+    def test_rotate(self):
+        rotate = Point.rotate(self.pt2, 90)
+        self.assertEqual(rotate.X, 44.592304747138776)
+        self.assertEqual(rotate.Y, 100)
+        self.assertEqual(rotate.Z, 44.592304747138776)
+
+    def test_mid(self):
+        mid = Point.mid(self.pt2, self.pt2)
+        self.assertEqual(mid.X, self.pt2.X)
+        self.assertEqual(mid.Y, self.pt2.Y)
+        self.assertEqual(mid.Z, self.pt2.Z)
+
 
 if __name__ == '__main__':
     unittest.main()
