@@ -5,40 +5,34 @@ from LibLathe.LLSegment import Segment
 
 
 class SegmentGroup:
-    '''
-    Container Group for segments
-    '''
+    """Container Group for segments"""
+
     def __init__(self):
         self.segments = []
 
     def add_segment(self, segment):
-        '''
-        Add segment to group
-        '''
+        """Add segment to group"""
+
         self.segments.append(segment)
 
     def get_segments(self):
-        '''
-        Return segments of group as a list
-        '''
+        """Return segments of group as a list"""
+
         return self.segments
 
     def extend(self, segmentGroup):
-        '''
-        Add segment group to this segmentgroup
-        '''
+        """Add segment group to this segmentgroup"""
+
         self.segments.extend(segmentGroup.get_segments())
 
     def count(self):
-        '''
-        Return the number of segments in the segmentgroup
-        '''
+        """Return the number of segments in the segmentgroup"""
+
         return len(self.segments)
 
     def boundbox(self):
-        '''
-        Return the boundbox for the segmentgroup
-        '''
+        """Return the boundbox for the segmentgroup"""
+
         xvalues = []
         yvalues = []
         zvalues = []
@@ -64,9 +58,7 @@ class SegmentGroup:
         return segmentGroupBoundBox
 
     def join_segments(self):
-        """
-        join segments of the segmentgroup
-        """
+        """join segments of the segmentgroup"""
 
         segments = self.get_segments()
         segmentGroupOut = SegmentGroup()
@@ -115,9 +107,7 @@ class SegmentGroup:
         self.segments = segmentGroupOut.get_segments()
 
     def previous_segment_connected(self, segment):
-        """
-        returns bool if segment is connect to the previous segment
-        """
+        """returns bool if segment is connect to the previous segment"""
 
         currentIdx = self.segments.index(segment)
         previousIdx = currentIdx - 1
@@ -132,7 +122,8 @@ class SegmentGroup:
         return False
 
     def get_min_retract_x(self, segment, part_segment_group):
-        ''' returns the minimum x retract based on the current segments and the part_segments '''
+        """ returns the minimum x retract based on the current segments and the part_segments """
+
         part_segments = part_segment_group.get_segments()
         currentIdx = self.segments.index(segment)
         x_values = []
@@ -157,9 +148,7 @@ class SegmentGroup:
         return min_retract_x
 
     def to_commands(self, part_segment_group, stock, step_over, hSpeed, vSpeed):
-        """
-        converts segmentgroup to gcode commands
-        """
+        """converts segmentgroup to gcode commands"""
 
         segments = self.get_segments()
 
