@@ -86,8 +86,8 @@ class BaseOP:
         self.stock = stock_bb
 
     def add_tool(self, tool_string):
-        '''
+        """
         Define the shape of the tool to be used
         see tool class for examples
-        '''
+        """
         self.tool.set_tool(tool_string)
