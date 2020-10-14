@@ -53,7 +53,7 @@ class Tool:
 
     def get_tool_cutting_angle(self):
         """
-        Return the maxumum cutting angle the tool is capable of
+        Return the maximum cutting angle the tool is capable of
         """
         return 275
 
@@ -186,6 +186,6 @@ class Tool:
         Return the cutting angle defined for this tool
         R = Right
         L = Left
-        N = Netural
+        N = Neutral
         """
         return self.direction
