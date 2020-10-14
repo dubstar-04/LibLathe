@@ -4,9 +4,7 @@ from LibLathe.LLTool import Tool
 
 
 class BaseOP:
-    '''
-    Base class for all turning operations.
-    '''
+    """Base class for all turning operations."""
 
     def __init__(self):
 
@@ -31,22 +29,18 @@ class BaseOP:
         self.vfeed = 50
 
     def set_params(self, params):
-        '''
-        Set operations parameters
-        '''
+        """Set operations parameters"""
+
         for param in params:
             setattr(self, param, params[param])
 
     def get_params(self):
-        '''
-        Return operations parameters
-        '''
+        """Return operations parameters"""
         pass
 
     def get_gcode(self):
-        '''
-        Base function for all turning operations
-        '''
+        """Base function for all turning operations"""
+
         self.remove_the_groove()
         self.offset_part_outline()
         self.generate_path()
@@ -54,16 +48,14 @@ class BaseOP:
         return Path
 
     def remove_the_groove(self):
-        '''
-        Remove grooves and undercuts from part geometry
-        '''
+        """Remove grooves and undercuts from part geometry"""
+
         if not self.allow_grooving:
             self.part_segment_group = utils.remove_the_groove(self.part_segment_group, self.stock.ZMin, self.tool)
 
     def offset_part_outline(self):
-        '''
-        Offsets the part to generate machining passes
-        '''
+        """Offsets the part to generate machining passes"""
+
         if self.allow_finishing:
             # If we are allowed finishing passes, add the part segment group to the finishing paths.
             self.finishing_paths.append(self.part_segment_group)
@@ -74,28 +66,21 @@ class BaseOP:
                 f_pass += 1
 
     def generate_path(self):
-        '''
-        Main processing function for each op
-        '''
+        """Main processing function for each op"""
+
         pass
 
     def generate_gcode(self):
-        '''
-        Generate Gcode for the op segments
-        '''
+        """Generate Gcode for the op segments"""
+
         return ""
 
     def add_part_edges(self, part_edges):
-        '''
-        Add edges to define the part geometry
-        part_edges = array of LibLathe segments
-        '''
+        """Add edges to define the part geometry part_edges = array of LibLathe segments"""
+
         for segment in part_edges:
             self.part_segment_group.add_segment(segment)
 
     def add_stock(self, stock_bb):
-        '''
-        Define bounding box for the stock material
-        stock_bb = LibLathe BoundBox
-        '''
+        """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""
         self.stock = stock_bb

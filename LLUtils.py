@@ -11,7 +11,8 @@ class Intersection:
 
 
 def sort_intersections_z(intersections):
-    ''' sort the a list of intersections by their z position '''
+    """ sort the a list of intersections by their z position """
+
     sortedPoints = sorted(intersections, key=lambda p: p.point.Z, reverse=True)
     return sortedPoints
 

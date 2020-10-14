@@ -10,9 +10,7 @@ from LibLathe.LLSegmentGroup import SegmentGroup
 class ProfileOP(LibLathe.LLBaseOP.BaseOP):
 
     def generate_path(self):
-        '''
-        Generate the path for the profile operation
-        '''
+        """Generate the path for the profile operation"""
 
         if not self.allow_roughing:
             return
@@ -87,9 +85,8 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                 self.clearing_paths.append(segmentGroup)
 
     def generate_gcode(self):
-        '''
-        Generate Gcode for the op segments
-        '''
+        """Generate Gcode for the op segments"""
+
         Path = []
 
         for segmentGroup in self.clearing_paths:

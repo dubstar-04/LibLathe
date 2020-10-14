@@ -17,28 +17,24 @@ class Segment:
         self.bulge = bulge
 
     def get_angle(self):
-        '''
-        Returns the included angle between the start and end points
-        '''
+        """Returns the included angle between the start and end points"""
+
         return math.atan(self.bulge) * 4
 
     def set_bulge(self, angle):
-        '''
-        Sets the bulge of the arc (tan(angle/4))
-        '''
+        """Sets the bulge of the arc (tan(angle/4))"""
+
         self.bulge = math.tan(angle / 4)
 
     def set_bulge_from_radius(self, radius):
-        '''
-        Sets the bulge of the arc using a known radius
-        '''
+        """Sets the bulge of the arc using a known radius"""
+
         angle = math.asin((self.get_length() * 0.5) / radius) * 2
         self.set_bulge(angle)
 
     def get_centre_point(self):
-        '''
-        Returns the centre point of the arc
-        '''
+        """Returns the centre point of the arc"""
+
         # TODO Tidy up this mess!!
         x1 = self.start.X
         y1 = self.start.Z
@@ -58,9 +54,8 @@ class Segment:
         return p
 
     def get_radius(self):
-        '''
-        Return the radius of the arc
-        '''
+        """Return the radius of the arc"""
+
         # rad = (self.get_length() / 2) / math.cos(self.get_gamma())
         rad = self.get_length() * (1 + math.pow(self.bulge, 2)) / (4 * abs(self.bulge))
         # rad = self.get_length() / 4 * (self.bulge + 1 / self.bulge)
@@ -68,10 +63,9 @@ class Segment:
         return rad
 
     def get_extent_min(self, direction):
-        '''
-        Return the minimum value of the segment in direction
-        direction is a string for the axis of interest, X, Y, Z
-        '''
+        """Return the minimum value of the segment in direction.
+        Direction is a string for the axis of interest, X, Y, Z"""
+
         values = []
         values.append(getattr(self.start, direction))
         values.append(getattr(self.end, direction))
@@ -86,10 +80,9 @@ class Segment:
         return min(values, key=abs)
 
     def get_extent_max(self, direction):
-        '''
-        Return the maximum value of the segment in direction
-        direction is a string for the axis of interest, X, Y, Z
-        '''
+        """Return the maximum value of the segment in direction.
+        Direction is a string for the axis of interest, X, Y, Z"""
+
         values = []
         values.append(getattr(self.start, direction))
         values.append(getattr(self.end, direction))
@@ -104,10 +97,9 @@ class Segment:
         return max(values, key=abs)
 
     def get_all_axis_positions(self, direction):
-        '''
-        Return an array of the axis positions in direction
-        direction is a string for the axis of interest, X, Y, Z
-        '''
+        """Return an array of the axis positions in direction.
+        Direction is a string for the axis of interest, X, Y, Z"""
+
         values = []
         values.append(getattr(self.start, direction))
         values.append(getattr(self.end, direction))
@@ -122,39 +114,33 @@ class Segment:
         return values
 
     def get_length(self):
-        '''
-        Returns the distance between the start and end points
-        '''
+        """Returns the distance between the start and end points"""
+
         return self.start.distance_to(self.end)
 
     def get_eta(self):
-        '''
-        Return eta angle (half the included angle)
-        '''
+        """Return eta angle (half the included angle)"""
+
         return self.get_angle() / 2
 
     def get_epsilon(self):
-        '''
-        Returns epsilon angle ()
-        '''
+        """Returns epsilon angle ()"""
+
         return math.atan(self.bulge)
 
     def get_phi(self):
-        '''
-        Return phi angle
-        '''
+        """Return phi angle"""
+
         return self.get_gamma() + self.get_epsilon()
 
     def get_gamma(self):
-        '''
-        Returns gamma angle
-        '''
+        """Returns gamma angle"""
+
         return (math.pi - self.get_angle()) / 2
 
     def is_same(self, seg):
-        '''
-        Returns True is the segment is the same
-        '''
+        """Returns True is the segment is the same"""
+
         if seg:
             if self.start == seg.start:
                 if self.end == seg.end:
