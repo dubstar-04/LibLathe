@@ -15,8 +15,8 @@ class test_point(unittest.TestCase):
     def test_distance_to(self):
         pt = Point(0, 0, 0)
         pt2 = Point(100, 100, 100)
-        test = Point.distance_to(pt, pt2)
-        self.assertAlmostEqual(test, 173.20508075688772)
+        distance = Point.distance_to(pt, pt2)
+        self.assertAlmostEqual(distance, 173.20508075688772)
 
     def test_angle_to(self):
         pt = Point(0, 0, 0)
