@@ -14,7 +14,10 @@ for line in file:
 
         commands = line.split(' ')
 
+        col['g'] = commands[0:1]
+
         for i in commands[1:]:
+
             if i[0] == 'X':
                 col['x'] = float(i[1:])
 
@@ -38,4 +41,4 @@ if isinstance(inputFile, str):
     file.close()
 
 # uncomment below to see current output
-# print(code)
+print(code)
