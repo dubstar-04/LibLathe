@@ -6,15 +6,14 @@ and writes the resulting gcode to a file.
 # Add LibLathe is in the Python Path
 import os
 import sys
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(os.path.dirname(thisFolder))
-sys.path.append(parentFolder)
-
 from LibLathe.LLBoundBox import BoundBox
 from LibLathe.LLPoint import Point
 from LibLathe.LLProfileOP import ProfileOP
 from LibLathe.LLSegment import Segment
+
+thisFolder = os.path.dirname(os.path.abspath(__file__))
+parentFolder = os.path.dirname(os.path.dirname(thisFolder))
+sys.path.append(parentFolder)
 
 # Define Part Geometry
 part_segments = []
