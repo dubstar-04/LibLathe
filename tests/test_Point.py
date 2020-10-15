@@ -10,18 +10,17 @@ from LibLathe.LLPoint import Point
 
 class test_point(unittest.TestCase):
     """Test for LLPoint.py"""
-
-    pt1 = Point(0, 0, 0)
-    pt2 = Point(100, 100, 100)
-    pt3 = Point(150, 130, 200)
-    pt4 = Point(200, 200, 200)
-    pt5 = Point(-100, 0, 100)
-    pt6 = Point(0, 100, 200)
-    pt7 = Point(-200, -200, -200)
-    pt8 = Point(-400, -400, -400)
-    pt9 = Point(-200, -200, -200)
-    pt10 = Point(200, 200, 200)
-
+    def setUp(self):
+        self.pt1 = Point(0, 0, 0)
+        self.pt2 = Point(100, 100, 100)
+        self.pt3 = Point(150, 130, 200)
+        self.pt4 = Point(200, 200, 200)
+        self.pt5 = Point(-100, 0, 100)
+        self.pt6 = Point(0, 100, 200)
+        self.pt7 = Point(-200, -200, -200)
+        self.pt8 = Point(-400, -400, -400)
+        self.pt9 = Point(-200, -200, -200)
+        self.pt10 = Point(200, 200, 200)
 
     def test_distance_to(self):
         distance = Point.distance_to(self.pt1, self.pt2)
