@@ -68,7 +68,6 @@ class SegmentGroup:
             pt1 = segments[i].start
             pt2 = segments[i].end
 
-            seg1 = segments[i]
             if i != 0:
                 seg1 = segments[i - 1]
                 intersect, pt = seg1.intersect(segments[i], extend=True)
