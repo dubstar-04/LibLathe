@@ -14,7 +14,7 @@ class test_point(unittest.TestCase):
     pt1 = Point(0, 0, 0)
     pt2 = Point(100, 100, 100)
     pt3 = Point(150, 130, 200)
-    pt3 = Point(200, 200, 200)
+    pt4 = Point(200, 200, 200)
 
     def test_distance_to(self):
         distance = Point.distance_to(self.pt1, self.pt2)
@@ -38,16 +38,16 @@ class test_point(unittest.TestCase):
         self.assertEqual(same, True)
 
     def test_sub(self):
-        sub = Point.sub(self.pt3, self.pt2)
+        sub = Point.sub(self.pt4, self.pt2)
         self.assertEqual(sub.X, self.pt2.X)
         self.assertEqual(sub.Y, self.pt2.Y)
         self.assertEqual(sub.Z, self.pt2.Z)
 
     def test_add(self):
         add = Point.add(self.pt2, self.pt2)
-        self.assertEqual(add.X, self.pt3.X)
-        self.assertEqual(add.Y, self.pt3.Y)
-        self.assertEqual(add.Z, self.pt3.Z)
+        self.assertEqual(add.X, self.pt4.X)
+        self.assertEqual(add.Y, self.pt4.Y)
+        self.assertEqual(add.Z, self.pt4.Z)
 
     def test_multiply(self):
         multiply = Point.multiply(self.pt2, 0)
