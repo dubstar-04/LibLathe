@@ -19,6 +19,9 @@ class Segment:
     def get_angle(self):
         """Returns the included angle between the start and end points"""
 
+        if self.bulge == 0:
+            return 180
+
         return math.atan(self.bulge) * 4
 
     def set_bulge(self, angle):
@@ -34,6 +37,9 @@ class Segment:
 
     def get_centre_point(self):
         """Returns the centre point of the arc"""
+
+        if self.bulge == 0:
+            return None
 
         # TODO Tidy up this mess!!
         x1 = self.start.X
@@ -56,10 +62,10 @@ class Segment:
     def get_radius(self):
         """Return the radius of the arc"""
 
-        # rad = (self.get_length() / 2) / math.cos(self.get_gamma())
+        if self.bulge == 0:
+            return 0
+
         rad = self.get_length() * (1 + math.pow(self.bulge, 2)) / (4 * abs(self.bulge))
-        # rad = self.get_length() / 4 * (self.bulge + 1 / self.bulge)
-        # print('LLSegment radius', rad)
         return rad
 
     def get_extent_min(self, direction):
