@@ -11,16 +11,16 @@ from LibLathe.LLSegment import Segment
 
 class test_segment(unittest.TestCase):
     """Test for LLSegment.py"""
+    def setUp(self):
+        self.pt1 = Point(0, 0, 0)
+        self.pt2 = Point(100, 0, 100)
+        self.pt3 = Point(100, 0, 0)
+        self.pt4 = Point(0, 0, 100)
 
-    pt1 = Point(0, 0, 0)
-    pt2 = Point(100, 0, 100)
-    pt3 = Point(100, 0, 0)
-    pt4 = Point(0, 0, 100)
-
-    lineSegment = Segment(pt1, pt2)
-    inverseLineSegment = Segment(pt3, pt4)
-    arcSegment = Segment(pt1, pt2, 1.5)
-    inverseArcSegment = Segment(pt2, pt1, 1.5)
+        self.lineSegment = Segment(self.pt1, self.pt2)
+        self.inverseLineSegment = Segment(self.pt3, self.pt4)
+        self.arcSegment = Segment(self.pt1, self.pt2, 1.5)
+        self.inverseArcSegment = Segment(self.pt2, self.pt1, 1.5)
 
     def test_get_angle(self):
         angle = self.lineSegment.get_angle()
