@@ -67,5 +67,3 @@ for line in gcode:
         f.write(command.to_string() + "\n")
 
 f.close()
-
-

@@ -1,5 +1,4 @@
 from PIL import Image, ImageDraw, ImageOps
-import sys
 
 
 class Plot:
@@ -63,7 +62,6 @@ class Plot:
         # size of the image (should be based on the max path point)
         size = 1500, 800
         img = Image.new('RGB', size, (168, 168, 168))
-        data = img.load()
         draw = ImageDraw.Draw(img)
 
         i = 0
