@@ -166,6 +166,7 @@ class Segment:
         else:
             print('segment.py - Intersect Error with passed segments')
 
+        # TODO: this should return a constent type not Point() or []
         return intersect, pt
 
     def intersectLineLine(self, seg, extend=False):
@@ -273,6 +274,8 @@ class Segment:
         else:
             intersect = True
             ptsout = pts
+
+        print('intersect', intersect, ptsout)
 
         return intersect, ptsout
 
