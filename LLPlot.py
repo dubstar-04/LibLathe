@@ -25,7 +25,7 @@ class Plot:
                     col = {}
 
                     commands = command.split(' ')
-                    if line[0:] == 'G18':
+                    if command[0:] == 'G18':
                         continue
 
                     col['g'] = commands[0:1]
@@ -53,8 +53,7 @@ class Plot:
                             print(line)
                             raise Warning('Unknown character!')
 
-                        code.append(col)
-        code.append(col)
+                code.append(col)
 
         # ---------------------------------------------------------------------
         # Draw the image
