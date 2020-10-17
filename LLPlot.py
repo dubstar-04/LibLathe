@@ -1,10 +1,12 @@
 from PIL import Image, ImageDraw, ImageOps
 import math
+import os
 
 
 class Plot:
     def __init__(self):
         self.background = (168, 168, 168)
+        self.fileLocation = ''
         self.imageName = 'image1'
         self.imageType = '.jpg'
         self.imageSize = (1920, 1080)
@@ -18,6 +20,13 @@ class Plot:
         self.__min_y = 500000
         self.__max_x = -500000
         self.__max_y = -500000
+
+    def set_file_path(self, path):
+        """Specify the location to save the plotted image"""
+        if os.path.exists(path):
+            self.fileLocation = path
+        else:
+            raise Warning('Given file path does not exist!')
 
     def set_background_color(self, color):
         """"Set background color of image"""
@@ -163,7 +172,7 @@ class Plot:
 
         # Mirror because its draw flipped.
         img = ImageOps.flip(img)
-        img.save(self.imageName + self.imageType)
+        img.save(self.fileLocation + self.imageName + self.imageType)
 
     def __get_line_color(self, value):
         if value == 'G0':
