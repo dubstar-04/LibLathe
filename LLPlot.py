@@ -11,10 +11,10 @@ class Plot:
         self.imageName = 'image1'
         self.imageType = '.jpg'
         self.imageSize = (1920, 1080)
-        self.g0Color = (256, 0, 0)
-        self.g1Color = (0, 256, 0)
-        self.g2Color = (0, 256, 0)
-        self.g3Color = (0, 256, 0)
+        self.g0Colour = (256, 0, 0)
+        self.g1Colour = (0, 256, 0)
+        self.g2Colour = (0, 256, 0)
+        self.g3Colour = (0, 256, 0)
         self.lineThickness = 2
 
         self.__min_x = 500000
@@ -33,30 +33,30 @@ class Plot:
         """Set transparency on/off"""
         self.transparency = not self.transparency
 
-    def set_background_color(self, color):
-        """"Set background color of image"""
-        if isinstance(color, tuple) and len(color) == 3:
+    def set_background_colour(self, colour):
+        """"Set background colour of image"""
+        if isinstance(colour, tuple) and len(colour) == 3:
             try:
-                self.background = color
+                self.background = colour
             except Exception:
-                raise Warning('Unknown color! Color is RGB. For example (255, 255, 255)')
+                raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
 
-    def set_path_color(self, g_number, color):
+    def set_path_colour(self, g_number, colour):
         """Set the colour of g path. For example G0, (255,255,255)"""
-        if isinstance(color, tuple) and len(color) == 3:
+        if isinstance(colour, tuple) and len(colour) == 3:
             try:
                 if g_number.upper().startswith('G0'):
-                    self.g0Color = color
+                    self.g0Colour = colour
                 elif g_number.upper().startswith('G1'):
-                    self.g1Color = color
+                    self.g1Colour = colour
                 elif g_number.upper().startswith('G2'):
-                    self.g2Color = color
+                    self.g2Colour = colour
                 elif g_number.upper().startswith('G3'):
-                    self.g3Color = color
+                    self.g3Colour = colour
             except Exception:
                 raise Warning('Unknown value! Please use for example G0, (255,255,255)')
         else:
-            raise Warning('Unknown color! Color is RGB. For example (255, 255, 255)')
+            raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
 
     def set_line_thickness(self, value):
         """Set the line thick to be drawn. Must be an integer value"""
@@ -166,7 +166,7 @@ class Plot:
         i = 0
         x = 1
         while i <= (len(code) - 1):
-            line_color = self.__get_line_color(code[i]['g'][0])
+            line_colour = self.__get_line_colour(code[i]['g'][0])
 
             # / 2 to draw from the center of the image
             # - 25 to offset the draw point from the edge of the image
@@ -175,7 +175,7 @@ class Plot:
             x_end = (self.imageSize[0] / 2) + (code[x]['z'] * scale) - 25
             y_end = self.imageSize[1] + (code[x]['x'] * scale) - 25
 
-            draw.line((x_start, y_start, x_end, y_end), fill=line_color, width=self.lineThickness)
+            draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
             i += 1
             if x != (len(code) - 1):
                 x += 1
@@ -187,12 +187,12 @@ class Plot:
         else:
             img.save(self.fileLocation + self.imageName + self.imageType)
 
-    def __get_line_color(self, value):
+    def __get_line_colour(self, value):
         if value == 'G0':
-            return self.g0Color
+            return self.g0Colour
         elif value == 'G1':
-            return self.g1Color
+            return self.g1Colour
         elif value == 'G2':
-            return self.g2Color
+            return self.g2Colour
         elif value == 'G3':
-            return self.g3Color
+            return self.g3Colour
