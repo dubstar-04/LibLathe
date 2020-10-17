@@ -6,6 +6,7 @@ import os
 class Plot:
     def __init__(self):
         self.background = (168, 168, 168)
+        self.transparency = False
         self.fileLocation = ''
         self.imageName = 'image1'
         self.imageType = '.jpg'
@@ -27,6 +28,10 @@ class Plot:
             self.fileLocation = path
         else:
             raise Warning('Given file path does not exist!')
+
+    def set_transparency(self):
+        """Set transparency on/off"""
+        self.transparency = not self.transparency
 
     def set_background_color(self, color):
         """"Set background color of image"""
@@ -150,7 +155,12 @@ class Plot:
     def __draw_image(self, code):
         # size of the image (should be based on the max path point)
         scale = self.__image_size()
-        img = Image.new('RGB', self.imageSize, self.background)
+
+        if self.transparency:
+            img = Image.new('RGBA', self.imageSize, (255, 0, 0, 0))
+        else:
+            img = Image.new('RGB', self.imageSize, self.background)
+
         draw = ImageDraw.Draw(img)
 
         i = 0
@@ -172,7 +182,10 @@ class Plot:
 
         # Mirror because its draw flipped.
         img = ImageOps.flip(img)
-        img.save(self.fileLocation + self.imageName + self.imageType)
+        if self.transparency:
+            img.save(self.fileLocation + self.imageName + '.png')
+        else:
+            img.save(self.fileLocation + self.imageName + self.imageType)
 
     def __get_line_color(self, value):
         if value == 'G0':
