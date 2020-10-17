@@ -14,10 +14,10 @@ class Plot:
         self.g3Color = (0, 256, 0)
         self.lineThickness = 2
 
-        self.__min_x = 0
-        self.__min_y = 0
-        self.__max_x = 0
-        self.__max_y = 0
+        self.__min_x = 500000
+        self.__min_y = 500000
+        self.__max_x = -500000
+        self.__max_y = -500000
 
     def set_background_color(self, color):
         """"Set background color of image"""
