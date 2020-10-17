@@ -2,26 +2,52 @@ from PIL import Image, ImageDraw, ImageOps
 
 
 class Plot:
-    def __init__(self, gcode):
-        self.gcode = gcode
+    def __init__(self):
+        self.background = (168, 168, 168)
+        self.imageName = 'image1'
+        self.imageType = '.jpg'
+        self.imagesize = (1080, 720)
 
-    def backplot(self):
-        # ---------------------------------------------------------------------
-        # Read G Code
-        # ---------------------------------------------------------------------
-        # inputFile = 'profile.gcode'
-        # file = open(inputFile, 'r')
+        self.__min_x = 0
+        self.__min_y = 0
+        self.__max_x = 0
+        self.__max_y = 0
+
+    def set_background_color(self, color):
+        """"Set background color of image"""
+        if isinstance(color, array) and len(color) == 3:
+            try:
+                self.background = color
+            except Exception:
+                raise Warning('Unknown color! Color is RGB. For example (255, 255, 255)')
+
+    def set_image_details(self, imageName='image1', imageType='.jpg'):
+        """"Set image details. Image name and image type (.jpg, .png)"""
+        self.imageName = imageName
+        if not imageType.startswith('.'):
+            self.imageType = '.' + imageType
+        else:
+            self.imageType = imageType
+
+    def backplot(self, gcode):
+        """Backplot creates an image from supplied LibLathe g code"""
+
         code = []
 
+        self.__min_x = 0
+        self.__min_y = 0
+        self.__max_x = 0
+        self.__max_y = 0
+
         # read each line
-        for line in self.gcode:
+        for line in gcode:
             for command in line:
                 command = command.to_string()
 
                 if command == '':
                     continue
 
-                if command.startswith('G'):
+                elif command.startswith('G'):
                     col = {}
 
                     commands = command.split(' ')
@@ -31,36 +57,47 @@ class Plot:
                     col['g'] = commands[0:1]
 
                     for i in commands[1:]:
-
                         if len(commands) <= 1:
-                            print(i)
                             continue
 
-                        elif i[0] == 'X':
+                        elif i[0].upper() == 'X':
                             col['x'] = float(i[1:])
+                            self.__image_size('x', float(i[1:]))
 
-                        elif i[0] == 'Y':
+                        elif i[0].upper() == 'Y':
                             continue
 
-                        elif i[0] == 'Z':
+                        elif i[0].upper() == 'Z':
                             col['z'] = float(i[1:])
+                            self.__image_size('y', float(i[1:]))
 
-                        elif i[0] == 'F':
-                            # can do something with speeds here in future
+                        elif i[0].upper() == 'F':
                             continue
 
                         else:
                             print(line)
                             raise Warning('Unknown character!')
+                else:
+                    continue
 
                 code.append(col)
+        self.__draw_image(code)
 
+    def __image_size(self, coordinate, value):
+        if coordinate == 'x':
+            self.__min_x = min([value, self.__min_x])
+            self.__max_x = max([value, self.__max_x])
+        else:
+            self.__min_y = min([value, self.__min_y])
+            self.__max_y = max([value, self.__max_y])
+
+    def __draw_image(self, code):
         # ---------------------------------------------------------------------
         # Draw the image
         # ---------------------------------------------------------------------
         # size of the image (should be based on the max path point)
         size = 1500, 800
-        img = Image.new('RGB', size, (168, 168, 168))
+        img = Image.new('RGB', size, self.background)
         draw = ImageDraw.Draw(img)
 
         i = 0
@@ -85,4 +122,4 @@ class Plot:
 
         # Mirror because its draw flipped.
         img = ImageOps.flip(img)
-        img.save('image1.jpg')
+        img.save(self.imageName + self.imageType)
