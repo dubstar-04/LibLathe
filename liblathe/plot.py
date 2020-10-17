@@ -22,7 +22,6 @@ class Plot:
         self.specifiedPlotColour = (0, 256, 0)
         self.mirrorImage = False
         self.flipImage = True
-
         self.__min_x = 500000
         self.__min_y = 500000
         self.__max_x = -500000
@@ -86,7 +85,7 @@ class Plot:
         self.rapidOnly = not self.rapidOnly
         self.cutsOnly = False
         self.specifiedPlot = ''
-
+        
     def draw_cuts_only(self):
         """Draw cuts only on/off"""
         self.cutsOnly = not self.cutsOnly
@@ -229,6 +228,13 @@ class Plot:
                 if self.rapidOnly and code[x]['g'][0] == 'G0':
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
                 elif self.cutsOnly and not code[x]['g'][0] == 'G0':
+                
+            if not self.rapidOnly and not self.cutsOnly:
+                draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
+            else:
+                if self.rapidOnly and code[x]['g'][0] == 'G0':
+                    draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
+                elif self.cutsOnly and code[x]['g'][0] == 'G1':
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g1Colour, width=self.lineThickness)
 
             i += 1
