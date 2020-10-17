@@ -16,6 +16,8 @@ class Plot:
         self.g2Colour = (0, 256, 0)
         self.g3Colour = (0, 256, 0)
         self.lineThickness = 2
+        self.rapidOnly = False
+        self.cutsOnly = False
 
         self.__min_x = 500000
         self.__min_y = 500000
@@ -74,6 +76,16 @@ class Plot:
             self.imageType = '.' + imageType
         else:
             self.imageType = imageType
+
+    def draw_rapids_only(self):
+        """Draw rapid only on/off"""
+        self.rapidOnly = not self.rapidOnly
+        self.cutsOnly = False
+
+    def draw_cuts_only(self):
+        """Draw cuts only on/off"""
+        self.cutsOnly = not self.cutsOnly
+        self.rapidOnly = False
 
     def backplot(self, gcode):
         """Backplot creates an image from supplied LibLathe g code"""
@@ -175,7 +187,14 @@ class Plot:
             x_end = (self.imageSize[0] / 2) + (code[x]['z'] * scale) - 25
             y_end = self.imageSize[1] + (code[x]['x'] * scale) - 25
 
-            draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
+            if not self.rapidOnly and not self.cutsOnly:
+                draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
+            else:
+                if self.rapidOnly and code[x]['g'][0] == 'G0':
+                    draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
+                elif self.cutsOnly and code[x]['g'][0] == 'G1':
+                    draw.line((x_start, y_start, x_end, y_end), fill=self.g1Colour, width=self.lineThickness)
+
             i += 1
             if x != (len(code) - 1):
                 x += 1
