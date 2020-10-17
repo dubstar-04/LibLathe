@@ -85,12 +85,14 @@ class Plot:
         self.rapidOnly = not self.rapidOnly
         self.cutsOnly = False
         self.specifiedPlot = ''
-        
+        self.cutsOnly = ''
+
     def draw_cuts_only(self):
         """Draw cuts only on/off"""
         self.cutsOnly = not self.cutsOnly
         self.rapidOnly = False
         self.specifiedPlot = ''
+        self.cutsOnly = ''
 
     def draw_specified(self, gcode, colour):
         """Draws only specified cut. For example G2"""
@@ -231,6 +233,9 @@ class Plot:
                 
             if not self.rapidOnly and not self.cutsOnly:
                 draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
+            elif self.specifiedPlot != '':
+                if code[x]['g'][0] == self.specifiedPlot:
+                    draw.line((x_start, y_start, x_end, y_end), fill=self.specifiedPlotColour, width=self.lineThickness)
             else:
                 if self.rapidOnly and code[x]['g'][0] == 'G0':
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
