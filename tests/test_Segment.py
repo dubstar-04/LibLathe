@@ -34,14 +34,15 @@ class test_segment(unittest.TestCase):
         self.assertEqual(lineCentrePt, None)
 
         arcCentrePt = self.arcSegment.get_centre_point()
-        centrePt = Point(29.166666666666668, 0.0, 70.83333333333333)
+        #print('arcCentrePt', arcCentrePt.X, arcCentrePt.Y, arcCentrePt.Z)
+        centrePt = Point(70.83333333333333, 0.0, 29.166666666666668)
         self.assertTrue(arcCentrePt.is_same(centrePt))
 
         invArcCenPt = self.inverseArcSegment.get_centre_point()
         # TODO: Investigate bulge direction errors
-        print('invArcCenPt', invArcCenPt.X, invArcCenPt.Y, invArcCenPt.Z)
-        centrePt = Point(70.83333333333333, 0.0, 29.166666666666668)
-        # self.assertTrue(invArcCenPt.is_same(centrePt))
+        # print('invArcCenPt', invArcCenPt.X, invArcCenPt.Y, invArcCenPt.Z)
+        centrePt = Point(29.166666666666668, 0.0, 70.83333333333333)
+        self.assertTrue(invArcCenPt.is_same(centrePt))
 
     def test_get_radius(self):
         lineRadius = self.lineSegment.get_radius()
@@ -54,7 +55,6 @@ class test_segment(unittest.TestCase):
         length = self.lineSegment.get_length()
         self.assertEqual(length, 141.4213562373095)
 
-        # TODO: Arc length should be the true length not the distance between the start and endpoints?
         arcSegmentLength = self.arcSegment.get_length()
         self.assertEqual(arcSegmentLength, 141.4213562373095)
 
@@ -83,17 +83,57 @@ class test_segment(unittest.TestCase):
         self.assertFalse(lineArcComparison)
 
     def test_intersect(self):
+
         intersect, pt = self.lineSegment.intersect(self.inverseLineSegment)
-        # print("intersect", intersect, pt.X, pt.Y, pt.Z)
         self.assertTrue(intersect)
         intersectionPt = Point(50, 0.0, 50)
         self.assertTrue(pt.is_same(intersectionPt))
 
-        intersect, pt = self.arcSegment.intersect(self.inverseLineSegment)
-        print("intersect", intersect)  # , pt.X, pt.Y, pt.Z)
+        intersect, pts = self.arcSegment.intersect(self.inverseLineSegment)
+        pt = pts[0]
         self.assertTrue(intersect)
-        # intersectionPt = Point(50, 0.0, 50)
-        # self.assertTrue(pt.is_same(intersectionPt))
+        intersectionPt = Point(16.666666666666657, 0.0, 83.33333333333334)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.inverseArcSegment.intersect(self.inverseLineSegment)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(83.33333333333334, 0.0, 16.66666666666666)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        self.pt5 = Point(-120.12, 0, 214.09)
+        self.pt6 = Point(-179.88, 0, 85.91)
+        self.pt7 = Point(-214.09, 0, 179.88)
+        self.pt8 = Point(-85.91, 0, 120.12)
+
+        self.lineSegment = Segment(self.pt5, self.pt6)
+        self.arcSegment = Segment(self.pt7, self.pt8, 1.5)
+        self.inverseArcSegment = Segment(self.pt7, self.pt8, -1.5)
+
+        intersect, pts = self.arcSegment.intersect(self.lineSegment)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(-130.08000000000004, 0.0, 192.72666666666657)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.inverseArcSegment.intersect(self.lineSegment)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(-169.91999999999996, 0.0, 107.27333333333338)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        # false intersection tests
+        self.lineSegment = Segment(self.pt1, self.pt2)
+
+        intersect, pts = self.inverseArcSegment.intersect(self.lineSegment)
+        self.assertFalse(intersect)
+
+        self.pt9 = Point(-164.74, 0, 118.39)
+        self.pt10 = Point(-137.55, 0, 176.70)
+        self.lineSegment = Segment(self.pt9, self.pt10)
+
+        intersect, pts = self.arcSegment.intersect(self.lineSegment)
+        self.assertFalse(intersect)
 
 
 if __name__ == '__main__':
