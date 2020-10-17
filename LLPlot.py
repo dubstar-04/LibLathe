@@ -38,15 +38,9 @@ class Plot:
 
     def backplot(self, gcode):
         """Backplot creates an image from supplied LibLathe g code"""
-
         code = []
+        self.__reset_min_max()
 
-        self.__min_x = 0
-        self.__min_y = 0
-        self.__max_x = 0
-        self.__max_y = 0
-
-        # read each line
         for line in gcode:
             for command in line:
                 command = command.to_string()
@@ -89,6 +83,12 @@ class Plot:
 
                 code.append(col)
         self.__draw_image(code)
+
+    def __reset_min_max(self):
+        self.__min_x = 0
+        self.__min_y = 0
+        self.__max_x = 0
+        self.__max_y = 0
 
     def __min_max(self, coordinate, value):
         # Used to derive the image size based on g code coordinates
