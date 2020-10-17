@@ -12,6 +12,7 @@ class Plot:
         self.g1Color = (0, 256, 0)
         self.g2Color = (0, 256, 0)
         self.g3Color = (0, 256, 0)
+        self.lineThickness = 2
 
         self.__min_x = 0
         self.__min_y = 0
@@ -29,14 +30,26 @@ class Plot:
     def set_path_color(self, g_number, color):
         """Set the colour of g path. For example G0, (255,255,255)"""
         if isinstance(color, tuple) and len(color) == 3:
-            if g_number.upper().startswith('G0'):
-                self.g0Color = color
-            elif g_number.upper().startswith('G1'):
-                self.g1Color = color
-            elif g_number.upper().startswith('G2'):
-                self.g2Color = color
-            elif g_number.upper().startswith('G3'):
-                self.g3Color = color
+            try:
+                if g_number.upper().startswith('G0'):
+                    self.g0Color = color
+                elif g_number.upper().startswith('G1'):
+                    self.g1Color = color
+                elif g_number.upper().startswith('G2'):
+                    self.g2Color = color
+                elif g_number.upper().startswith('G3'):
+                    self.g3Color = color
+            except Exception:
+                raise Warning('Unknown value! Please use for example G0, (255,255,255)')
+        else:
+            raise Warning('Unknown color! Color is RGB. For example (255, 255, 255)')
+
+    def set_line_thickness(self, value):
+        """Set the line thick to be drawn. Must be an integer value"""
+        if isinstance(value, int):
+            self.lineThickness = value
+        else:
+            raise Warning('Unknown thickness value! Thickness must be an integer!')
 
     def set_image_details(self, imageName='image1', imageType='.jpg', imageSize=(1920, 1080)):
         """"Set image details. Image name, image type (.jpg, .png) and image size (1080, 720)"""
@@ -134,7 +147,6 @@ class Plot:
         i = 0
         x = 1
         while i <= (len(code) - 1):
-
             line_color = self.__get_line_color(code[i]['g'][0])
 
             # / 2 to draw from the center of the image
@@ -144,7 +156,7 @@ class Plot:
             x_end = (self.imageSize[0] / 2) + (code[x]['z'] * scale) - 25
             y_end = self.imageSize[1] + (code[x]['x'] * scale) - 25
 
-            draw.line((x_start, y_start, x_end, y_end), fill=line_color)
+            draw.line((x_start, y_start, x_end, y_end), fill=line_color, width=self.lineThickness)
             i += 1
             if x != (len(code) - 1):
                 x += 1
