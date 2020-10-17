@@ -18,6 +18,8 @@ class Plot:
         self.lineThickness = 2
         self.rapidOnly = False
         self.cutsOnly = False
+        self.specifiedPlot = ''
+        self.specifiedPlotColour = (0, 256, 0)
 
         self.__min_x = 500000
         self.__min_y = 500000
@@ -81,10 +83,23 @@ class Plot:
         """Draw rapid only on/off"""
         self.rapidOnly = not self.rapidOnly
         self.cutsOnly = False
+        self.cutsOnly = ''
 
     def draw_cuts_only(self):
         """Draw cuts only on/off"""
         self.cutsOnly = not self.cutsOnly
+        self.rapidOnly = False
+        self.cutsOnly = ''
+
+    def draw_specified(self, gcode, colour):
+        """Draws only specified cut. For example G2"""
+        self.specifiedPlot = gcode
+        if isinstance(colour, tuple) and len(colour) == 3:
+            try:
+                self.specifiedPlotColour = colour
+            except Exception:
+                raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
+        self.cutsOnly = False
         self.rapidOnly = False
 
     def backplot(self, gcode):
@@ -187,8 +202,11 @@ class Plot:
             x_end = (self.imageSize[0] / 2) + (code[x]['z'] * scale) - 25
             y_end = self.imageSize[1] + (code[x]['x'] * scale) - 25
 
-            if not self.rapidOnly and not self.cutsOnly:
+            if not self.rapidOnly and not self.cutsOnly and self.specifiedPlot == '':
                 draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
+            elif self.specifiedPlot != '':
+                if code[x]['g'][0] == self.specifiedPlot:
+                    draw.line((x_start, y_start, x_end, y_end), fill=self.specifiedPlotColour, width=self.lineThickness)
             else:
                 if self.rapidOnly and code[x]['g'][0] == 'G0':
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
