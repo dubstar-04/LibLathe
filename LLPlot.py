@@ -26,6 +26,18 @@ class Plot:
             except Exception:
                 raise Warning('Unknown color! Color is RGB. For example (255, 255, 255)')
 
+    def set_path_color(self, g_number, color):
+        """Set the colour of g path. For example G0, (255,255,255)"""
+        if isinstance(color, tuple) and len(color) == 3:
+            if g_number.upper().startswith('G0'):
+                self.g0Color = color
+            elif g_number.upper().startswith('G1'):
+                self.g1Color = color
+            elif g_number.upper().startswith('G2'):
+                self.g2Color = color
+            elif g_number.upper().startswith('G3'):
+                self.g3Color = color
+
     def set_image_details(self, imageName='image1', imageType='.jpg', imageSize=(1920, 1080)):
         """"Set image details. Image name, image type (.jpg, .png) and image size (1080, 720)"""
         self.imageName = imageName
@@ -123,9 +135,7 @@ class Plot:
         x = 1
         while i <= (len(code) - 1):
 
-            line_color = (0, 256, 0)
-            if code[i]['g'][0] == 'G0':
-                line_color = (256, 0, 0)
+            line_color = self.__get_line_color(code[i]['g'][0])
 
             # / 2 to draw from the center of the image
             # - 25 to offset the draw point from the edge of the image
@@ -142,3 +152,13 @@ class Plot:
         # Mirror because its draw flipped.
         img = ImageOps.flip(img)
         img.save(self.imageName + self.imageType)
+
+    def __get_line_color(self, value):
+        if value == 'G0':
+            return self.g0Color
+        elif value == 'G1':
+            return self.g1Color
+        elif value == 'G2':
+            return self.g2Color
+        elif value == 'G3':
+            return self.g3Color
