@@ -15,6 +15,7 @@ from LibLathe.LLBoundBox import BoundBox
 from LibLathe.LLPoint import Point
 from LibLathe.LLProfileOP import ProfileOP
 from LibLathe.LLSegment import Segment
+from LibLathe.LLPlot import Plot
 
 # Define Part Geometry
 part_segments = []
@@ -55,6 +56,8 @@ profileOP.set_params(props)
 profileOP.add_stock(StockBoundingBox)
 profileOP.add_part_edges(part_segments)
 gcode = profileOP.get_gcode()
+plot = Plot()
+plot.backplot(gcode)
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")
