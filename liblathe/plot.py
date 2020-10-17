@@ -105,6 +105,7 @@ class Plot:
         self.cutsOnly = False
         self.rapidOnly = False
 
+
     def flip_image_horizontal(self):
         """Flip image horizontally(left to right).Turns On/Off"""
         self.mirrorImage = not self.mirrorImage
