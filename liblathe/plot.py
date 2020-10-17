@@ -20,6 +20,8 @@ class Plot:
         self.cutsOnly = False
         self.specifiedPlot = ''
         self.specifiedPlotColour = (0, 256, 0)
+        self.mirrorImage = False
+        self.flipImage = True
 
         self.__min_x = 500000
         self.__min_y = 500000
@@ -101,6 +103,16 @@ class Plot:
                 raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
         self.cutsOnly = False
         self.rapidOnly = False
+
+    def mirror_image(self):
+        """Flip image horizontally(left to right).Turns On/Off"""
+        self.mirrorImage = not self.mirrorImage
+        self.flipImage = False
+
+    def flip_image(self):
+        """Flip the image vertically(top to bottom). Turns On/Off"""
+        self.flipImage = not self.flipImage
+        self.mirrorImage = False
 
     def backplot(self, gcode):
         """Backplot creates an image from supplied LibLathe g code"""
@@ -219,7 +231,13 @@ class Plot:
                 x += 1
 
         # Mirror because its draw flipped.
-        img = ImageOps.flip(img)
+        if self.mirrorImage:
+            img = ImageOps.mirror(img)
+        elif self.flipImage:
+            img = ImageOps.flip(img)
+        else:
+            img = ImageOps.flip(img)
+
         if self.transparency:
             img.save(self.fileLocation + self.imageName + '.png')
         else:
