@@ -28,6 +28,10 @@ class test_command(unittest.TestCase):
         string = command.to_string()
         self.assertEqual(string, 'G0')
 
+        command = Command('G0', self.params)
+        string = command.to_string()
+        self.assertEqual(string, 'G0 X-20 Y0 Z6 F10')
+
 
 if __name__ == '__main__':
     unittest.main()
