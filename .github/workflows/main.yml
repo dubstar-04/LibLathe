@@ -1,0 +1,19 @@
+name: Coverage
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Test
+        run: npm test
+
+      - name: Monitor coverage
+        uses: slavcodev/coverage-monitor-action@1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          clover_file: "logs/clover.xml"
+          threshold_alert: 10
+          threshold_warning: 50
