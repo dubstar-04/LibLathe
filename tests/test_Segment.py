@@ -16,75 +16,119 @@ class test_segment(unittest.TestCase):
         self.pt2 = Point(100, 0, 100)
         self.pt3 = Point(100, 0, 0)
         self.pt4 = Point(0, 0, 100)
+        self.pt5 = Point(-120.12, 0, 214.09)
+        self.pt6 = Point(-179.88, 0, 85.91)
+        self.pt7 = Point(-214.09, 0, 179.88)
+        self.pt8 = Point(-85.91, 0, 120.12)
+        self.pt9 = Point(-164.74, 0, 118.39)
+        self.pt10 = Point(-137.55, 0, 176.70)
 
-        self.lineSegment = Segment(self.pt1, self.pt2)
-        self.inverseLineSegment = Segment(self.pt3, self.pt4)
-        self.arcSegment = Segment(self.pt1, self.pt2, 1.5)
-        self.inverseArcSegment = Segment(self.pt2, self.pt1, -1.5)
+        self.lineSegment1 = Segment(self.pt1, self.pt2)
+        self.lineSegment2 = Segment(self.pt5, self.pt6)
+        self.lineSegment3 = Segment(self.pt9, self.pt10)
+
+        self.inverseLineSegment1 = Segment(self.pt3, self.pt4)
+
+        self.arcSegment1 = Segment(self.pt1, self.pt2, 1.5)
+        self.arcSegment2 = Segment(self.pt7, self.pt8, 1.5)
+
+        self.inverseArcSegment1 = Segment(self.pt1, self.pt2, -1.5)
+        self.inverseArcSegment2 = Segment(self.pt7, self.pt8, -1.5)
 
     def test_get_angle(self):
-        angle = self.lineSegment.get_angle()
+        angle = self.lineSegment1.get_angle()
         self.assertEqual(angle, 180)
 
-        arcAngle = self.arcSegment.get_angle()
+        arcAngle = self.arcSegment1.get_angle()
         self.assertEqual(arcAngle, 3.931174892989316)
 
     def test_get_centre_point(self):
-        lineCentrePt = self.lineSegment.get_centre_point()
+        lineCentrePt = self.lineSegment1.get_centre_point()
         self.assertEqual(lineCentrePt, None)
 
-        arcCentrePt = self.arcSegment.get_centre_point()
-        centrePt = Point(29.166666666666668, 0.0, 70.83333333333333)
+        arcCentrePt = self.arcSegment1.get_centre_point()
+        centrePt = Point(70.83333333333333, 0.0, 29.166666666666668)
         self.assertTrue(arcCentrePt.is_same(centrePt))
 
-        invArcCenPt = self.inverseArcSegment.get_centre_point()
-        centrePt = Point(70.83333333333333, 0.0, 29.166666666666668)
+        invArcCenPt = self.inverseArcSegment1.get_centre_point()
+        centrePt = Point(29.166666666666668, 0.0, 70.83333333333333)
         self.assertTrue(invArcCenPt.is_same(centrePt))
 
     def test_get_radius(self):
-        lineRadius = self.lineSegment.get_radius()
+        lineRadius = self.lineSegment1.get_radius()
         self.assertEqual(lineRadius, 0)
 
-        arcRadius = self.arcSegment.get_radius()
+        arcRadius = self.arcSegment1.get_radius()
         self.assertEqual(arcRadius, 76.60323462854265)
 
     def test_get_length(self):
-        length = self.lineSegment.get_length()
+        length = self.lineSegment1.get_length()
         self.assertEqual(length, 141.4213562373095)
 
-        arcSegmentLength = self.arcSegment.get_length()
+        arcSegmentLength = self.arcSegment1.get_length()
         self.assertEqual(arcSegmentLength, 141.4213562373095)
 
     def test_get_eta(self):
-        eta = self.lineSegment.get_eta()
+        eta = self.lineSegment1.get_eta()
         self.assertEqual(eta, 90)
 
-        arcEta = self.arcSegment.get_eta()
+        arcEta = self.arcSegment1.get_eta()
         self.assertEqual(arcEta, 1.965587446494658)
 
     def test_get_epsilon(self):
-        epsilon = self.lineSegment.get_epsilon()
+        epsilon = self.lineSegment1.get_epsilon()
         self.assertEqual(epsilon, 0)
 
-        arcEpsilon = self.arcSegment.get_epsilon()
+        arcEpsilon = self.arcSegment1.get_epsilon()
         self.assertEqual(arcEpsilon, 0.982793723247329)
 
     def test_is_same(self):
-        lineComparison = self.lineSegment.is_same(self.lineSegment)
+        lineComparison = self.lineSegment1.is_same(self.lineSegment1)
         self.assertTrue(lineComparison)
 
-        arcComparison = self.arcSegment.is_same(self.arcSegment)
+        arcComparison = self.arcSegment1.is_same(self.arcSegment1)
         self.assertTrue(arcComparison)
 
-        lineArcComparison = self.lineSegment.is_same(self.arcSegment)
+        lineArcComparison = self.lineSegment1.is_same(self.arcSegment1)
         self.assertFalse(lineArcComparison)
 
     def test_intersect(self):
-        intersect, pt = self.lineSegment.intersect(self.inverseLineSegment)
-        # print("intersect", intersect, pt.X, pt.Y, pt.Z)
+
+        intersect, pt = self.lineSegment1.intersect(self.inverseLineSegment1)
         self.assertTrue(intersect)
         intersectionPt = Point(50, 0.0, 50)
         self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.arcSegment1.intersect(self.inverseLineSegment1)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(16.666666666666657, 0.0, 83.33333333333334)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.inverseArcSegment1.intersect(self.inverseLineSegment1)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(83.33333333333334, 0.0, 16.66666666666666)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.arcSegment2.intersect(self.lineSegment2)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(-130.08000000000004, 0.0, 192.72666666666657)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.inverseArcSegment2.intersect(self.lineSegment2)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(-169.91999999999996, 0.0, 107.27333333333338)
+        self.assertTrue(pt.is_same(intersectionPt))
+
+        # false intersection tests
+        intersect, pts = self.inverseArcSegment2.intersect(self.lineSegment1)
+        self.assertFalse(intersect)
+
+        intersect, pts = self.arcSegment2.intersect(self.lineSegment3)
+        self.assertFalse(intersect)
 
 
 if __name__ == '__main__':

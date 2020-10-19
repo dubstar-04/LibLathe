@@ -25,7 +25,11 @@ class Segment:
         return math.atan(self.bulge) * 4
 
     def set_bulge(self, angle):
-        """Sets the bulge of the arc (tan(angle/4))"""
+        """
+        Sets the bulge of the arc (tan(angle/4))
+        Negative bulge = clockwise
+        Positive bulge = anticlockwise
+        """
 
         self.bulge = math.tan(angle / 4)
 
@@ -41,20 +45,19 @@ class Segment:
         if self.bulge == 0:
             return None
 
-        # TODO Tidy up this mess!!
-        x1 = self.start.X
-        y1 = self.start.Z
-        x2 = self.end.X
-        y2 = self.end.Z
-        q = math.sqrt(math.pow((x2 - x1), 2) + math.pow((y2 - y1), 2))
-        y3 = (y1 + y2) / 2
-        x3 = (x1 + x2) / 2
+        normal = math.sqrt(math.pow((self.end.X - self.start.X), 2) + math.pow((self.end.Z - self.start.Z), 2))
 
-        basex = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((q / 2), 2)) * (y1 - y2) / q
-        basey = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((q / 2), 2)) * (x2 - x1) / q
+        basex = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.start.Z - self.end.Z) / normal
+        basey = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.end.X - self.start.X) / normal
 
-        x = x3 + basex
-        z = y3 + basey
+        # invert for positive buldge values
+        if self.bulge > 0:
+            basex = -basex
+            basey = -basey
+
+        x = (self.start.X + self.end.X) / 2 + basex
+        z = (self.start.Z + self.end.Z) / 2 + basey
+
         p = Point(x, 0, z)
 
         return p
@@ -121,7 +124,7 @@ class Segment:
 
     def get_length(self):
         """Returns the distance between the start and end points"""
-
+        # TODO: Arc length should be the true length not the distance between the start and endpoints?
         return self.start.distance_to(self.end)
 
     def get_eta(self):
@@ -166,6 +169,7 @@ class Segment:
         else:
             print('segment.py - Intersect Error with passed segments')
 
+        # TODO: this should return a constent type not Point() or []
         return intersect, pt
 
     def intersectLineLine(self, seg, extend=False):
@@ -228,34 +232,12 @@ class Segment:
         u1 = (-b + e) / (2 * a)
         u2 = (-b - e) / (2 * a)
 
-        # print('possible point', u1, u2)
-        # pt = Point(u2, 0, u1)
-
-        '''
-        if u1 < 0 or u1 > 1 and u2 < 0 or u2 > 1:
-                if u1 < 0 and u2 < 0 or u1 > 1 and u2 > 1:
-                    #outside
-                    if extend:
-                        pt = a1.lerp(a2, u1)
-                        pt = a1.lerp(a2, u2)
-                else:
-                #inside
-                    if extend:
-                        pt = a1.lerp(a2, u1)
-                        pt = a1.lerp(a2, u2)
-        else:
-        '''
-
         # intersection
         if 0 <= u1 and u1 <= 1 or extend:
-            # intersect = True
             pts.append(a1.lerp(a2, u1))
 
         if 0 <= u2 and u2 <= 1 or extend:
-            # intersect = True
             pts.append(a1.lerp(a2, u2))
-
-        # TODO: check that rounding makes sense. possible just add 0.5 to the start and end angle?
 
         sa = round(c.angle_to(circle.start), 0)
         ea = round(c.angle_to(circle.end), 0)
@@ -263,16 +245,41 @@ class Segment:
         if not extend:
             for pnt in pts:
                 pnt_ang = round(c.angle_to(pnt), 0)
-                # print('arc stuff', sa, ea, pnt_ang, pnt.X, pnt.Z)
 
-                if pnt_ang >= sa and pnt_ang <= ea:
-                    # print('point', pnt.X, pnt.Z)
-                    # TODO: Return all points and select the nearest in the join_segments function
-                    intersect = True
-                    ptsout.append(pnt)
+                # print('arc stuff', 'sa:', sa, 'ea:', ea, 'pnt_ang:', pnt_ang, pnt.X, pnt.Z, 'centre:', c)
+
+                if sa < ea:
+                    if circle.bulge > 0:
+                        # print('sa < ea - positive bulge')
+                        if pnt_ang <= sa or pnt_ang >= ea:
+                            # print('inside the arc sa < ea - positive bulge')
+                            ptsout.append(pnt)
+                    if circle.bulge < 0:
+                        # print('sa < ea - negative bulge')
+                        if pnt_ang >= sa and pnt_ang <= ea:
+                            # print('inside the arc sa < ea - negative bulge')
+                            ptsout.append(pnt)
+
+                if sa > ea:
+                    if circle.bulge > 0:
+                        # print('sa > ea - positive bulge')
+                        if pnt_ang <= sa and pnt_ang >= ea:
+                            # print('inside the arc sa > ea - positive bulge')
+                            ptsout.append(pnt)
+
+                    if circle.bulge < 0:
+                        # print('sa > ea - negative bulge')
+                        if pnt_ang >= sa or pnt_ang <= ea:
+                            # print('inside the arc sa > ea - negative bulge')
+                            ptsout.append(pnt)
+
         else:
             intersect = True
             ptsout = pts
+        # TODO: Return all points and select the nearest in the join_segments function
+
+        if len(ptsout):
+            intersect = True
 
         return intersect, ptsout
 
