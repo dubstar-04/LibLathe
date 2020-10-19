@@ -45,8 +45,8 @@ class SegmentGroup:
 
         XMin = min(xvalues, key=abs)
         XMax = max(xvalues, key=abs)
-        YMin = max(yvalues, key=abs)
-        YMax = min(yvalues, key=abs)
+        YMin = min(yvalues, key=abs)
+        YMax = max(yvalues, key=abs)
         ZMin = min(zvalues, key=abs)
         ZMax = max(zvalues, key=abs)
 
