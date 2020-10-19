@@ -1,4 +1,4 @@
-# LibLathe ![Python package](https://github.com/dubstar-04/LibLathe/workflows/Python%20package/badge.svg?branch=master)
+# LibLathe ![Python package](https://github.com/dubstar-04/LibLathe/workflows/Python%20package/badge.svg?branch=master) ![Coverage](https://github.com/dubstar-04/LibLathe/workflows/Coverage/badge.svg)
 LibLathe is an opensource standalone python library for generating lathe paths and gcode for use with cnc lathes.
 
 | :warning: WARNING: LibLathe is currently experimental / Proof of concept and only suitable for testing. |
