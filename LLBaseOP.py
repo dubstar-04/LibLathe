@@ -36,7 +36,11 @@ class BaseOP:
 
     def get_params(self):
         """Return operations parameters"""
-        pass
+        return {'min_dia': self.min_dia, 'extra_dia': self.extra_dia, 'start_offset': self.start_offset,
+                'end_offset': self.end_offset, 'allow_grooving': self.allow_grooving,
+                'allow_facing': self.allow_facing, 'allow_roughing': self.allow_roughing,
+                'allow_finishing': self.allow_finishing,'step_over': self.step_over,
+                'finish_passes': self.finish_passes, 'hfeed': self.hfeed, 'vfeed': self.vfeed}
 
     def get_gcode(self):
         """Base function for all turning operations"""
