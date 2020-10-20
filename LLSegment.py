@@ -17,7 +17,7 @@ class Segment:
         self.bulge = bulge
 
     def get_angle(self):
-        """Returns the included angle between the start and end points"""
+        """Returns the included angle between the start and end points in radians"""
 
         if self.bulge == 0:
             return 180
@@ -29,6 +29,7 @@ class Segment:
         Sets the bulge of the arc (tan(angle/4))
         Negative bulge = clockwise
         Positive bulge = anticlockwise
+        angle in radians
         """
 
         self.bulge = math.tan(angle / 4)
