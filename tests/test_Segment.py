@@ -42,6 +42,16 @@ class test_segment(unittest.TestCase):
         arcAngle = self.arcSegment1.get_angle()
         self.assertEqual(arcAngle, 3.931174892989316)
 
+    def test_set_bulge(self):
+        tempSegment = self.lineSegment1
+        tempSegment.set_bulge(3.931174892989316)
+        self.assertEqual(tempSegment.bulge, 1.5)
+
+    def test_set_bulge_from_radius(self):
+        tempSegment = self.lineSegment1
+        tempSegment.set_bulge_from_radius(76.60323462854265)
+        self.assertEqual(tempSegment.bulge, 0.6666666666666667)
+
     def test_get_centre_point(self):
         lineCentrePt = self.lineSegment1.get_centre_point()
         self.assertEqual(lineCentrePt, None)
@@ -60,6 +70,26 @@ class test_segment(unittest.TestCase):
 
         arcRadius = self.arcSegment1.get_radius()
         self.assertEqual(arcRadius, 76.60323462854265)
+
+    def test_get_extent_min(self):
+        extentMinX = self.lineSegment2.get_extent_min('X')
+        self.assertEqual(extentMinX, self.pt5.X)
+
+        extentMinY = self.lineSegment2.get_extent_min('Y')
+        self.assertEqual(extentMinY, self.pt5.Y)
+
+        extentMinZ = self.lineSegment2.get_extent_min('Z')
+        self.assertEqual(extentMinZ, self.pt6.Z)
+
+    def test_get_extent_max(self):
+        extentMaxX = self.lineSegment2.get_extent_max('X')
+        self.assertEqual(extentMaxX, self.pt6.X)
+
+        extentMaxY = self.lineSegment2.get_extent_max('Y')
+        self.assertEqual(extentMaxY, self.pt5.Y)
+
+        extentMaxZ = self.lineSegment2.get_extent_max('Z')
+        self.assertEqual(extentMaxZ, self.pt5.Z)
 
     def test_get_length(self):
         length = self.lineSegment1.get_length()
@@ -81,6 +111,13 @@ class test_segment(unittest.TestCase):
 
         arcEpsilon = self.arcSegment1.get_epsilon()
         self.assertEqual(arcEpsilon, 0.982793723247329)
+
+    def test_get_phi(self):
+        phi = self.lineSegment1.get_phi()
+        self.assertEqual(phi, -88.42920367320511)
+
+        arcPhi = self.arcSegment1.get_phi()
+        self.assertEqual(arcPhi, 0.5880026035475675)
 
     def test_is_same(self):
         lineComparison = self.lineSegment1.is_same(self.lineSegment1)
