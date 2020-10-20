@@ -81,6 +81,15 @@ class test_segment(unittest.TestCase):
         extentMinZ = self.lineSegment2.get_extent_min('Z')
         self.assertEqual(extentMinZ, self.pt6.Z)
 
+        AecExtentMinX = self.arcSegment2.get_extent_min('X')
+        self.assertEqual(AecExtentMinX, self.pt8.X)
+
+        AecExtentMinY = self.arcSegment2.get_extent_min('Y')
+        self.assertEqual(AecExtentMinY, self.pt5.Y)
+
+        AecExtentMinZ = self.arcSegment2.get_extent_min('Z')
+        self.assertEqual(AecExtentMinZ, 46.68997508893331)
+
     def test_get_extent_max(self):
         extentMaxX = self.lineSegment2.get_extent_max('X')
         self.assertEqual(extentMaxX, self.pt6.X)
@@ -90,6 +99,34 @@ class test_segment(unittest.TestCase):
 
         extentMaxZ = self.lineSegment2.get_extent_max('Z')
         self.assertEqual(extentMaxZ, self.pt5.Z)
+
+        AecExtentMaxX = self.arcSegment2.get_extent_max('X')
+        self.assertEqual(AecExtentMaxX, -239.0558582444)
+
+        AecExtentMaxY = self.arcSegment2.get_extent_max('Y')
+        self.assertEqual(AecExtentMaxY, -76.60585824440003)
+
+        AecExtentMaxZ = self.arcSegment2.get_extent_max('Z')
+        self.assertEqual(AecExtentMaxZ, self.pt7.Z)
+
+    def test_get_all_axis_positions(self):
+        allAxisPosX = self.lineSegment2.get_all_axis_positions('X')
+        self.assertEqual(allAxisPosX, [self.pt5.X, self.pt6.X])
+
+        allAxisPosY = self.lineSegment2.get_all_axis_positions('Y')
+        self.assertEqual(allAxisPosY, [self.pt5.Y, self.pt6.Y])
+
+        allAxisPosZ = self.lineSegment2.get_all_axis_positions('Z')
+        self.assertEqual(allAxisPosZ, [self.pt5.Z, self.pt6.Z])
+
+        arcAllAxisPosX = self.arcSegment2.get_all_axis_positions('X')
+        self.assertEqual(arcAllAxisPosX, [self.pt7.X, self.pt8.X, -239.0558582444])
+
+        arcAllAxisPosY = self.arcSegment2.get_all_axis_positions('Y')
+        self.assertEqual(arcAllAxisPosY, [self.pt7.Y, self.pt8.Y, -76.60585824440003])
+
+        arcAllAxisPosZ = self.arcSegment2.get_all_axis_positions('Z')
+        self.assertEqual(arcAllAxisPosZ, [self.pt7.Z, self.pt8.Z, 46.68997508893331])
 
     def test_get_length(self):
         length = self.lineSegment1.get_length()
