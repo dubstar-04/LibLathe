@@ -37,7 +37,6 @@ class test_segment_group(unittest.TestCase):
         self.vfeed = 50
         self.step_over = 1.5
 
-
     def test_add_segment(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         segmentStart = self.segmentGroup.segments[0].start
