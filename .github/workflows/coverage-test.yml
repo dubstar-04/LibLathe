@@ -7,8 +7,8 @@ jobs:
   codecov:
     name: Codecov Workflow
     runs-on: ubuntu-latest
-    ignore: 
-      - "*LLPlot.py"
+    
+
 
     steps:
       - uses: actions/checkout@v1
