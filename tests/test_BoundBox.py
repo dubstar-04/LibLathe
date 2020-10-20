@@ -9,7 +9,7 @@ from LibLathe.LLPoint import Point
 from LibLathe.LLBoundBox import BoundBox
 
 
-class test_point(unittest.TestCase):
+class test_boundbox(unittest.TestCase):
     """Test for LLBoundBox.py"""
     def setUp(self):
         self.pt1 = Point(0, 0, 0)
