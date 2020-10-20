@@ -9,7 +9,7 @@ from LibLathe.LLCommand import Command
 
 
 class test_command(unittest.TestCase):
-    """Test for LLBoundBox.py"""
+    """Test for LLCommand.py"""
     def setUp(self):
         self.params = {'X': -20, 'Y': 0, 'Z': 6, 'F': 10}
 
