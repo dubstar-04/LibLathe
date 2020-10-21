@@ -1,4 +1,4 @@
-from liblathe._version import __version__  # noqa: F401
+from liblathe.version import __version__  # noqa: F401
 
 
 __author__ = 'Daniel Wood'
