@@ -28,6 +28,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
+        pip install Pillow
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Code Spell
       uses: codespell-project/actions-codespell@master
