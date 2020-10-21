@@ -2,6 +2,7 @@ import re
 from setuptools import setup
 import warnings
 import sys
+from os import path
 
 if sys.version_info[:3] < (3, 5, 0):
     warnings.warn("liblathe does not support versions below "
@@ -17,10 +18,16 @@ if match:
 else:
     raise RuntimeError("Could not find version in '%s'" % VERSIONFILE)
 
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 setup(
     name='liblathe',
     version=version,
     description='Python library for generating lathe paths and gcode ',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/dubstar-04/LibLathe',
     author='Daniel Wood',
     author_email='s.d.wood.82@googlemail.com',
