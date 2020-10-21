@@ -1,12 +1,12 @@
 import math
 
-import LibLathe.LLBaseOP
-from LibLathe.LLPoint import Point
-from LibLathe.LLSegment import Segment
-from LibLathe.LLSegmentGroup import SegmentGroup
+import liblathe.base_op
+from liblathe.point import Point
+from liblathe.segment import Segment
+from liblathe.segmentgroup import SegmentGroup
 
 
-class FaceOP(LibLathe.LLBaseOP.BaseOP):
+class FaceOP(liblathe.base_op.BaseOP):
 
     def generate_path(self):
         """Generate the path for the profile operation"""
@@ -23,7 +23,7 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
         zstart = partBoundBox.ZMax + step_over * line_count
 
         # build list of segments
-        segmentGroup = SegmentGroup()
+        segmentgroup = SegmentGroup()
 
         counter = 0
         while counter < line_count + 1:
@@ -32,17 +32,17 @@ class FaceOP(LibLathe.LLBaseOP.BaseOP):
             pt2 = Point(xmax, 0, zpt)
             path_line = Segment(pt1, pt2)
             seg = path_line
-            segmentGroup.add_segment(seg)
+            segmentgroup.add_segment(seg)
             counter += 1
 
-        self.clearing_paths.append(segmentGroup)
+        self.clearing_paths.append(segmentgroup)
 
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
         Path = []
-        for segmentGroup in self.clearing_paths:
-            rough = segmentGroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+        for segmentgroup in self.clearing_paths:
+            rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
             Path.append(rough)
 
         return Path

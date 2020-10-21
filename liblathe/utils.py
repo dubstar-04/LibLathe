@@ -1,7 +1,7 @@
-from LibLathe.LLPoint import Point
-from LibLathe.LLSegment import Segment
-from LibLathe.LLSegmentGroup import SegmentGroup
-from LibLathe.LLVector import Vector
+from liblathe.point import Point
+from liblathe.segment import Segment
+from liblathe.segmentgroup import SegmentGroup
+from liblathe.vector import Vector
 
 
 class Intersection:
@@ -17,8 +17,8 @@ def sort_intersections_z(intersections):
     return sortedPoints
 
 
-def remove_the_groove(segmentGroupIn, stock_zmin, tool):
-    segments = segmentGroupIn.get_segments()
+def remove_the_groove(segmentgroupIn, stock_zmin, tool):
+    segments = segmentgroupIn.get_segments()
     segs_out = SegmentGroup()
     index = 0
     while index < len(segments):
@@ -90,7 +90,7 @@ def offsetPath(segGroupIn, step_over):
     # TODO Sort Edges to ensure they're in order.  See: Part.__sortEdges__()
     # nedges = []
     segs = segGroupIn.get_segments()
-    segmentGroup = SegmentGroup()
+    segmentgroup = SegmentGroup()
 
     for i in range(len(segs)):
         seg = segs[i]
@@ -129,8 +129,8 @@ def offsetPath(segGroupIn, step_over):
             pt = vec.multiply(step_over)
             segment = Segment(pt.add(seg.start), pt.add(seg.end))
 
-        segmentGroup.add_segment(segment)
+        segmentgroup.add_segment(segment)
 
-    segmentGroup.join_segments()
+    segmentgroup.join_segments()
 
-    return segmentGroup
+    return segmentgroup

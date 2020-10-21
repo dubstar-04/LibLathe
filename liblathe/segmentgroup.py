@@ -1,7 +1,7 @@
-from LibLathe.LLBoundBox import BoundBox
-from LibLathe.LLCommand import Command
-from LibLathe.LLPoint import Point
-from LibLathe.LLSegment import Segment
+from liblathe.boundbox import BoundBox
+from liblathe.command import Command
+from liblathe.point import Point
+from liblathe.segment import Segment
 
 
 class SegmentGroup:
@@ -20,10 +20,10 @@ class SegmentGroup:
 
         return self.segments
 
-    def extend(self, segmentGroup):
+    def extend(self, segmentgroup):
         """Add segment group to this segmentgroup"""
 
-        self.segments.extend(segmentGroup.get_segments())
+        self.segments.extend(segmentgroup.get_segments())
 
     def count(self):
         """Return the number of segments in the segmentgroup"""
@@ -53,15 +53,15 @@ class SegmentGroup:
         pt1 = Point(XMin, YMin, ZMin)
         pt2 = Point(XMax, YMax, ZMax)
 
-        segmentGroupBoundBox = BoundBox(pt1, pt2)
+        segmentgroupBoundBox = BoundBox(pt1, pt2)
 
-        return segmentGroupBoundBox
+        return segmentgroupBoundBox
 
     def join_segments(self):
         """join segments of the segmentgroup"""
 
         segments = self.get_segments()
-        segmentGroupOut = SegmentGroup()
+        segmentgroupOut = SegmentGroup()
 
         for i in range(len(segments)):
 
@@ -95,15 +95,15 @@ class SegmentGroup:
                     if segments[i].bulge < 0:
                         rad = 0 - rad
                     nseg.set_bulge_from_radius(rad)
-                    segmentGroupOut.add_segment(nseg)
+                    segmentgroupOut.add_segment(nseg)
                 else:
-                    segmentGroupOut.add_segment(Segment(pt1, pt2))
+                    segmentgroupOut.add_segment(Segment(pt1, pt2))
             else:
                 # No Intersections found. Return the segment in its current state
                 # print('join_segments - No Intersection found for index:', i)
-                segmentGroupOut.add_segment(segments[i])
+                segmentgroupOut.add_segment(segments[i])
 
-        self.segments = segmentGroupOut.get_segments()
+        self.segments = segmentgroupOut.get_segments()
 
     def previous_segment_connected(self, segment):
         """returns bool if segment is connect to the previous segment"""

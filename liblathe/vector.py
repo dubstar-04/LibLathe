@@ -1,4 +1,4 @@
-from LibLathe.LLPoint import Point
+from liblathe.point import Point
 import math
 
 
