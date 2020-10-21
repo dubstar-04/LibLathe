@@ -1,5 +1,5 @@
 """
-LibLathe Example 2
+LibLathe Example 1
 This example creates a profile turning operation
 and writes the resulting gcode to a file.
 """
@@ -8,38 +8,31 @@ import os
 import sys
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(os.path.dirname(thisFolder))
+parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
-from LibLathe.LLBoundBox import BoundBox
-from LibLathe.LLPoint import Point
-from LibLathe.LLProfileOP import ProfileOP
-from LibLathe.LLSegment import Segment
-from LibLathe.LLPlot import Plot
+from liblathe.boundbox import BoundBox
+from liblathe.point import Point
+from liblathe.profile_op import ProfileOP
+from liblathe.segment import Segment
+from liblathe.plot import Plot
 
 # Define Part Geometry
 part_segments = []
 
-PartPt1 = Point(0, 0, 10)
-PartPt2 = Point(-5, 0, -9)
-PartPt3 = Point(-9.5, 0, -15.85)
-PartPt4 = Point(-5.4, 0, -22)
-PartPt5 = Point(-5.4, 0, -40)
-PartPt6 = Point(-13, 0, -45)
-PartPt7 = Point(-13, 0, -48)
-PartPt8 = Point(0, 0, -48)
+PartPt1 = Point(0, 0, 0)
+PartPt2 = Point(-15, 0, -5)
+PartPt3 = Point(-15, 0, -15)
+PartPt4 = Point(0, 0, -20)
 
-part_segments.append(Segment(PartPt1, PartPt2, -0.75))
+part_segments.append(Segment(PartPt1, PartPt2))
 part_segments.append(Segment(PartPt2, PartPt3))
 part_segments.append(Segment(PartPt3, PartPt4))
-part_segments.append(Segment(PartPt4, PartPt5))
-part_segments.append(Segment(PartPt5, PartPt6))
-part_segments.append(Segment(PartPt6, PartPt8))
-part_segments.append(Segment(PartPt7, PartPt8))
+part_segments.append(Segment(PartPt4, PartPt1))
 
 # Define stock bounds
-stockPt1 = Point(0, 0, 15)
-stockPt2 = Point(-25, 0, -55)
+stockPt1 = Point(0, 0, 5)
+stockPt2 = Point(-20, 0, -20)
 StockBoundingBox = BoundBox(stockPt1, stockPt2)
 
 # Define Operations Properties
