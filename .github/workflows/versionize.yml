@@ -26,4 +26,7 @@ jobs:
           version=$(git rev-list --count master)
           echo "write version number to version.py"
           echo "Current version is: $version"
-          echo __version__ = \"0.0.$version\" > liblathe/version.py
+          versionString=$(__version__ = \"0.0.$version\")
+          list=$(ls)
+          echo list $list
+          echo  $versionString > liblathe/version.py
