@@ -3,13 +3,13 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(os.path.dirname(thisFolder))
+parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from LibLathe.LLPoint import Point
+from liblathe.point import Point
 
 
 class test_point(unittest.TestCase):
-    """Test for LLPoint.py"""
+    """Test for point.py"""
     def setUp(self):
         self.pt1 = Point(0, 0, 0)
         self.pt2 = Point(100, 100, 100)
