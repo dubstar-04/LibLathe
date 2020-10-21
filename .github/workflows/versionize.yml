@@ -28,5 +28,5 @@ jobs:
           echo "Current version is: $version"
           versionString=$(__version__ = \"0.0.$version\")
           list=$(ls)
-          echo list $list
+          echo "list $list"
           echo  $versionString > liblathe/version.py
