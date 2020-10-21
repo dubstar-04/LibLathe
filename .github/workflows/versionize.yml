@@ -23,7 +23,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Write version number to version.py
         run: |
-          version=`git rev-list --count master`
-          echo write version number to version.py
-          echo Current version is: $version
+          version=$(git rev-list --count master)
+          echo "write version number to version.py"
+          echo "Current version is: $version"
           echo __version__ = \"0.0.$version\" > liblathe/version.py
