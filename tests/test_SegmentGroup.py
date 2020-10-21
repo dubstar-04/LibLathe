@@ -30,6 +30,7 @@ class test_segment_group(unittest.TestCase):
         self.lineSegment1 = Segment(self.pt1, self.pt2)
         self.lineSegment2 = Segment(self.pt5, self.pt6)
         self.lineSegment3 = Segment(self.pt9, self.pt10)
+        self.lineSegment4 = Segment(self.pt2, self.pt1)
 
         self.inverseLineSegment1 = Segment(self.pt3, self.pt4)
 
@@ -102,8 +103,8 @@ class test_segment_group(unittest.TestCase):
 
     def test_previous_segment_connected_true(self):
         self.segmentGroup.add_segment(self.lineSegment1)
-        self.segmentGroup.add_segment(self.inverseLineSegment1)
-        self.assertFalse(self.segmentGroup.previous_segment_connected(self.inverseLineSegment1))
+        self.segmentGroup.add_segment(self.lineSegment4)
+        self.assertTrue(self.segmentGroup.previous_segment_connected(self.lineSegment4))
 
     def test_get_min_retract_x(self):
         self.segmentGroup.add_segment(self.lineSegment1)
