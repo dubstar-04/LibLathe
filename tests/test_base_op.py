@@ -3,13 +3,13 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(os.path.dirname(thisFolder))
+parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from LibLathe.LLBaseOP import BaseOP
+from liblathe.base_op import BaseOP
 
 
 class test_BaseOP(unittest.TestCase):
-    """Test for LLBaseOP.py"""
+    """Test for base_op.py"""
 
     def setUp(self):
         self.baseop = BaseOP()

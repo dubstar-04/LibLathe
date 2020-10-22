@@ -1,13 +1,13 @@
 import math
 
-import LibLathe.LLBaseOP
-import LibLathe.LLUtils as utils
-from LibLathe.LLPoint import Point
-from LibLathe.LLSegment import Segment
-from LibLathe.LLSegmentGroup import SegmentGroup
+import liblathe.base_op
+import liblathe.utils as utils
+from liblathe.point import Point
+from liblathe.segment import Segment
+from liblathe.segmentgroup import SegmentGroup
 
 
-class ProfileOP(LibLathe.LLBaseOP.BaseOP):
+class ProfileOP(liblathe.base_op.BaseOP):
 
     def generate_path(self):
         """Generate the path for the profile operation"""
@@ -41,16 +41,16 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                         intersections.append(intersection)
 
             # build list of segments
-            segmentGroup = SegmentGroup()
+            segmentgroup = SegmentGroup()
 
             if not intersections:
                 seg = path_line
-                segmentGroup.add_segment(seg)
+                segmentgroup.add_segment(seg)
 
             if len(intersections) == 1:
                 # Only one intersection, trim line to intersection.
                 seg = Segment(pt1, intersections[0].point)
-                segmentGroup.add_segment(seg)
+                segmentgroup.add_segment(seg)
 
             if len(intersections) > 1:
                 # more than one intersection
@@ -75,25 +75,25 @@ class ProfileOP(LibLathe.LLBaseOP.BaseOP):
                                 path_line = Segment(intersections[i].point, intersections[i + 1].point)
                                 path_line.set_bulge_from_radius(rad)
 
-                                segmentGroup.add_segment(path_line)
+                                segmentgroup.add_segment(path_line)
 
                         if i % 2 == 0:
                             path_line = Segment(intersections[i].point, intersections[i + 1].point)
-                            segmentGroup.add_segment(path_line)
+                            segmentgroup.add_segment(path_line)
 
-            if segmentGroup.count():
-                self.clearing_paths.append(segmentGroup)
+            if segmentgroup.count():
+                self.clearing_paths.append(segmentgroup)
 
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
         Path = []
 
-        for segmentGroup in self.clearing_paths:
-            rough = segmentGroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+        for segmentgroup in self.clearing_paths:
+            rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
             Path.append(rough)
-        for segmentGroup in self.finishing_paths:
-            finish = segmentGroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+        for segmentgroup in self.finishing_paths:
+            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
             Path.append(finish)
 
         return Path

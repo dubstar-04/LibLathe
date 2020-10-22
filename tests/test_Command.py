@@ -3,13 +3,13 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(os.path.dirname(thisFolder))
+parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from LibLathe.LLCommand import Command
+from liblathe.command import Command
 
 
 class test_command(unittest.TestCase):
-    """Test for LLCommand.py"""
+    """Test for command.py"""
     def setUp(self):
         self.params = {'X': -20, 'Y': 0, 'Z': 6, 'F': 10}
 

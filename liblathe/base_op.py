@@ -1,6 +1,6 @@
-import LibLathe.LLUtils as utils
-from LibLathe.LLSegmentGroup import SegmentGroup
-from LibLathe.LLTool import Tool
+import liblathe.utils as utils
+from liblathe.segmentgroup import SegmentGroup
+from liblathe.tool import Tool
 
 
 class BaseOP:
@@ -65,8 +65,8 @@ class BaseOP:
             self.finishing_paths.append(self.part_segment_group)
             f_pass = 1
             while f_pass != self.finish_passes:
-                segmentGroup = utils.offsetPath(self.part_segment_group, self.step_over * f_pass)
-                self.finishing_paths.append(segmentGroup)
+                segmentgroup = utils.offsetPath(self.part_segment_group, self.step_over * f_pass)
+                self.finishing_paths.append(segmentgroup)
                 f_pass += 1
 
     def generate_path(self):
