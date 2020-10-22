@@ -55,8 +55,10 @@ os.system("pip install twine")
 if mode == "0" or mode == "1":
     # upload the file to the selected index
     if testing:
+        print('publish to https://test.pypi.org/')
         os.system("twine upload --repository testpypi dist/*")
     else:
+        print('publish to https://pypi.org/')
         os.system("twine upload --repository pypi dist/*")
 
 __dir__ = os.path.dirname(__file__)
