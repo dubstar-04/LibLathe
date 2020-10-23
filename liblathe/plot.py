@@ -154,7 +154,7 @@ class Plot:
                             continue
 
                         else:
-                            print(line)
+                            print(command)
                             raise Warning('Unknown character!')
                 else:
                     continue
