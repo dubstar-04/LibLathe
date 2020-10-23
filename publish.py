@@ -3,7 +3,6 @@ Automate publishing liblathe to https://pypi.org/
 """
 
 import os
-import subprocess
 import shutil
 import re
 
