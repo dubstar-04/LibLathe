@@ -305,7 +305,7 @@ class Segment:
 
             # print('point_on_segment', pnt_ang, 'X:', point.X, 'Y:', point.Y, 'Z:', point.Z)
 
-            # TODO: There must be a slicker way to determin if the point is on the arc. Current method good for debug. 
+            # TODO: There must be a slicker way to determin if the point is on the arc. Current method good for debug.
 
             if self.bulge > 0:
                 if sa < ea:
