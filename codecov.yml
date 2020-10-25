@@ -3,7 +3,7 @@ codecov:
   branch: master
 
 ignore:
-  - "/tests"
+  - "tests"
   - "setup.py" 
   - "publish.py" 
 
