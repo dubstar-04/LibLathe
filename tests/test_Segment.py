@@ -31,6 +31,7 @@ class test_segment(unittest.TestCase):
 
         self.arcSegment1 = Segment(self.pt1, self.pt2, 1.5)
         self.arcSegment2 = Segment(self.pt7, self.pt8, 1.5)
+        self.arcSegment3 = Segment(self.pt3, self.pt4, 1.5)
 
         self.inverseArcSegment1 = Segment(self.pt1, self.pt2, -1.5)
         self.inverseArcSegment2 = Segment(self.pt7, self.pt8, -1.5)
@@ -168,7 +169,8 @@ class test_segment(unittest.TestCase):
 
     def test_intersect(self):
 
-        intersect, pt = self.lineSegment1.intersect(self.inverseLineSegment1)
+        intersect, pts = self.lineSegment1.intersect(self.inverseLineSegment1)
+        pt = pts[0]
         self.assertTrue(intersect)
         intersectionPt = Point(50, 0.0, 50)
         self.assertTrue(pt.is_same(intersectionPt))
@@ -196,6 +198,12 @@ class test_segment(unittest.TestCase):
         self.assertTrue(intersect)
         intersectionPt = Point(-169.91999999999996, 0.0, 107.27333333333338)
         self.assertTrue(pt.is_same(intersectionPt))
+
+        intersect, pts = self.arcSegment1.intersect(self.arcSegment3)
+        pt = pts[0]
+        self.assertTrue(intersect)
+        intersectionPt = Point(-2.882525053975556, 0.0, 50)
+        self.assertTrue(pts[0].is_same(intersectionPt))
 
         # false intersection tests
         intersect, pts = self.inverseArcSegment2.intersect(self.lineSegment1)
