@@ -180,7 +180,7 @@ class Segment:
         b1 = seg.start
         b2 = seg.end
         intersect = False
-        pt = Point()
+        pts = []
 
         ua_t = (b2.X - b1.X) * (a1.Z - b1.Z) - (b2.Z - b1.Z) * (a1.X - b1.X)
         ub_t = (a2.X - a1.X) * (a1.Z - b1.Z) - (a2.Z - a1.Z) * (a1.X - b1.X)
@@ -190,13 +190,12 @@ class Segment:
             ua = ua_t / u_b
             ub = ub_t / u_b
 
-            # print('LLSEG intersect', ua, ub)
-
             if ((0 <= ua and ua <= 1) and (0 <= ub and ub <= 1)) or extend:
                 intersect = True
                 pt = Point(a1.X + ua * (a2.X - a1.X), 0, a1.Z + ua * (a2.Z - a1.Z))
+                pts.append(pt)
 
-        return intersect, pt
+        return intersect, pts
 
     def intersectCircleLine(self, seg, extend=False):
 
