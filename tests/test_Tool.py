@@ -21,7 +21,6 @@ class test_tool(unittest.TestCase):
         direction = self.tool.direction
         orientation = self.tool.orientation
 
-        print(shape, length, nose_radius, direction, orientation)
         self.assertEqual(shape, "D")
         self.assertEqual(length, "07")
         self.assertEqual(nose_radius, "04")
