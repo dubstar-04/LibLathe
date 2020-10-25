@@ -27,6 +27,10 @@ class test_tool(unittest.TestCase):
         self.assertEqual(direction, "R")
         self.assertEqual(orientation, ToolOri.X)
 
+    def test_get_tool_cutting_angle(self):
+        cuttingAngle = self.tool.get_tool_cutting_angle()
+        self.assertEqual(cuttingAngle, 275)
+
     def test_getShapeAngle(self):
         shapeAngle = self.tool.getShapeAngle()
         self.assertEqual(shapeAngle, 55)
