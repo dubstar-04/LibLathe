@@ -120,6 +120,30 @@ class Tool:
 
     def getNoseRadius(self):
         """
+        Return the nose radius for the tool
+        """
+        noseRadius = {
+            "00": 0,  # sharp
+            "V3": 0.03,
+            "V5": 0.05,
+            "01": 0.1,
+            "02": 0.2,
+            "04": 0.4,
+            "08": 0.8,
+            "12": 1.2,
+            "16": 1.6,
+            "20": 2.0,
+            "24": 2.4,
+            "28": 2.8,
+            "32": 3.2
+        }
+
+        try:
+            radius = noseRadius[self.nose_radius]
+            print("nose radius: ", radius)
+            return radius
+        except(KeyError):
+            return None
 
     def getCuttingDirection(self):
         """
