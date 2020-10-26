@@ -124,8 +124,8 @@ class Tool:
     def getCuttingDirection(self):
         """
         Return the cutting angle defined for this tool
-        R = Right
-        L = Left
+        R = Right [<-]
+        L = Left  [->]
         N = Neutral
         """
         return self.direction
