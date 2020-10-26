@@ -24,11 +24,12 @@ class Tool:
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
         self.orientation = None             # orientation of the tool X or Z
+        self.tool_rotation = 0              # tool rotation about tool tip
 
         if tool_string:
             self.set_tool(tool_string)
 
-    def set_tool(self, tool_string, tool_ori=ToolOri.X):
+    def set_tool(self, tool_string, tool_ori=ToolOri.X, tool_rotation=0):
 
         if not len(tool_string) == 11:
             raise ValueError("Tool Input String Incomplete")
@@ -40,6 +41,7 @@ class Tool:
         self.nose_radius = self.tool_string[8:10]
         self.direction = self.tool_string[-1]
         self.orientation = tool_ori
+        self.tool_rotation = tool_rotation
 
         for item in vars(self):
             print('item', getattr(self, item))
@@ -145,3 +147,9 @@ class Tool:
         N = Neutral
         """
         return self.direction
+
+    def getRotation(self):
+        """
+        Return the tool rotation for this tool
+        """
+        return self.tool_rotation
