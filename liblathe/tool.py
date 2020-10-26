@@ -16,11 +16,11 @@ class Tool:
     def __init__(self, tool_string=None):
         self.tool_string = None             # DCMT070204R
         self.shape = None                   # D
-        # self.clearance_angle = None       # C
-        # self.tolerance = None             # M
-        # self.type = None                  # T
+        # clearance angle                   # C
+        # tolerance                         # M
+        # type                              # T
         self.length = None                  # 07
-        # self.thickness = None             # 02
+        # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
         self.orientation = None             # orientation of the tool X or Z
@@ -36,20 +36,13 @@ class Tool:
         # TODO: Validate the values passed in create a valid tool
         self.tool_string = tool_string
         self.shape = self.tool_string[0]
-        # self.clearance_angle = self.tool_string[1]
-        # self.tolerance = self.tool_string[2]
-        # self.type = self.tool_string[3]
         self.length = self.tool_string[4:6]
-        # self.thickness = self.tool_string[6:8]
         self.nose_radius = self.tool_string[8:10]
         self.direction = self.tool_string[-1]
         self.orientation = tool_ori
 
         for item in vars(self):
             print('item', getattr(self, item))
-
-        self.getShapeAngle()
-        self.getEdgeLength()
 
     def get_tool_cutting_angle(self):
         """
