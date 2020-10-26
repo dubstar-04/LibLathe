@@ -49,8 +49,17 @@ class Tool:
     def get_tool_cutting_angle(self):
         """
         Return the maximum cutting angle the tool is capable of
+        Note: Angle is on the XZ plane and inverted. 
         """
-        return 275
+        shapeAngle = self.getShapeAngle()
+        rotation = self.getRotation()
+        clearance = 2
+
+        max_cutting_angle = 360 - (shapeAngle + rotation + clearance)
+
+        print('max_cutting angle:', max_cutting_angle)
+
+        return max_cutting_angle
 
     def get_max_doc(self):
         """
