@@ -43,8 +43,8 @@ class Tool:
         self.orientation = tool_ori
         self.tool_rotation = tool_rotation
 
-        for item in vars(self):
-            print('item', getattr(self, item))
+        # for item in vars(self):
+        #     print('item', getattr(self, item))
 
     def get_tool_cutting_angle(self):
         """
@@ -57,7 +57,7 @@ class Tool:
 
         max_cutting_angle = 360 - (shapeAngle + rotation + clearance)
 
-        print('max_cutting angle:', max_cutting_angle)
+        # print('max_cutting angle:', max_cutting_angle)
 
         return max_cutting_angle
 
@@ -94,7 +94,7 @@ class Tool:
         }
 
         angle = shape.get(self.shape, None)
-        print('shape Angle:', angle)
+        # print('shape Angle:', angle)
         return angle
 
     def getEdgeLength(self):
@@ -116,7 +116,7 @@ class Tool:
 
         try:
             edgeLength = shapeSize[self.shape][self.length]
-            print("shape Size: ", edgeLength)
+            # print("shape Size: ", edgeLength)
             return edgeLength
         except(KeyError):
             return None
@@ -143,7 +143,7 @@ class Tool:
 
         try:
             radius = noseRadius[self.nose_radius]
-            print("nose radius: ", radius)
+            # print("nose radius: ", radius)
             return radius
         except(KeyError):
             return None

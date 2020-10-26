@@ -34,7 +34,7 @@ def remove_the_groove(segmentgroupIn, stock_zmin, tool):
         if seg.bulge == 0:
             pt1 = seg.start
             pt2 = seg.end
-            print('seg angle', segments.index(seg), pt1.angle_to(pt2))
+            # print('seg angle', segments.index(seg), pt1.angle_to(pt2))
             if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
                 next_index, pt = find_next_good_edge(segments, index, stock_zmin, tool)
                 if not next_index:
