@@ -65,10 +65,12 @@ class Point:
         return p
 
     def rotate(self, angle):
-        """Returns a point rotated by angle degrees"""
+        """Returns a point rotated by angle in degrees"""
 
-        x = self.Z * math.sin(angle) + self.X * math.cos(angle)
-        z = self.Z * math.cos(angle) + self.X * math.sin(angle)
+        angle = math.radians(angle)
+
+        x = self.X * math.cos(angle) + self.Z * math.sin(angle)
+        z = -self.X * math.sin(angle) + self.Z * math.cos(angle)
         return Point(x, self.Y, z)
 
     def mid(self, pt):
