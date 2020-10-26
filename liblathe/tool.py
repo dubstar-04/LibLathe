@@ -93,7 +93,6 @@ class Tool:
         print('shape Angle:', angle)
         return angle
 
-
     def getEdgeLength(self):
         """
         Return the edge length for the tool
