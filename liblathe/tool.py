@@ -16,19 +16,20 @@ class Tool:
     def __init__(self, tool_string=None):
         self.tool_string = None             # DCMT070204R
         self.shape = None                   # D
-        # self.clearance_angle = None       # C
-        # self.tolerance = None             # M
-        # self.type = None                  # T
+        # clearance angle                   # C
+        # tolerance                         # M
+        # type                              # T
         self.length = None                  # 07
-        # self.thickness = None             # 02
+        # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
         self.orientation = None             # orientation of the tool X or Z
+        self.tool_rotation = 0              # tool rotation about tool tip
 
         if tool_string:
             self.set_tool(tool_string)
 
-    def set_tool(self, tool_string, tool_ori=ToolOri.X):
+    def set_tool(self, tool_string, tool_ori=ToolOri.X, tool_rotation=0):
 
         if not len(tool_string) == 11:
             raise ValueError("Tool Input String Incomplete")
@@ -36,26 +37,29 @@ class Tool:
         # TODO: Validate the values passed in create a valid tool
         self.tool_string = tool_string
         self.shape = self.tool_string[0]
-        # self.clearance_angle = self.tool_string[1]
-        # self.tolerance = self.tool_string[2]
-        # self.type = self.tool_string[3]
         self.length = self.tool_string[4:6]
-        # self.thickness = self.tool_string[6:8]
         self.nose_radius = self.tool_string[8:10]
         self.direction = self.tool_string[-1]
         self.orientation = tool_ori
+        self.tool_rotation = tool_rotation
 
-        for item in vars(self):
-            print('item', getattr(self, item))
-
-        self.getShapeAngle()
-        self.getEdgeLength()
+        # for item in vars(self):
+        #     print('item', getattr(self, item))
 
     def get_tool_cutting_angle(self):
         """
         Return the maximum cutting angle the tool is capable of
+        Note: Angle is on the XZ plane and inverted. 
         """
-        return 275
+        shapeAngle = self.getShapeAngle()
+        rotation = self.getRotation()
+        clearance = 2
+
+        max_cutting_angle = 360 - (shapeAngle + rotation + clearance)
+
+        # print('max_cutting angle:', max_cutting_angle)
+
+        return max_cutting_angle
 
     def get_max_doc(self):
         """
@@ -90,38 +94,8 @@ class Tool:
         }
 
         angle = shape.get(self.shape, None)
-        print('shape Angle:', angle)
+        # print('shape Angle:', angle)
         return angle
-
-    def getClearanceAngle(self):
-        """
-        A 	3 degrees
-        B 	5 degrees
-        C 	7 degrees
-        D 	15 degrees
-        E 	20 degrees
-        F 	25 degrees
-        G 	30 degrees
-        N 	0 degrees
-        P 	11 degrees
-        O 	Other
-        """
-        pass
-
-    def getType(self):
-        """
-        A 	Hole
-        G 	Hole, chip break double side
-        M 	Hole, chip break single side
-        N 	No Hole, No Chipbreak
-        P 	Hole, chip break double side
-        Q 	Countersunk Hole
-        R 	No Hole, chip break single side
-        T 	C’sunk Hole, c’break single side
-        W 	Double Countersunk Hole
-        X 	Other
-        """
-        pass
 
     def getEdgeLength(self):
         """
@@ -142,50 +116,49 @@ class Tool:
 
         try:
             edgeLength = shapeSize[self.shape][self.length]
-            print("shape Size: ", edgeLength)
+            # print("shape Size: ", edgeLength)
             return edgeLength
         except(KeyError):
             return None
 
-    def getThickness(self):
-        """
-        S1 = 1.39
-        01 = 1.59
-        T0 = 1.79
-        02 = 2.38
-        T2 = 2.78
-        03 = 3.18
-        T3 = 3.97
-        04 = 4.76
-        06 = 6.35
-        07 = 7.94
-        09 = 9.52
-        """
-        pass
-
     def getNoseRadius(self):
         """
-        00 = sharp
-        V3 = 0.03
-        V5 = 0.05
-        01 = 0.1
-        02 = 0.2
-        04 = 0.4
-        08 = 0.8
-        12 = 1.2
-        16 = 1.6
-        20 = 2.0
-        24 = 2.4
-        28 = 2.8
-        32 = 2.2
+        Return the nose radius for the tool
         """
-        pass
+        noseRadius = {
+            "00": 0,  # sharp
+            "V3": 0.03,
+            "V5": 0.05,
+            "01": 0.1,
+            "02": 0.2,
+            "04": 0.4,
+            "08": 0.8,
+            "12": 1.2,
+            "16": 1.6,
+            "20": 2.0,
+            "24": 2.4,
+            "28": 2.8,
+            "32": 3.2
+        }
+
+        try:
+            radius = noseRadius[self.nose_radius]
+            # print("nose radius: ", radius)
+            return radius
+        except(KeyError):
+            return None
 
     def getCuttingDirection(self):
         """
         Return the cutting angle defined for this tool
-        R = Right
-        L = Left
+        R = Right [<-]
+        L = Left  [->]
         N = Neutral
         """
         return self.direction
+
+    def getRotation(self):
+        """
+        Return the tool rotation for this tool
+        """
+        return self.tool_rotation

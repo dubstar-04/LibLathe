@@ -2,6 +2,7 @@ from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
 from liblathe.vector import Vector
+import math
 
 
 class Intersection:
@@ -43,7 +44,7 @@ def remove_the_groove(segmentgroupIn, stock_zmin, tool):
                 if next_index != index:
                     seg = Segment(pt1, pt)
                     segs_out.add_segment(seg)
-                    next_pt1 = segments[next_index].start
+                    next_pt1 = pt
                     next_pt2 = segments[next_index].end
                 if next_pt1 != pt:
                     seg = Segment(pt1, next_pt2)
@@ -64,9 +65,21 @@ def find_next_good_edge(segments, current_index, stock_zmin, tool):
     pt1 = segments[index].start
     index += 1
     while index < len(segments):
-        pt2 = segments[index].start
-        if pt1.angle_to(pt2) < tool.get_tool_cutting_angle():
-            return index, pt2
+        # create a new point at the max angle from pt1
+        a = math.radians(tool.get_tool_cutting_angle())
+        x = pt1.X + math.cos(a) * 2
+        z = pt1.Z + math.sin(a) * 2
+        pt2 = Point(x, 0, z)
+        # create a new projected segment
+        seg = Segment(pt1, pt2)
+
+        # loop through the remaining segments and see if the projected segments
+        idx = index
+        while idx < len(segments):
+            intersect, pt = seg.intersect(segments[idx], True)
+            if intersect:
+                return idx, pt[0]
+            idx += 1
         index += 1
 
     stock_pt = Point(pt1.X, pt1.Y, stock_zmin)
