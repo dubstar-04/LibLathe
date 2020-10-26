@@ -93,35 +93,6 @@ class Tool:
         print('shape Angle:', angle)
         return angle
 
-    def getClearanceAngle(self):
-        """
-        A 	3 degrees
-        B 	5 degrees
-        C 	7 degrees
-        D 	15 degrees
-        E 	20 degrees
-        F 	25 degrees
-        G 	30 degrees
-        N 	0 degrees
-        P 	11 degrees
-        O 	Other
-        """
-        pass
-
-    def getType(self):
-        """
-        A 	Hole
-        G 	Hole, chip break double side
-        M 	Hole, chip break single side
-        N 	No Hole, No Chipbreak
-        P 	Hole, chip break double side
-        Q 	Countersunk Hole
-        R 	No Hole, chip break single side
-        T 	C’sunk Hole, c’break single side
-        W 	Double Countersunk Hole
-        X 	Other
-        """
-        pass
 
     def getEdgeLength(self):
         """
@@ -147,39 +118,8 @@ class Tool:
         except(KeyError):
             return None
 
-    def getThickness(self):
-        """
-        S1 = 1.39
-        01 = 1.59
-        T0 = 1.79
-        02 = 2.38
-        T2 = 2.78
-        03 = 3.18
-        T3 = 3.97
-        04 = 4.76
-        06 = 6.35
-        07 = 7.94
-        09 = 9.52
-        """
-        pass
-
     def getNoseRadius(self):
         """
-        00 = sharp
-        V3 = 0.03
-        V5 = 0.05
-        01 = 0.1
-        02 = 0.2
-        04 = 0.4
-        08 = 0.8
-        12 = 1.2
-        16 = 1.6
-        20 = 2.0
-        24 = 2.4
-        28 = 2.8
-        32 = 2.2
-        """
-        pass
 
     def getCuttingDirection(self):
         """
