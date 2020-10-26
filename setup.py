@@ -2,24 +2,26 @@ import re
 from setuptools import setup
 import warnings
 import sys
-from os import path
+import os
 
 if sys.version_info[:3] < (3, 5, 0):
     warnings.warn("liblathe does not support versions below "
                   "Python 3.5.0", RuntimeWarning)
 
-VERSIONFILE = 'liblathe/version.py'
+__dir__ = os.path.dirname(__file__)
+version_file = os.path.join(__dir__, "liblathe/version.py")
+liblathe_path = os.path.join(__dir__, "liblathe")
+liblathe_path = os.path.abspath(liblathe_path)
 
-version_line = open(VERSIONFILE).read()
+version_line = open(version_file).read()
 version_re = r"^__version__ = ['\"]([^'\"]*)['\"]"
 match = re.search(version_re, version_line, re.M)
 if match:
     version = match.group(1)
 else:
-    raise RuntimeError("Could not find version in '%s'" % VERSIONFILE)
+    raise RuntimeError("Could not find version in '%s'" % version_file)
 
-this_directory = path.abspath(path.dirname(__file__))
-with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+with open(os.path.join(__dir__, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(

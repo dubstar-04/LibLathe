@@ -180,7 +180,7 @@ class Segment:
         b1 = seg.start
         b2 = seg.end
         intersect = False
-        pt = Point()
+        pts = []
 
         ua_t = (b2.X - b1.X) * (a1.Z - b1.Z) - (b2.Z - b1.Z) * (a1.X - b1.X)
         ub_t = (a2.X - a1.X) * (a1.Z - b1.Z) - (a2.Z - a1.Z) * (a1.X - b1.X)
@@ -190,13 +190,12 @@ class Segment:
             ua = ua_t / u_b
             ub = ub_t / u_b
 
-            # print('LLSEG intersect', ua, ub)
-
             if ((0 <= ua and ua <= 1) and (0 <= ub and ub <= 1)) or extend:
                 intersect = True
                 pt = Point(a1.X + ua * (a2.X - a1.X), 0, a1.Z + ua * (a2.Z - a1.Z))
+                pts.append(pt)
 
-        return intersect, pt
+        return intersect, pts
 
     def intersectCircleLine(self, seg, extend=False):
 
@@ -240,39 +239,11 @@ class Segment:
         if 0 <= u2 and u2 <= 1 or extend:
             pts.append(a1.lerp(a2, u2))
 
-        sa = round(c.angle_to(circle.start), 0)
-        ea = round(c.angle_to(circle.end), 0)
-
         if not extend:
             for pnt in pts:
-                pnt_ang = round(c.angle_to(pnt), 0)
-
-                # print('arc stuff', 'sa:', sa, 'ea:', ea, 'pnt_ang:', pnt_ang, pnt.X, pnt.Z, 'centre:', c)
-
-                if sa < ea:
-                    if circle.bulge > 0:
-                        # print('sa < ea - positive bulge')
-                        if pnt_ang <= sa or pnt_ang >= ea:
-                            # print('inside the arc sa < ea - positive bulge')
-                            ptsout.append(pnt)
-                    if circle.bulge < 0:
-                        # print('sa < ea - negative bulge')
-                        if pnt_ang >= sa and pnt_ang <= ea:
-                            # print('inside the arc sa < ea - negative bulge')
-                            ptsout.append(pnt)
-
-                if sa > ea:
-                    if circle.bulge > 0:
-                        # print('sa > ea - positive bulge')
-                        if pnt_ang <= sa and pnt_ang >= ea:
-                            # print('inside the arc sa > ea - positive bulge')
-                            ptsout.append(pnt)
-
-                    if circle.bulge < 0:
-                        # print('sa > ea - negative bulge')
-                        if pnt_ang >= sa or pnt_ang <= ea:
-                            # print('inside the arc sa > ea - negative bulge')
-                            ptsout.append(pnt)
+                # check if the point is on the segment
+                if circle.point_on_segment(pnt):
+                    ptsout.append(pnt)
 
         else:
             intersect = True
@@ -291,44 +262,69 @@ class Segment:
         c2 = seg.get_centre_point()
         r2 = seg.get_radius()
         intersect = False
-        pt = Point()
         pts = []
-
-        # Determine minimum and maximum radii where circles can intersect
-        r_max = r1 + r2
-        r_min = abs(r1 - r2)
+        ptsout = []
 
         # Determine actual distance between circle centres
         c_dist = c1.distance_to(c2)
 
-        if c_dist > r_max:
-            # Intersection Outside
-            pass
-        elif c_dist < r_min:
-            # Intersection Inside
+        a = (r1 ** 2 - r2 ** 2 + c_dist ** 2) / (2 * c_dist)
+        h = math.sqrt(r1 ** 2 - a ** 2)
+        p = c1.lerp(c2, a / c_dist)
+        b = h / c_dist
+        pts.append(Point(p.X - b * (c2.Z - c1.Z), 0, p.Z + b * (c2.X - c1.X)))
+        pts.append(Point(p.X + b * (c2.Z - c1.Z), 0, p.Z - b * (c2.X - c1.X)))
+
+        for pnt in pts:
+            # check if the point is on both segments
+            if self.point_on_segment(pnt) and seg.point_on_segment(pnt):
+                ptsout.append(pnt)
+
+        if len(ptsout):
+            intersect = True
+
+        return intersect, ptsout
+
+    def point_on_segment(self, point):
+
+        if self.bulge == 0:
+            # Line
+            # TODO: Move the line code here
             pass
         else:
-            a = (r1 ** 2 - r2 ** 2 + c_dist ** 2) / (2 * c_dist)
-            h = math.sqrt(r1 ** 2 - a ** 2)
-            p = c1.lerp(c2, a / c_dist)
-            b = h / c_dist
-            pts.append(Point(p.X - b * (c2.Z - c1.Z), p.Z + b * (c2.X - c1.X)))
-            pts.append(Point(p.X + b * (c2.Z - c1.Z), p.Z - b * (c2.X - c1.X)))
+            # Arc
+            c = self.get_centre_point()
+            radius = self.get_radius()
+            sa = c.angle_to(self.start)
+            ea = c.angle_to(self.end)
+            pnt_ang = c.angle_to(point)
 
-            sa1 = c1.angle_to(self.start)
-            ea1 = c1.angle_to(self.end)
+            # if the point isn't on the segment radius it's not a true intersection
+            if round(c.distance_to(point), 5) != round(radius, 5):
+                return False
 
-            sa2 = c2.angle_to(seg.start)
-            ea2 = c2.angle_to(seg.end)
+            # print('point_on_segment', pnt_ang, 'X:', point.X, 'Y:', point.Y, 'Z:', point.Z)
 
-            for pnt in pts:
-                pnt_ang1 = c1.angle_to(pnt)
-                pnt_ang2 = c2.angle_to(pnt)
-                # print('arc stuff', sa, ea, pnt_ang, pnt.X, pnt.Z)
+            # TODO: There must be a slicker way to determin if the point is on the arc. Current method good for debug.
 
-                if pnt_ang1 > sa1 and pnt_ang1 < ea1 and pnt_ang2 > sa2 and pnt_ang2 < ea2:
-                    # print('point', pnt.X, pnt.Z)
-                    intersect = True
-                    pt = pnt
+            if self.bulge > 0:
+                if sa < ea:
+                    # print('sa > ea - positive bulge')
+                    if pnt_ang <= sa or pnt_ang >= ea:
+                        return True
 
-        return intersect, pt
+                if sa > ea:
+                    # print('sa < ea - positive bulge')
+                    if pnt_ang <= sa and pnt_ang >= ea:
+                        return True
+
+            elif self.bulge < 0:
+                if sa < ea:
+                    # print('sa < ea - negative bulge')
+                    if pnt_ang >= sa and pnt_ang <= ea:
+                        return True
+
+                if sa > ea:
+                    # print('sa > ea - negative bulge')
+                    if pnt_ang >= sa or pnt_ang <= ea:
+                        return True
