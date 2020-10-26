@@ -32,7 +32,7 @@ class test_tool(unittest.TestCase):
 
     def test_get_tool_cutting_angle(self):
         cuttingAngle = self.tool.get_tool_cutting_angle()
-        self.assertEqual(cuttingAngle, 275)
+        self.assertEqual(cuttingAngle, 303)
 
     def test_getShapeAngle(self):
         shapeAngle = self.tool.getShapeAngle()
