@@ -42,6 +42,10 @@ class test_tool(unittest.TestCase):
         edgeLength = self.tool.getEdgeLength()
         self.assertEqual(edgeLength, 6.35)
 
+    def test_getNoseRadius(self):
+        noseRadius = self.tool.getNoseRadius()
+        self.assertEqual(noseRadius, 0.4)
+
     def test_getCuttingDirection(self):
         cuttingDirection = self.tool.getCuttingDirection()
         self.assertEqual(cuttingDirection, "R")
