@@ -50,6 +50,10 @@ class test_tool(unittest.TestCase):
         cuttingDirection = self.tool.getCuttingDirection()
         self.assertEqual(cuttingDirection, "R")
 
+    def test_getRotation(self):
+        rotation = self.tool.getRotation()
+        self.assertEqual(rotation, 0)
+
 
 if __name__ == '__main__':
     unittest.main()
