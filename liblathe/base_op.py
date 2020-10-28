@@ -45,6 +45,9 @@ class BaseOP:
     def get_gcode(self):
         """Base function for all turning operations"""
 
+        if self.tool.tool_string is None:
+            raise Warning("Tool is unset")
+
         self.remove_the_groove()
         self.offset_part_outline()
         self.generate_path()

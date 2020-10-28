@@ -1,3 +1,5 @@
+import math
+
 from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
@@ -65,15 +67,17 @@ def find_next_good_edge(segments, current_index, stock_zmin, tool):
     index += 1
     while index < len(segments):
         # create a new point at the max angle from pt1
-        a = tool.get_tool_cutting_angle()
-        pt2 = pt1.project(a, 2)
+        ang = tool.get_tool_cutting_angle()
+        # calculate the length required to project the point to the centreline
+        length = abs(pt1.X / math.cos(math.radians(360 - ang)))
+        pt2 = pt1.project(ang, length)
         # create a new projected segment
         seg = Segment(pt1, pt2)
 
         # loop through the remaining segments and see if the projected segments
         idx = index
         while idx < len(segments):
-            intersect, pt = seg.intersect(segments[idx], True)
+            intersect, pt = seg.intersect(segments[idx])
             if intersect:
                 return idx, pt[0]
             idx += 1
