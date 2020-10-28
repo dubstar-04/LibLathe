@@ -2,7 +2,6 @@ from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
 from liblathe.vector import Vector
-import math
 
 
 class Intersection:
@@ -66,10 +65,8 @@ def find_next_good_edge(segments, current_index, stock_zmin, tool):
     index += 1
     while index < len(segments):
         # create a new point at the max angle from pt1
-        a = math.radians(tool.get_tool_cutting_angle())
-        x = pt1.X + math.cos(a) * 2
-        z = pt1.Z + math.sin(a) * 2
-        pt2 = Point(x, 0, z)
+        a = tool.get_tool_cutting_angle()
+        pt2 = pt1.project(a, 2)
         # create a new projected segment
         seg = Segment(pt1, pt2)
 

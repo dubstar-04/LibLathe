@@ -83,10 +83,16 @@ class test_point(unittest.TestCase):
         self.assertEqual(rotate.Z, -100)
 
     def test_mid(self):
-        mid = Point.mid(self.pt2, self.pt2)
-        self.assertEqual(mid.X, self.pt2.X)
-        self.assertEqual(mid.Y, self.pt2.Y)
-        self.assertEqual(mid.Z, self.pt2.Z)
+        mid = self.pt2.mid(self.pt4)
+        self.assertEqual(mid.X, 150)
+        self.assertEqual(mid.Y, 150)
+        self.assertEqual(mid.Z, 150)
+
+    def test_project(self):
+        projected = self.pt1.project(270, 5)
+        self.assertEqual(projected.X, self.pt1.X)
+        self.assertEqual(projected.Y, self.pt1.Y)
+        self.assertEqual(projected.Z, -5)
 
 
 if __name__ == '__main__':
