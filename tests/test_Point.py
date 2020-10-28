@@ -88,6 +88,13 @@ class test_point(unittest.TestCase):
         self.assertEqual(mid.Y, self.pt2.Y)
         self.assertEqual(mid.Z, self.pt2.Z)
 
+    def test_project(self):
+        projected = self.pt1.project(270, 5)
+        self.assertEqual(projected.X, self.pt1.X)
+        self.assertEqual(projected.Y, self.pt1.Y)
+        self.assertEqual(projected.Z, -5)
+
+
 
 if __name__ == '__main__':
     unittest.main()
