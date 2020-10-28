@@ -146,6 +146,12 @@ class Plot:
                         elif i[0].upper() == 'Y':
                             continue
 
+                        elif i[0].upper() == 'I':
+                            col['i'] = float(i[1:])
+
+                        elif i[0].upper() == 'K':
+                            col['k'] = float(i[1:])
+
                         elif i[0].upper() == 'Z':
                             col['z'] = float(i[1:])
                             self.__min_max('y', float(i[1:]))
@@ -223,7 +229,6 @@ class Plot:
                 if self.rapidOnly and code[x]['g'][0] == 'G0':
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
                 elif self.cutsOnly and not code[x]['g'][0] == 'G0':
-
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g1Colour, width=self.lineThickness)
 
             i += 1
