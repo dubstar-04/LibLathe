@@ -66,7 +66,7 @@ class Point:
 
     def rotate(self, angle):
         """Returns a point rotated by angle in degrees"""
-        # TODO: rotate should operate about another point. 
+        # TODO: rotate should operate about another point.
         angle = math.radians(angle)
 
         x = self.X * math.cos(angle) + self.Z * math.sin(angle)

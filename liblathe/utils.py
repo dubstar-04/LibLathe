@@ -2,7 +2,6 @@ from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
 from liblathe.vector import Vector
-import math
 
 
 class Intersection:
