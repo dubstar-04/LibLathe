@@ -66,12 +66,13 @@ class Point:
 
     def rotate(self, angle):
         """Returns a point rotated by angle in degrees"""
-
+        # TODO: rotate should operate about another point. 
         angle = math.radians(angle)
 
         x = self.X * math.cos(angle) + self.Z * math.sin(angle)
         z = -self.X * math.sin(angle) + self.Z * math.cos(angle)
-        return Point(x, self.Y, z)
+        p = Point(x, self.Y, z)
+        return p
 
     def mid(self, pt):
         """Returns midpoint between self and pt"""
@@ -80,4 +81,12 @@ class Point:
         y = (self.Y + pt.Y) / 2
         z = (self.Z + pt.Z) / 2
         p = Point(x, y, z)
+        return p
+
+    def project(self, angle, distance):
+        """Project the point at angle by distance"""
+        angle = math.radians(angle)
+        x = round(self.X + math.cos(angle) * distance, 5)
+        z = round(self.Z + math.sin(angle) * distance, 5)
+        p = Point(x, self.Y, z)
         return p
