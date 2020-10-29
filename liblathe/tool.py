@@ -67,6 +67,13 @@ class Tool:
         """
         pass
 
+    def get_width(self):
+        """
+        Return the width of the cutting tool
+        """
+        # TODO: Calculate the actual width
+        return self.getEdgeLength()
+
     def getShapeAngle(self):
         """
         Return the angle of the tools shape
