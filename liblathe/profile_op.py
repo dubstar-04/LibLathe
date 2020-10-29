@@ -20,6 +20,15 @@ class ProfileOP(liblathe.base_op.BaseOP):
         line_count = int(math.ceil((self.stock.XLength() + self.extra_dia * 0.5) / self.step_over))
         xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
 
+        if self.allow_finishing:
+            # If we are allowed finishing passes, add the part segment group to the finishing paths.
+            self.finishing_paths.append(self.part_segment_group)
+            f_pass = 1
+            while f_pass != self.finish_passes:
+                segmentgroup = utils.offsetPath(self.part_segment_group, self.step_over * f_pass)
+                self.finishing_paths.append(segmentgroup)
+                f_pass += 1
+
         roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
         self.finishing_paths.append(roughing_boundary)
 
