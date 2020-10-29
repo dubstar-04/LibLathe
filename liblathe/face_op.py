@@ -24,7 +24,7 @@ class FaceOP(liblathe.base_op.BaseOP):
 
         # build list of segments
         segmentgroup = SegmentGroup()
-
+        # TODO: Move the final pass to finishing passes for a slower pass
         counter = 0
         while counter < line_count + 1:
             zpt = zstart - counter * self.step_over
