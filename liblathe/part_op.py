@@ -12,8 +12,8 @@ class PartOP(liblathe.base_op.BaseOP):
         self.clearing_paths = []
 
         toolWidth = self.tool.get_width()
-        xmin = self.stock.XMin - self.extra_dia
-        xmax = 0 - self.min_dia
+        xmin = self.stock.XMin - self.extra_dia * 0.5
+        xmax = 0 - self.min_dia * 0.5
         zmin = self.stock.ZMin - toolWidth
 
         # build list of segments

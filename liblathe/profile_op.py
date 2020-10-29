@@ -17,8 +17,8 @@ class ProfileOP(liblathe.base_op.BaseOP):
 
         self.clearing_paths = []
         zmax = self.stock.ZMax + self.start_offset
-        line_count = int(math.ceil(self.stock.XLength() / self.step_over))
-        xstart = 0 - (self.step_over * line_count + self.min_dia)
+        line_count = int(math.ceil((self.stock.XLength() + self.extra_dia * 0.5) / self.step_over))
+        xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
 
         roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
         self.finishing_paths.append(roughing_boundary)
