@@ -25,11 +25,11 @@ class ProfileOP(liblathe.base_op.BaseOP):
             self.finishing_paths.append(self.part_segment_group)
             f_pass = 1
             while f_pass != self.finish_passes:
-                segmentgroup = utils.offsetPath(self.part_segment_group, self.step_over * f_pass)
+                segmentgroup = self.part_segment_group.offsetPath(self.step_over * f_pass)
                 self.finishing_paths.append(segmentgroup)
                 f_pass += 1
 
-        roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
+        roughing_boundary = self.part_segment_group.offsetPath(self.step_over * self.finish_passes)
         self.finishing_paths.append(roughing_boundary)
 
         for roughing_pass in range(line_count):

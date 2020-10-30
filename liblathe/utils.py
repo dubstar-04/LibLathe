@@ -3,7 +3,6 @@ import math
 from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
-from liblathe.vector import Vector
 
 
 class Intersection:
@@ -98,53 +97,3 @@ def find_next_good_edge(segments, current_index, stock_zmin, tool):
     # No solution :(
     # print('find_next_good_edge: FAILED')
     return False, stock_pt
-
-
-def offsetPath(segGroupIn, step_over):
-    # TODO Sort Edges to ensure they're in order.  See: Part.__sortEdges__()
-    # nedges = []
-    segs = segGroupIn.get_segments()
-    segmentgroup = SegmentGroup()
-
-    for i in range(len(segs)):
-        seg = segs[i]
-        if seg.bulge != 0:
-
-            if seg.bulge > 0:
-                vec = Vector().normalise(seg.start, seg.get_centre_point())
-                vec2 = Vector().normalise(seg.end, seg.get_centre_point())
-                pt = vec.multiply(step_over)
-                pt2 = vec2.multiply(step_over)
-                new_start = seg.start.add(pt)
-                new_end = seg.end.add(pt2)
-
-                new_start.X = new_start.X - step_over
-                new_end.X = new_end.X - step_over
-                rad = seg.get_radius() - step_over
-                # print('offsetPath arc dims', new_start.X, new_start.Z, new_end.X, new_end.Z)
-            else:
-                vec = Vector().normalise(seg.get_centre_point(), seg.start)
-                vec2 = Vector().normalise(seg.get_centre_point(), seg.end)
-                pt = vec.multiply(step_over)
-                pt2 = vec2.multiply(step_over)
-                new_start = pt.add(seg.start)
-                new_end = pt2.add(seg.end)
-                rad = seg.get_radius() + step_over  # seg.get_centre_point().distance_to(new_start)
-
-            segment = Segment(new_start, new_end)
-
-            if seg.bulge < 0:
-                rad = 0 - rad
-            segment.set_bulge_from_radius(rad)
-
-        if seg.bulge == 0:
-            vec = Vector().normalise(seg.start, seg.end)
-            vec = vec.rotate_x(-1.570796)
-            pt = vec.multiply(step_over)
-            segment = Segment(pt.add(seg.start), pt.add(seg.end))
-
-        segmentgroup.add_segment(segment)
-
-    segmentgroup.join_segments()
-
-    return segmentgroup
