@@ -15,6 +15,15 @@ class ProfileOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the profile operation"""
 
+        if self.allow_finishing and self.finish_passes:
+            # If we are allowed finishing passes, add the part segment group to the finishing paths.
+            self.finishing_paths.append(self.part_segment_group)
+            f_pass = 1
+            while f_pass < self.finish_passes:
+                segmentgroup = self.part_segment_group.offsetPath(self.step_over * f_pass)
+                self.finishing_paths.append(segmentgroup)
+                f_pass += 1
+
         if not self.allow_roughing:
             return
 
@@ -23,17 +32,10 @@ class ProfileOP(liblathe.base_op.BaseOP):
         line_count = int(math.ceil((self.stock.XLength() + self.extra_dia * 0.5) / self.step_over))
         xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
 
-        if self.allow_finishing:
-            # If we are allowed finishing passes, add the part segment group to the finishing paths.
-            self.finishing_paths.append(self.part_segment_group)
-            f_pass = 1
-            while f_pass != self.finish_passes:
-                segmentgroup = self.part_segment_group.offsetPath(self.step_over * f_pass)
-                self.finishing_paths.append(segmentgroup)
-                f_pass += 1
-
-        roughing_boundary = self.part_segment_group.offsetPath(self.step_over * self.finish_passes)
-        self.finishing_paths.append(roughing_boundary)
+        # create roughing boundary at the last finish pass
+        offset = self.finish_passes - 1 if self.finish_passes else 0
+        roughing_boundary = self.part_segment_group.offsetPath(self.step_over * offset)
+        # self.finishing_paths.append(roughing_boundary)
 
         for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over
