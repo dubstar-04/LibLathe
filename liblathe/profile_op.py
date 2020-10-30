@@ -15,6 +15,8 @@ class ProfileOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the profile operation"""
 
+        self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.ZMin, self.tool, self.allow_grooving)
+
         if self.allow_finishing and self.finish_passes:
             # If we are allowed finishing passes, add the part segment group to the finishing paths.
             self.finishing_paths.append(self.part_segment_group)
