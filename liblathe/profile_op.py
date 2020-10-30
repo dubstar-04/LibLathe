@@ -1,7 +1,7 @@
 import math
 
 import liblathe.base_op
-import liblathe.utils as utils
+from liblathe.intersection import Intersection
 from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
@@ -41,13 +41,13 @@ class ProfileOP(liblathe.base_op.BaseOP):
             for seg in roughing_boundary.get_segments():
                 intersect, point = seg.intersect(path_line)
                 if intersect:
-                    if type(point) is list:
-                        for p in point:
-                            intersection = utils.Intersection(p, seg)
-                            intersections.append(intersection)
-                    else:
-                        intersection = utils.Intersection(point, seg)
+                    # if type(point) is list:
+                    for p in point:
+                        intersection = Intersection(p, seg)
                         intersections.append(intersection)
+                        # else:
+                        #     intersection = utils.Intersection(point, seg)
+                        #     intersections.append(intersection)
 
             # build list of segments
             segmentgroup = SegmentGroup()
@@ -63,13 +63,14 @@ class ProfileOP(liblathe.base_op.BaseOP):
 
             if len(intersections) > 1:
                 # more than one intersection
-                intersection = utils.Intersection(pt1, None)
+                intersection = Intersection(pt1, None)
                 intersections.insert(0, intersection)
 
-                intersection2 = utils.Intersection(pt2, None)
+                intersection2 = Intersection(pt2, None)
                 intersections.append(intersection2)
 
-                intersections = utils.sort_intersections_z(intersections)
+                #  sort the a list of intersections by their z position
+                intersections = sorted(intersections, key=lambda p: p.point.Z, reverse=True)
 
                 for i in range(len(intersections)):
                     if i + 1 < len(intersections):

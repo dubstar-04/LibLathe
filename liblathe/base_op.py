@@ -1,4 +1,3 @@
-import liblathe.utils as utils
 from liblathe.segmentgroup import SegmentGroup
 from liblathe.tool import Tool
 
@@ -57,7 +56,7 @@ class BaseOP:
         """Remove grooves and undercuts from part geometry"""
 
         if not self.allow_grooving:
-            self.part_segment_group = utils.remove_the_groove(self.part_segment_group, self.stock.ZMin, self.tool)
+            self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.ZMin, self.tool)
 
     def generate_path(self):
         """Main processing function for each op"""
