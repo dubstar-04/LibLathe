@@ -47,16 +47,9 @@ class BaseOP:
         if self.tool.tool_string is None:
             raise Warning("Tool is unset")
 
-        self.remove_the_groove()
         self.generate_path()
         Path = self.generate_gcode()
         return Path
-
-    def remove_the_groove(self):
-        """Remove grooves and undercuts from part geometry"""
-
-        if not self.allow_grooving:
-            self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.ZMin, self.tool)
 
     def generate_path(self):
         """Main processing function for each op"""

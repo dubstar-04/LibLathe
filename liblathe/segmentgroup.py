@@ -270,7 +270,7 @@ class SegmentGroup:
 
         return segmentgroup
 
-    def remove_the_groove(self, stock_zmin, tool):
+    def remove_the_groove(self, stock_zmin, tool, allow_grooving=False):
         segments = self.get_segments()
         segs_out = SegmentGroup()
         index = 0
@@ -288,7 +288,7 @@ class SegmentGroup:
                 pt2 = seg.end
                 # print('seg angle', segments.index(seg), pt1.angle_to(pt2))
                 if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
-                    next_index, pt = self.find_next_good_edge(index, stock_zmin, tool)
+                    next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving)
                     if not next_index:
                         seg = Segment(pt1, pt)
                         segs_out.add_segment(seg)
@@ -311,26 +311,31 @@ class SegmentGroup:
             index += 1
         return segs_out
 
-    def find_next_good_edge(self, current_index, stock_zmin, tool):
+    def find_next_good_edge(self, current_index, stock_zmin, tool, allow_grooving):
         segments = self.get_segments()
         index = current_index
         pt1 = segments[index].start
         index += 1
         while index < len(segments):
-            # create a new point at the max angle from pt1
-            ang = tool.get_tool_cutting_angle()
-            # calculate the length required to project the point to the centreline
-            length = abs(pt1.X / math.cos(math.radians(360 - ang)))
-            pt2 = pt1.project(ang, length)
+
+            if allow_grooving:
+                # create a new point at the max angle from pt1
+                ang = tool.get_tool_cutting_angle()
+                # calculate the length required to project the point to the centreline
+                length = abs(pt1.X / math.cos(math.radians(360 - ang)))
+                pt2 = pt1.project(ang, length)
+            else:
+                pt2 = Point(pt1.X, pt1.Y, stock_zmin)
+
             # create a new projected segment
             seg = Segment(pt1, pt2)
 
             # loop through the remaining segments and see if the projected segments
             idx = index
             while idx < len(segments):
-                intersect, pt = seg.intersect(segments[idx])
+                intersect, pts = seg.intersect(segments[idx])
                 if intersect:
-                    return idx, pt[0]
+                    return idx, pts[0]
                 idx += 1
             index += 1
 
@@ -340,9 +345,9 @@ class SegmentGroup:
         index += 1
 
         while index < len(segments):
-            intersect, point = seg.intersect(segments[index])
+            intersect, pts = seg.intersect(segments[index])
             if intersect:
-                return index, point
+                return index, pts[0]
 
             index += 1
         # No solution :(
