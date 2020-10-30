@@ -1,10 +1,13 @@
 import math
+from collections import namedtuple
 
 import liblathe.base_op
-import liblathe.utils as utils
 from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
+
+# create a namedtuple to hold intersection data
+Intersection = namedtuple('Intersection', 'point, seg')
 
 
 class ProfileOP(liblathe.base_op.BaseOP):
@@ -25,11 +28,11 @@ class ProfileOP(liblathe.base_op.BaseOP):
             self.finishing_paths.append(self.part_segment_group)
             f_pass = 1
             while f_pass != self.finish_passes:
-                segmentgroup = utils.offsetPath(self.part_segment_group, self.step_over * f_pass)
+                segmentgroup = self.part_segment_group.offsetPath(self.step_over * f_pass)
                 self.finishing_paths.append(segmentgroup)
                 f_pass += 1
 
-        roughing_boundary = utils.offsetPath(self.part_segment_group, self.step_over * self.finish_passes)
+        roughing_boundary = self.part_segment_group.offsetPath(self.step_over * self.finish_passes)
         self.finishing_paths.append(roughing_boundary)
 
         for roughing_pass in range(line_count):
@@ -41,12 +44,8 @@ class ProfileOP(liblathe.base_op.BaseOP):
             for seg in roughing_boundary.get_segments():
                 intersect, point = seg.intersect(path_line)
                 if intersect:
-                    if type(point) is list:
-                        for p in point:
-                            intersection = utils.Intersection(p, seg)
-                            intersections.append(intersection)
-                    else:
-                        intersection = utils.Intersection(point, seg)
+                    for p in point:
+                        intersection = Intersection(p, seg)
                         intersections.append(intersection)
 
             # build list of segments
@@ -63,24 +62,27 @@ class ProfileOP(liblathe.base_op.BaseOP):
 
             if len(intersections) > 1:
                 # more than one intersection
-                intersection = utils.Intersection(pt1, None)
+                # add the end points of the pass to generate new segments
+                intersection = Intersection(pt1, None)
                 intersections.insert(0, intersection)
 
-                intersection2 = utils.Intersection(pt2, None)
+                intersection2 = Intersection(pt2, None)
                 intersections.append(intersection2)
 
-                intersections = utils.sort_intersections_z(intersections)
+                #  sort the a list of intersections by their z position
+                intersections = sorted(intersections, key=lambda p: p.point.Z, reverse=True)
 
                 for i in range(len(intersections)):
                     if i + 1 < len(intersections):
                         if intersections[i].seg:
+                            # Check if the roughing pass intersects with an arc segment
                             if intersections[i].seg.is_same(intersections[i + 1].seg):
                                 seg = intersections[i].seg
                                 rad = seg.get_radius()
 
                                 if seg.bulge < 0:
                                     rad = 0 - rad
-
+                                # build a new segment from the portion of the arc that is intersected
                                 path_line = Segment(intersections[i].point, intersections[i + 1].point)
                                 path_line.set_bulge_from_radius(rad)
 
