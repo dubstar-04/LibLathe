@@ -1,10 +1,13 @@
 import math
+from collections import namedtuple
 
 import liblathe.base_op
-from liblathe.intersection import Intersection
 from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
+
+# create a namedtuple to hold intersection data
+Intersection = namedtuple('Intersection', 'point, seg')
 
 
 class ProfileOP(liblathe.base_op.BaseOP):
@@ -63,6 +66,7 @@ class ProfileOP(liblathe.base_op.BaseOP):
 
             if len(intersections) > 1:
                 # more than one intersection
+                # add the end points of the pass to generate new segments
                 intersection = Intersection(pt1, None)
                 intersections.insert(0, intersection)
 
@@ -75,13 +79,14 @@ class ProfileOP(liblathe.base_op.BaseOP):
                 for i in range(len(intersections)):
                     if i + 1 < len(intersections):
                         if intersections[i].seg:
+                            # Check if the roughing pass intersects with an arc segment
                             if intersections[i].seg.is_same(intersections[i + 1].seg):
                                 seg = intersections[i].seg
                                 rad = seg.get_radius()
 
                                 if seg.bulge < 0:
                                     rad = 0 - rad
-
+                                # build a new segment from the portion of the arc that is intersected
                                 path_line = Segment(intersections[i].point, intersections[i + 1].point)
                                 path_line.set_bulge_from_radius(rad)
 
