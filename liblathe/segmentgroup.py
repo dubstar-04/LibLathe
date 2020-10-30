@@ -222,7 +222,7 @@ class SegmentGroup:
         return cmds
 
     def offsetPath(self, step_over):
-        # TODO Sort Edges to ensure they're in order.  See: Part.__sortEdges__()
+        # TODO Sort Edges to ensure they're in order.
         # nedges = []
         segs = self.get_segments()
         segmentgroup = SegmentGroup()

@@ -44,13 +44,9 @@ class ProfileOP(liblathe.base_op.BaseOP):
             for seg in roughing_boundary.get_segments():
                 intersect, point = seg.intersect(path_line)
                 if intersect:
-                    # if type(point) is list:
                     for p in point:
                         intersection = Intersection(p, seg)
                         intersections.append(intersection)
-                        # else:
-                        #     intersection = utils.Intersection(point, seg)
-                        #     intersections.append(intersection)
 
             # build list of segments
             segmentgroup = SegmentGroup()
