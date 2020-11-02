@@ -15,6 +15,18 @@ class ProfileOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the profile operation"""
 
+        def add_lead_segment(seg, startPt, endPt):
+            """ add lead in and lead out segments to the path """
+            rad = seg.get_radius()
+
+            if seg.bulge < 0:
+                rad = 0 - rad
+            path_line = Segment(startPt, endPt)
+            if rad != 0:
+                path_line.set_bulge_from_radius(rad)
+
+            segmentgroup.add_segment(path_line)
+
         self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.ZMin, self.tool, self.allow_grooving)
 
         if self.allow_finishing and self.finish_passes:
@@ -63,6 +75,11 @@ class ProfileOP(liblathe.base_op.BaseOP):
                 # Only one intersection, trim line to intersection.
                 seg = Segment(pt1, intersections[0].point)
                 segmentgroup.add_segment(seg)
+                if intersections[0].seg:
+                    # add lead out
+                    seg = intersections[0].seg
+                    startPt = intersections[0].point
+                    add_lead_segment(seg, startPt, seg.end)
 
             if len(intersections) > 1:
                 # more than one intersection
@@ -78,23 +95,22 @@ class ProfileOP(liblathe.base_op.BaseOP):
 
                 for i in range(len(intersections)):
                     if i + 1 < len(intersections):
-                        if intersections[i].seg:
-                            # Check if the roughing pass intersects with an arc segment
-                            if intersections[i].seg.is_same(intersections[i + 1].seg):
-                                seg = intersections[i].seg
-                                rad = seg.get_radius()
-
-                                if seg.bulge < 0:
-                                    rad = 0 - rad
-                                # build a new segment from the portion of the arc that is intersected
-                                path_line = Segment(intersections[i].point, intersections[i + 1].point)
-                                path_line.set_bulge_from_radius(rad)
-
-                                segmentgroup.add_segment(path_line)
-
                         if i % 2 == 0:
+                            if intersections[i].seg:
+                                # add lead in
+                                seg = intersections[i].seg
+                                endPoint = intersections[i].point
+                                add_lead_segment(seg, seg.start, endPoint)
+
+                            # primary intersect - intersection[i].point == startpoint
                             path_line = Segment(intersections[i].point, intersections[i + 1].point)
                             segmentgroup.add_segment(path_line)
+
+                            if intersections[i + 1].seg:
+                                # add lead out
+                                seg = intersections[i + 1].seg
+                                startPt = intersections[i + 1].point
+                                add_lead_segment(seg, startPt, seg.end)
 
             if segmentgroup.count():
                 self.clearing_paths.append(segmentgroup)
