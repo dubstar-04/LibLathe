@@ -33,9 +33,9 @@ class Point:
         """Returns True is the coordinates are the same"""
 
         if pt:
-            if self.X == pt.X:
-                if self.Y == pt.Y:
-                    if self.Z == pt.Z:
+            if round(self.X, 5) == round(pt.X, 5):
+                if round(self.Y, 5) == round(pt.Y, 5):
+                    if round(self.Z, 5) == round(pt.Z, 5):
                         return True
 
         return False
