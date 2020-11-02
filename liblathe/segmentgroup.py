@@ -267,54 +267,84 @@ class SegmentGroup:
             segmentgroup.add_segment(segment)
 
         segmentgroup.join_segments()
-
         return segmentgroup
 
     def remove_the_groove(self, stock_zmin, tool, allow_grooving=False):
         segments = self.get_segments()
         segs_out = SegmentGroup()
         index = 0
+
         while index < len(segments):
             seg = segments[index]
+            next_index = False
+            pt1 = seg.start
+            pt2 = seg.end
+            pt = None
 
             if seg.bulge != 0:
+                print('arc segment')
                 if seg.bulge > 0:
-                    seg = Segment(seg.start, seg.end)
+                    # TODO: handle segments with a positive bulge
+                    seg = Segment(pt1, pt2)
+                    segs_out.add_segment(seg)
+                if seg.bulge < 0:
+                    # Limit the arc movement to the X extents or the tangent at the max tool angle if allow_grooving
+                    angle_limit = 180 if allow_grooving is False else tool.get_tool_cutting_angle() - 90
+                    if seg.get_centre_point().angle_to(pt2) <= angle_limit:
+                        segs_out.add_segment(seg)
+                    else:
+                        rad = seg.get_radius()
+                        if not allow_grooving:
+                            x = seg.get_centre_point().X - rad
+                            y = seg.get_centre_point().Y
+                            z = seg.get_centre_point().Z
+                            pt = Point(x, y, z)
+                        else:
+                            pt = seg.get_centre_point().project(angle_limit, rad)
 
-                segs_out.add_segment(seg)
+                        if seg.bulge < 0:
+                            rad = 0 - rad
 
-            if seg.bulge == 0:
-                pt1 = seg.start
-                pt2 = seg.end
-                # print('seg angle', segments.index(seg), pt1.angle_to(pt2))
+                        seg = Segment(pt1, pt)
+                        seg.set_bulge_from_radius(rad)
+                        segs_out.add_segment(seg)
+
+                        pt1 = pt
+                        next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving, pt)
+
+            elif seg.bulge == 0:
+                print('line segment')
                 if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
                     next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving)
-                    if not next_index:
-                        seg = Segment(pt1, pt)
-                        segs_out.add_segment(seg)
-                        break
-                    if next_index != index:
-                        seg = Segment(pt1, pt)
-                        segs_out.add_segment(seg)
-                        next_pt1 = pt
-                        next_pt2 = segments[next_index].end
-                    if next_pt1 != pt:
-                        seg = Segment(pt1, next_pt2)
-                        segs_out.add_segment(seg)
-                        next_index += 1
-
-                    index = next_index
-                    continue
                 else:
                     segs_out.add_segment(seg)
+
+            if next_index is False and pt is not None:
+                seg = Segment(pt1, pt)
+                segs_out.add_segment(seg)
+                break
+            if next_index is not False and next_index != index:
+                seg = Segment(pt1, pt)
+                segs_out.add_segment(seg)
+                next_pt1 = pt
+                next_pt2 = segments[next_index].end
+                seg = Segment(next_pt1, next_pt2)
+                segs_out.add_segment(seg)
+                next_index += 1
+                index = next_index
+                continue
 
             index += 1
         return segs_out
 
-    def find_next_good_edge(self, current_index, stock_zmin, tool, allow_grooving):
+    def find_next_good_edge(self, current_index, stock_zmin, tool, allow_grooving, pt=None):
         segments = self.get_segments()
         index = current_index
-        pt1 = segments[index].start
+        if pt is None:
+            pt1 = segments[index].start
+        else:
+            pt1 = pt
+
         index += 1
         while index < len(segments):
 
@@ -351,5 +381,4 @@ class SegmentGroup:
 
             index += 1
         # No solution :(
-        # print('find_next_good_edge: FAILED')
         return False, stock_pt
