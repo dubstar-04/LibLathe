@@ -36,9 +36,15 @@ class Segment:
 
     def set_bulge_from_radius(self, radius):
         """Sets the bulge of the arc using a known radius"""
+        
+        angle = (self.get_length() * 0.5) / radius
+        if angle < -1 or angle > 1:
+            print('error with angle input')
+            # limit asin input range 1:-1
+            angle = min(1, max(angle, -1))
+        bulge_angle = math.asin(angle) * 2
 
-        angle = math.asin((self.get_length() * 0.5) / radius) * 2
-        self.set_bulge(angle)
+        self.set_bulge(bulge_angle)
 
     def get_centre_point(self):
         """Returns the centre point of the arc"""
