@@ -36,7 +36,7 @@ class Segment:
 
     def set_bulge_from_radius(self, radius):
         """Sets the bulge of the arc using a known radius"""
-        
+
         angle = (self.get_length() * 0.5) / radius
         if angle < -1 or angle > 1:
             print('error with angle input')
@@ -273,6 +273,18 @@ class Segment:
 
         # Determine actual distance between circle centres
         c_dist = c1.distance_to(c2)
+
+        if c_dist > r1 + r2:
+            # too far apart to intersect
+            return intersect, ptsout
+
+        if c_dist < abs(r1 - r2):
+            # inside each other
+            return intersect, ptsout
+
+        if c1.is_same(c2):
+            # concentric
+            return intersect, ptsout
 
         a = (r1 ** 2 - r2 ** 2 + c_dist ** 2) / (2 * c_dist)
         h = math.sqrt(r1 ** 2 - a ** 2)
