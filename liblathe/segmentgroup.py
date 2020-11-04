@@ -117,14 +117,12 @@ class SegmentGroup:
         segments = self.get_segments()
         if index + 1 < len(segments):
             for i in range(len(segments) - 1, index, -1):
-                if i != index:  # and i != index + 1:
+                if i != index:
                     if segments[index].end.is_same(segments[i].start):
                         continue
 
-                    # print('index:', index, 'i:', i, 'segs', len(segments))
                     intersect, pt = segments[index].intersect(segments[i])
                     if intersect:
-                        print('clean intersect index:', index, 'i', i)
                         if type(pt) is list:
                             pt = pt[0]
 
@@ -145,10 +143,6 @@ class SegmentGroup:
                         if i != index + 1:
                             del self.segments[index + 1:i]
 
-                        # for j in range(index + 1, i):
-                        #    print('pop:', index, j)
-                        #    self.segments.remove(self.segments[j])
-                        #    break
                         break
 
             if index < self.count():
