@@ -85,17 +85,28 @@ class ProfileOP(liblathe.base_op.BaseOP):
                 for i in range(len(intersections)):
                     if i + 1 < len(intersections):
                         if i % 2 == 0:
+                            # primary segment
+                            primary_segment = Segment(intersections[i].point, intersections[i + 1].point)
+
+                            # check the length of the pass before adding to the segmentgroup
+                            if primary_segment.get_length() < self.step_over:
+                                continue
+
+                            # if the intersection is connected to another segment
                             if intersections[i].seg:
+                                # add a lead in
+                                # TODO: optimise this to match the max tool angle
                                 endPt = intersections[i].point
                                 startPt = endPt.project(180, self.step_over)
                                 path_line = Segment(startPt, endPt)
                                 segmentgroup.add_segment(path_line)
 
-                            # primary intersect - intersection[i].point == startpoint
-                            path_line = Segment(intersections[i].point, intersections[i + 1].point)
-                            segmentgroup.add_segment(path_line)
+                            # add the primary segment to the segment group
+                            segmentgroup.add_segment(primary_segment)
 
+                            # if the intersection is connected to another segment
                             if intersections[i + 1].seg:
+                                # add a lead out
                                 startPt = intersections[i + 1].point
                                 endPt = startPt.project(135, self.step_over)
                                 path_line = Segment(startPt, endPt)
@@ -110,10 +121,10 @@ class ProfileOP(liblathe.base_op.BaseOP):
         Path = []
 
         for segmentgroup in self.clearing_paths:
-            rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+            rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
             Path.append(rough)
         for segmentgroup in self.finishing_paths:
-            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
             Path.append(finish)
 
         return Path

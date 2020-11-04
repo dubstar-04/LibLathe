@@ -30,6 +30,6 @@ class PartOP(liblathe.base_op.BaseOP):
 
         Path = []
         for segmentgroup in self.finishing_paths:
-            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
             Path.append(finish)
         return Path

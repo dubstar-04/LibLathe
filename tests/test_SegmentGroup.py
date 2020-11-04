@@ -118,13 +118,13 @@ class test_segment_group(unittest.TestCase):
     def test_to_commands_size(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
-        cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.hfeed, self.vfeed)
+        cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         self.assertEqual(len(cmds), 7)
 
     def test_to_commands_movement(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
-        cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.hfeed, self.vfeed)
+        cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         # Expected return
         # Command Movements
         # ['G18', 'G0', 'G0', 'G0', 'G1', 'G0', 'G0']
@@ -139,7 +139,7 @@ class test_segment_group(unittest.TestCase):
     def test_to_commands_params(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
-        cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.hfeed, self.vfeed)
+        cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         # Expected return
         # Command Params
         # {}
