@@ -33,6 +33,11 @@ class FaceOP(liblathe.base_op.BaseOP):
             path_line = Segment(pt1, pt2)
             seg = path_line
             segmentgroup.add_segment(seg)
+
+            pt3 = pt2.project(135, self.step_over)
+            leadout = Segment(pt2, pt3)
+            segmentgroup.add_segment(leadout)
+
             counter += 1
 
         self.clearing_paths.append(segmentgroup)
@@ -42,7 +47,7 @@ class FaceOP(liblathe.base_op.BaseOP):
 
         Path = []
         for segmentgroup in self.clearing_paths:
-            rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.hfeed, self.vfeed)
+            rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
             Path.append(rough)
 
         return Path

@@ -190,7 +190,7 @@ class SegmentGroup:
         min_retract_x = max(x_values, key=abs)
         return min_retract_x
 
-    def to_commands(self, part_segment_group, stock, step_over, hSpeed, vSpeed):
+    def to_commands(self, part_segment_group, stock, step_over, finish_passes, hSpeed, vSpeed):
         """converts segmentgroup to gcode commands"""
 
         segments = self.get_segments()
@@ -202,14 +202,15 @@ class SegmentGroup:
 
         for seg in segments:
             min_x_retract = self.get_min_retract_x(seg, part_segment_group)
-            x_retract = min_x_retract - step_over
+            x_retract = min_x_retract - step_over * finish_passes
             min_z_retract = stock.ZMax
             z_retract = min_z_retract + step_over
 
-            # print('min_x_retract:', min_x_retract)
+            print('min_x_retract:', min_x_retract)
 
+            # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
-                # params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z + step_over, 'F': hSpeed}
+
                 params = {'X': seg.start.X, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
@@ -218,45 +219,50 @@ class SegmentGroup:
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
+            # handle line segments
             if seg.bulge == 0:
+                # handle unconnected segments
                 if not self.previous_segment_connected(seg):
-                    # if edges.index(edge) == 1:
-                    pt = seg.start  # edge.valueAt(edge.FirstParameter)
+                    pt = seg.start
+                    # rapid to the xmin
+                    params = {'X': x_retract, 'Y': pt.Y, 'F': hSpeed}
+                    rapid = Command('G0', params)
+                    cmds.append(rapid)
+                    # rapid at xmin to the start of te segment
+                    params = {'X': x_retract, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                    rapid = Command('G0', params)
+                    cmds.append(rapid)
+                    # rapid to the start of the start of the cutting move
                     params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
                     cmd = Command('G0', params)
                     cmds.append(cmd)
-
-                pt = seg.end  # edge.valueAt(edge.LastParameter)
+                # perform the cutting
+                pt = seg.end
                 params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
                 cmd = Command('G1', params)
-
+                cmds.append(cmd)
+            # handle arc segments
             if seg.bulge != 0:
-                # TODO: define arctype from bulge sign +/-
-
                 pt1 = seg.start
                 pt2 = seg.end
-                # print('toPathCommand - bulge', seg.bulge )
+                # set the arc direction
                 if seg.bulge < 0:
                     arcType = 'G2'
                 else:
                     arcType = 'G3'
-
+                # set the arc parameters
                 cen = seg.get_centre_point().sub(pt1)
-                # print('toPathCommand arc cen', seg.get_centre_point().X, seg.get_centre_point().Z)
                 params = {'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': hSpeed}
-                # print('toPathCommand', params)
                 cmd = Command(arcType, params)
+                cmds.append(cmd)
 
-            cmds.append(cmd)
-
+            # handle the lead out at the end of the segmentgroup
             if segments.index(seg) == len(segments) - 1:
                 params = {'X': x_retract, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
-                # params = {'X': x_retract, 'Y': 0, 'Z': segments[0].start.Z + step_over, 'F': hSpeed}
                 params = {'X': x_retract, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
-
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
