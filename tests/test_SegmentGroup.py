@@ -37,6 +37,7 @@ class test_segment_group(unittest.TestCase):
         self.hfeed = 100
         self.vfeed = 50
         self.step_over = 1.5
+        self.finish_passes = 2
 
     def test_add_segment(self):
         self.segmentGroup.add_segment(self.lineSegment1)
@@ -113,13 +114,13 @@ class test_segment_group(unittest.TestCase):
 
         self.segmentGroup.add_segment(self.lineSegment3)
         min_x = self.segmentGroup.get_min_retract_x(self.lineSegment3, self.segmentGroup)
-        self.assertEqual(min_x,  -164.74)
+        self.assertEqual(min_x, -164.74)
 
     def test_to_commands_size(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
         cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-        self.assertEqual(len(cmds), 7)
+        self.assertEqual(len(cmds), 9)
 
     def test_to_commands_movement(self):
         self.segmentGroup.add_segment(self.lineSegment1)
@@ -132,9 +133,9 @@ class test_segment_group(unittest.TestCase):
         self.assertEqual(cmds[1].Movement, 'G0')
         self.assertEqual(cmds[2].Movement, 'G0')
         self.assertEqual(cmds[3].Movement, 'G0')
-        self.assertEqual(cmds[4].Movement, 'G1')
+        self.assertEqual(cmds[4].Movement, 'G0')
         self.assertEqual(cmds[5].Movement, 'G0')
-        self.assertEqual(cmds[6].Movement, 'G0')
+        self.assertEqual(cmds[6].Movement, 'G1')
 
     def test_to_commands_params(self):
         self.segmentGroup.add_segment(self.lineSegment1)
@@ -152,10 +153,10 @@ class test_segment_group(unittest.TestCase):
         self.assertEqual(cmds[0].Params, {})
         self.assertEqual(cmds[1].Params, {'X': 0, 'Y': 0, 'Z': 101.5, 'F': 100})
         self.assertEqual(cmds[2].Params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[3].Params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[4].Params, {'X': 100, 'Y': 0, 'Z': 100, 'F': 100})
-        self.assertEqual(cmds[5].Params, {'X': 98.5, 'Y': 0, 'Z': 100, 'F': 100})
-        self.assertEqual(cmds[6].Params, {'X': 98.5, 'Y': 0, 'Z': 101.5, 'F': 100})
+        self.assertEqual(cmds[3].Params, {'X': 97.0, 'Y': 0, 'F': 100})
+        self.assertEqual(cmds[4].Params, {'X': 97.0, 'Y': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[5].Params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[6].Params, {'X': 100, 'Y': 0, 'Z': 100, 'F': 100})
 
 
 if __name__ == '__main__':
