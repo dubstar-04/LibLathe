@@ -24,3 +24,12 @@ comment:
   layout: "reach,diff,flags,files,footer"
   behavior: default
   require_changes: no
+  
+  status:
+    project: # settings affecting project coverage
+      enabled: yes
+      target: auto # auto % coverage target
+      threshold: 5%  # allow for 5% reduction of coverage without failing
+
+    # do not run coverage on patch nor changes
+    patch: no
