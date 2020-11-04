@@ -107,6 +107,47 @@ class SegmentGroup:
                 segmentgroupOut.add_segment(segments[i])
 
         self.segments = segmentgroupOut.get_segments()
+        self.clean_offset_path()
+
+    def clean_offset_path(self, index=0):
+        """
+        remove any self intersecting features from the path.
+        index is the segment to evaluate
+        """
+        segments = self.get_segments()
+        if index + 1 < len(segments):
+            for i in range(len(segments) - 1, index, -1):
+                if i != index:
+                    if segments[index].end.is_same(segments[i].start):
+                        continue
+
+                    intersect, pt = segments[index].intersect(segments[i])
+                    if intersect:
+                        if type(pt) is list:
+                            pt = pt[0]
+
+                        self.segments[index].end = pt
+                        if self.segments[index].bulge:
+                            rad = self.segments[index].get_radius()
+                            if self.segments[index].bulge < 0:
+                                rad = 0 - rad
+                            self.segments[index].set_bulge_from_radius(rad)
+
+                        self.segments[i].start = pt
+                        if self.segments[i].bulge:
+                            rad = self.segments[i].get_radius()
+                            if self.segments[i].bulge < 0:
+                                rad = 0 - rad
+                            self.segments[i].set_bulge_from_radius(rad)
+
+                        if i != index + 1:
+                            del self.segments[index + 1:i]
+
+                        break
+
+            if index < self.count():
+                # run again with the next segment
+                self.clean_offset_path(index + 1)
 
     def previous_segment_connected(self, segment):
         """returns bool if segment is connect to the previous segment"""
