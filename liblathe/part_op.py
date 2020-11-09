@@ -9,7 +9,7 @@ class PartOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the Part operation"""
 
-        self.finishing_paths = []
+        self.tool_paths = []
 
         toolWidth = self.tool.get_width()
         xmin = self.stock.XMin - self.extra_dia * 0.5
@@ -23,13 +23,13 @@ class PartOP(liblathe.base_op.BaseOP):
         seg = Segment(startPt, endPt)
         segmentgroup.add_segment(seg)
 
-        self.finishing_paths.append(segmentgroup)
+        self.tool_paths.append(segmentgroup)
 
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
         Path = []
-        for segmentgroup in self.finishing_paths:
+        for segmentgroup in self.tool_paths:
             finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
             Path.append(finish)
         return Path
