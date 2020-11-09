@@ -12,18 +12,19 @@ from liblathe.tool import ToolOri
 class test_tool(unittest.TestCase):
     """Test for tool.py"""
     def setUp(self):
-        self.tool = Tool('DCMT070204R')
+        self.tool = Tool()
+        self.tool.set_tool_from_string('DCMT070204R')
 
     def test_create_tool(self):
-        shape = self.tool.shape
+        shape = "D"
         length = self.tool.length
         nose_radius = self.tool.nose_radius
         direction = self.tool.direction
         orientation = self.tool.orientation
 
         self.assertEqual(shape, "D")
-        self.assertEqual(length, "07")
-        self.assertEqual(nose_radius, "04")
+        self.assertEqual(length, 6.35)
+        self.assertEqual(nose_radius, 0.4)
         self.assertEqual(direction, "R")
         self.assertEqual(orientation, ToolOri.X)
 
@@ -35,15 +36,15 @@ class test_tool(unittest.TestCase):
         self.assertEqual(cuttingAngle, 303)
 
     def test_getShapeAngle(self):
-        shapeAngle = self.tool.getShapeAngle()
+        shapeAngle = self.tool.get_tip_angle_from_shape("D")
         self.assertEqual(shapeAngle, 55)
 
     def test_getEdgeLength(self):
-        edgeLength = self.tool.getEdgeLength()
+        edgeLength = self.tool.getEdgeLength("D", "07")
         self.assertEqual(edgeLength, 6.35)
 
     def test_getNoseRadius(self):
-        noseRadius = self.tool.getNoseRadius()
+        noseRadius = self.tool.getNoseRadius("04")
         self.assertEqual(noseRadius, 0.4)
 
     def test_getCuttingDirection(self):

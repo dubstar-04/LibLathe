@@ -14,48 +14,69 @@ class Tool:
     Example Tool Definistion: DCMT070204R
     """
     def __init__(self, tool_string=None):
-        self.tool_string = None             # DCMT070204R
-        self.shape = None                   # D
+        # tool_string                       # DCMT070204R
+        # shape                             # D
         # clearance angle                   # C
         # tolerance                         # M
         # type                              # T
+        self.tip_angle = None
         self.length = None                  # 07
         # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
-        self.orientation = None             # orientation of the tool X or Z
+        self.orientation = ToolOri.X        # orientation of the tool X or Z
         self.tool_rotation = 0              # tool rotation about tool tip
 
         if tool_string:
-            self.set_tool(tool_string)
+            self.set_tool_from_string(tool_string)
 
-    def set_tool(self, tool_string, tool_ori=ToolOri.X, tool_rotation=0):
+    def set_tool_from_string(self, tool_string):
 
         if not len(tool_string) == 11:
             raise ValueError("Tool Input String Incomplete")
 
         # TODO: Validate the values passed in create a valid tool
-        self.tool_string = tool_string
-        self.shape = self.tool_string[0]
-        self.length = self.tool_string[4:6]
-        self.nose_radius = self.tool_string[8:10]
-        self.direction = self.tool_string[-1]
-        self.orientation = tool_ori
-        self.tool_rotation = tool_rotation
+        shape = tool_string[0]
+        length = tool_string[4:6]
+        radius = tool_string[8:10]
 
-        # for item in vars(self):
-        #     print('item', getattr(self, item))
+        self.tip_angle = self.get_tip_angle_from_shape(shape)
+        self.length = self.getEdgeLength(shape, length)
+        self.nose_radius = self.getNoseRadius(radius)
+        self.direction = tool_string[-1]
+
+    def set_tip_angle(self, angle):
+        """Set the tools tip angle"""
+        self.tip_angle = angle
+
+    def set_edge_length(self, length):
+        """Set the tools edge length"""
+        self.length = length
+
+    def set_nose_radius(self, radius):
+        """Set the tools nose radius"""
+        self.nose_radius = radius
+
+    def set_direction(self, direction):
+        """ Set the tools cutting direction R-N-L"""
+        self.direction = direction
+
+    def set_rotation(self, rotation):
+        """ Set the tools cutting rotation"""
+        self.rotation = rotation
+
+    def set_orientation(self, orientation):
+        """ Set the tools cutting rotation"""
+        self.orientation = orientation
 
     def get_tool_cutting_angle(self):
         """
         Return the maximum cutting angle the tool is capable of
         Note: Angle is on the XZ plane and inverted.
         """
-        shapeAngle = self.getShapeAngle()
-        rotation = self.getRotation()
-        clearance = 2
 
-        max_cutting_angle = 360 - (shapeAngle + rotation + clearance)
+        clearance = 2
+        max_cutting_angle = 360 - (self.tip_angle + self.tool_rotation + clearance)
 
         # print('max_cutting angle:', max_cutting_angle)
 
@@ -72,9 +93,9 @@ class Tool:
         Return the width of the cutting tool
         """
         # TODO: Calculate the actual width
-        return self.getEdgeLength()
+        return self.length
 
-    def getShapeAngle(self):
+    def get_tip_angle_from_shape(self, shape_char):
         """
         Return the angle of the tools shape
         """
@@ -100,11 +121,11 @@ class Tool:
             "X": None   # Special Shape
         }
 
-        angle = shape.get(self.shape, None)
+        angle = shape.get(shape_char, None)
         # print('shape Angle:', angle)
         return angle
 
-    def getEdgeLength(self):
+    def getEdgeLength(self, shape, length):
         """
         Return the edge length for the tool
         Sizes from: http://www.mitsubishicarbide.com/en/technical_information/tec_turning_tools/tec_turning_insert/tec_turning_guide/tec_turning_identification
@@ -122,13 +143,13 @@ class Tool:
         }
 
         try:
-            edgeLength = shapeSize[self.shape][self.length]
+            edgeLength = shapeSize[shape][length]
             # print("shape Size: ", edgeLength)
             return edgeLength
         except(KeyError):
             return None
 
-    def getNoseRadius(self):
+    def getNoseRadius(self, radius):
         """
         Return the nose radius for the tool
         """
@@ -149,7 +170,7 @@ class Tool:
         }
 
         try:
-            radius = noseRadius[self.nose_radius]
+            radius = noseRadius[radius]
             # print("nose radius: ", radius)
             return radius
         except(KeyError):
