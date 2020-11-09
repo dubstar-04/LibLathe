@@ -8,7 +8,7 @@ class BaseOP:
     def __init__(self):
 
         self.stock = None
-        self.tool = Tool()
+        self.tool = None
         self.part_segment_group = SegmentGroup()
 
         self.finishing_paths = []
@@ -44,7 +44,7 @@ class BaseOP:
     def get_gcode(self):
         """Base function for all turning operations"""
 
-        if self.tool.tool_string is None:
+        if self.tool is None:
             raise Warning("Tool is unset")
 
         self.generate_path()
@@ -71,9 +71,6 @@ class BaseOP:
         """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""
         self.stock = stock_bb
 
-    def add_tool(self, tool_string):
-        """
-        Define the shape of the tool to be used
-        see tool class for examples
-        """
-        self.tool.set_tool(tool_string)
+    def add_tool(self, tool):
+        """Set the tool for the operation"""
+        self.tool = tool
