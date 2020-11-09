@@ -14,8 +14,8 @@ class Tool:
     Example Tool Definistion: DCMT070204R
     """
     def __init__(self, tool_string=None):
-        # self.tool_string = None             # DCMT070204R
-        # self.shape = None                   # D
+        # tool_string                       # DCMT070204R
+        # shape                             # D
         # clearance angle                   # C
         # tolerance                         # M
         # type                              # T
@@ -28,7 +28,7 @@ class Tool:
         self.tool_rotation = 0              # tool rotation about tool tip
 
         if tool_string:
-            self.set_tool(tool_string)
+            self.set_tool_from_string(tool_string)
 
     def set_tool_from_string(self, tool_string):
 
@@ -36,15 +36,14 @@ class Tool:
             raise ValueError("Tool Input String Incomplete")
 
         # TODO: Validate the values passed in create a valid tool
-        # self.tool_string = tool_string
-        shape = self.tool_string[0]
-        length = self.tool_string[4:6]
-        radius = self.tool_string[8:10]
+        shape = tool_string[0]
+        length = tool_string[4:6]
+        radius = tool_string[8:10]
 
         self.tip_angle = self.get_tip_angle_from_shape(shape)
         self.length = self.getEdgeLength(shape, length)
         self.nose_radius = self.getNoseRadius(radius)
-        self.direction = self.tool_string[-1]
+        self.direction = tool_string[-1]
 
     def set_tip_angle(self, angle):
         """Set the tools tip angle"""
@@ -96,7 +95,7 @@ class Tool:
         # TODO: Calculate the actual width
         return self.length
 
-    def get_tip_angle_from_shape(self, shape):
+    def get_tip_angle_from_shape(self, shape_char):
         """
         Return the angle of the tools shape
         """
@@ -122,7 +121,7 @@ class Tool:
             "X": None   # Special Shape
         }
 
-        angle = shape.get(shape, None)
+        angle = shape.get(shape_char, None)
         # print('shape Angle:', angle)
         return angle
 
