@@ -15,10 +15,10 @@ class test_BaseOP(unittest.TestCase):
         self.baseop = BaseOP()
         self.setProps = {'min_dia': 0, 'extra_dia': 0, 'start_offset': 0, 'end_offset': 0, 'allow_grooving': False,
                       'allow_facing': False, 'allow_roughing': True, 'allow_finishing': True, 'step_over': 1,
-                      'finish_passes': 2, 'hfeed': 10, 'vfeed': 10}
+                      'finish_passes': 2, 'stock_to_leave': 0.25, 'hfeed': 10, 'vfeed': 10}
         self.getProps = {'min_dia': 0, 'extra_dia': 0, 'start_offset': 0, 'end_offset': 0, 'allow_grooving': False,
                       'allow_facing': False, 'allow_roughing': True, 'allow_finishing': True, 'step_over': 1.5,
-                      'finish_passes': 2, 'hfeed': 100, 'vfeed': 50}
+                      'finish_passes': 2, 'stock_to_leave': 0, 'hfeed': 100, 'vfeed': 50}
 
     def test_set_params(self):
         self.baseop.set_params(self.setProps)

@@ -17,10 +17,10 @@ class FaceOP(liblathe.base_op.BaseOP):
         zmax = self.stock.ZMax + self.start_offset
 
         self.clearing_paths = []
-        length = zmax - partBoundBox.ZMax
+        length = zmax - partBoundBox.ZMax + self.stock_to_leave
         step_over = self.step_over
         line_count = math.ceil(length / step_over)
-        zstart = partBoundBox.ZMax + step_over * line_count
+        zstart = partBoundBox.ZMax + step_over * line_count + self.stock_to_leave
 
         # build list of segments
         segmentgroup = SegmentGroup()

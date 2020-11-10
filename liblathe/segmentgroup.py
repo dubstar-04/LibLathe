@@ -270,7 +270,10 @@ class SegmentGroup:
 
     def offsetPath(self, step_over):
         # TODO Sort Edges to ensure they're in order.
-        # nedges = []
+
+        if step_over == 0:
+            return self
+
         segs = self.get_segments()
         segmentgroup = SegmentGroup()
 
