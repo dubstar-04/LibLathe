@@ -206,7 +206,7 @@ class SegmentGroup:
             min_z_retract = stock.ZMax
             z_retract = min_z_retract + step_over
 
-            print('min_x_retract:', min_x_retract)
+            # print('min_x_retract:', min_x_retract)
 
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
