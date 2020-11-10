@@ -5,8 +5,17 @@ LibLathe is an opensource standalone python library for generating lathe paths a
 | :warning: WARNING: LibLathe is currently experimental / Proof of concept and only suitable for testing. |
 
 ## Examples 
-Generating a roughing / profiling operation:
-![Profile Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/liblathepawn.png)
+### Facing:
+![Facing Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/FacingOp.jpeg)
+
+### Roughing:
+![Roughing Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/RoughingOp.jpeg)
+
+### Profiling:
+![Profiling Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/ProfilingOp.jpeg)
+
+### Parting:
+![Parting Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/PartingOp.jpeg)
 
 ## Links
 * Docs: https://liblathe.readthedocs.io/en/latest
