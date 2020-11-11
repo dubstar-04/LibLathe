@@ -4,7 +4,7 @@ from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
 
 
-class PartOP(liblathe.base_op.BaseOP):
+class PartoffOP(liblathe.base_op.BaseOP):
 
     def generate_path(self):
         """Generate the path for the Part operation"""
