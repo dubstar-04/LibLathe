@@ -229,7 +229,6 @@ class Plot:
             else:
                 if self.rapidOnly and code[x]['g'][0] == 'G0':
                     draw.line((x_start, y_start, x_end, y_end), fill=self.g0Colour, width=self.lineThickness)
-                elif self.cutsOnly and not code[x]['g'][0] == 'G0':
                 
             if not self.rapidOnly and not self.cutsOnly:
                 draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.lineThickness)
