@@ -277,9 +277,6 @@ class SegmentGroup:
                     pt2 = vec2.multiply(step_over)
                     new_start = seg.start.add(pt)
                     new_end = seg.end.add(pt2)
-
-                    new_start.X = new_start.X - step_over
-                    new_end.X = new_end.X - step_over
                     rad = seg.get_radius() - step_over
 
                 else:
@@ -289,7 +286,7 @@ class SegmentGroup:
                     pt2 = vec2.multiply(step_over)
                     new_start = pt.add(seg.start)
                     new_end = pt2.add(seg.end)
-                    rad = seg.get_radius() + step_over  # seg.get_centre_point().distance_to(new_start)
+                    rad = seg.get_radius() + step_over
 
                 segment = Segment(new_start, new_end)
                 segment.derive_bulge(seg, rad)
@@ -334,8 +331,10 @@ class SegmentGroup:
                     projseg = Segment(pt1, proj_pt)
                     intersect, pts = projseg.intersect(segments[index])
                     if intersect and allow_grooving:
+                        # add the intersecting line to the segment_group
                         new_seg = Segment(pt1, pts[0])
                         segs_out.add_segment(new_seg)
+                        # add the remainer of the arc to the segment_group
                         remaining_seg = Segment(pts[0], pt2)
                         remaining_seg.derive_bulge(seg)
                         segs_out.add_segment(remaining_seg)
