@@ -57,7 +57,7 @@ class Segment:
         basex = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.start.Z - self.end.Z) / normal
         basey = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.end.X - self.start.X) / normal
 
-        # invert for positive buldge values
+        # invert for positive bulge values
         if self.bulge > 0:
             basex = -basex
             basey = -basey
@@ -94,8 +94,8 @@ class Segment:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge = centre_pt - rad
-            values.append(buldge)
+            bulge = centre_pt - rad
+            values.append(bulge)
 
         return min(values, key=abs)
 
@@ -111,8 +111,8 @@ class Segment:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge = centre_pt - rad
-            values.append(buldge)
+            bulge = centre_pt - rad
+            values.append(bulge)
 
         return max(values, key=abs)
 
@@ -128,8 +128,8 @@ class Segment:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge = centre_pt - rad
-            values.append(buldge)
+            bulge = centre_pt - rad
+            values.append(bulge)
 
         return values
 

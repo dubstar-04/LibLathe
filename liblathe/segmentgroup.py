@@ -197,7 +197,7 @@ class SegmentGroup:
         segments = self.get_segments()
 
         cmds = []
-        # TODO: Move the G18 to a PATH Class? it doent need to be added to every segment group
+        # TODO: Move the G18 to a PATH Class? it doesn't need to be added to every segment group
         cmd = Command('G18')  # xz plane
         cmds.append(cmd)
 
@@ -348,7 +348,7 @@ class SegmentGroup:
                         # add the intersecting line to the segment_group
                         new_seg = Segment(pt1, pts[0])
                         segs_out.add_segment(new_seg)
-                        # add the remainer of the arc to the segment_group
+                        # add the remainder of the arc to the segment_group
                         remaining_seg = Segment(pts[0], pt2)
                         remaining_seg.derive_bulge(seg)
                         segs_out.add_segment(remaining_seg)
