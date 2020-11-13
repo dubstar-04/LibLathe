@@ -106,6 +106,17 @@ class SegmentGroup:
         self.segments = segmentgroupOut.get_segments()
         self.clean_offset_path()
 
+    def merge_segments(self):
+        """merge adjacent line segments"""
+        for i in range(len(self.segments)):
+            if i + 1 < len(self.segments):
+                if self.segments[i].get_rotation() == self.segments[i + 1].get_rotation():
+                    if self.segments[i].bulge == 0 and self.segments[i + 1].bulge == 0:
+                        self.segments[i].end = self.segments[i + 1].end
+                        self.segments.pop(i + 1)
+                        # call merge segments again
+                        self.merge_segments()
+
     def clean_offset_path(self, index=0):
         """
         remove any self intersecting features from the path.
@@ -186,7 +197,7 @@ class SegmentGroup:
         segments = self.get_segments()
 
         cmds = []
-        # TODO: Move the G18 to a PATH Class? it doent need to be added to every segment group
+        # TODO: Move the G18 to a PATH Class? it doesn't need to be added to every segment group
         cmd = Command('G18')  # xz plane
         cmds.append(cmd)
 
@@ -337,12 +348,12 @@ class SegmentGroup:
                         # add the intersecting line to the segment_group
                         new_seg = Segment(pt1, pts[0])
                         segs_out.add_segment(new_seg)
-                        # add the remainer of the arc to the segment_group
+                        # add the remainder of the arc to the segment_group
                         remaining_seg = Segment(pts[0], pt2)
                         remaining_seg.derive_bulge(seg)
                         segs_out.add_segment(remaining_seg)
                     else:
-                        if seg.start.angle_to(seg.end) < 270:
+                        if seg.start.angle_to(seg.end) <= 270:
                             seg = Segment(pt1, pt2)
                             segs_out.add_segment(seg)
                         else:
@@ -397,6 +408,7 @@ class SegmentGroup:
                 continue
 
             index += 1
+        segs_out.merge_segments()
         return segs_out
 
     def find_next_good_edge(self, current_index, stock_zmin, tool, allow_grooving, pt=None):

@@ -57,7 +57,7 @@ class Segment:
         basex = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.start.Z - self.end.Z) / normal
         basey = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.end.X - self.start.X) / normal
 
-        # invert for positive buldge values
+        # invert for positive bulge values
         if self.bulge > 0:
             basex = -basex
             basey = -basey
@@ -78,6 +78,10 @@ class Segment:
         rad = self.get_length() * (1 + math.pow(self.bulge, 2)) / (4 * abs(self.bulge))
         return rad
 
+    def get_rotation(self):
+        """returns the rotation of the segment"""
+        return self.start.angle_to(self.end)
+
     def get_extent_min(self, direction):
         """Return the minimum value of the segment in direction.
         Direction is a string for the axis of interest, X, Y, Z"""
@@ -90,8 +94,8 @@ class Segment:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge = centre_pt - rad
-            values.append(buldge)
+            bulge = centre_pt - rad
+            values.append(bulge)
 
         return min(values, key=abs)
 
@@ -107,8 +111,8 @@ class Segment:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge = centre_pt - rad
-            values.append(buldge)
+            bulge = centre_pt - rad
+            values.append(bulge)
 
         return max(values, key=abs)
 
@@ -124,8 +128,8 @@ class Segment:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
             # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            buldge = centre_pt - rad
-            values.append(buldge)
+            bulge = centre_pt - rad
+            values.append(bulge)
 
         return values
 

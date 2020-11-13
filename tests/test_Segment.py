@@ -72,6 +72,10 @@ class test_segment(unittest.TestCase):
         arcRadius = self.arcSegment1.get_radius()
         self.assertEqual(arcRadius, 76.60323462854265)
 
+    def test_get_rotation(self):
+        angle = self.lineSegment1.get_rotation()
+        self.assertEqual(angle, 45)
+
     def test_get_extent_min(self):
         extentMinX = self.lineSegment2.get_extent_min('X')
         self.assertEqual(extentMinX, self.pt5.X)

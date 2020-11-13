@@ -11,7 +11,7 @@ class Tool:
     Class to hold a lathe tool definition
     Tool String Formatting:
     Shape | Clearance Angle | Tolerance | Type | Edge Length | Thickness | Nose Radius | Direction
-    Example Tool Definistion: DCMT070204R
+    Example Tool Definition: DCMT070204R
     """
     def __init__(self, tool_string=None):
         # tool_string                       # DCMT070204R
