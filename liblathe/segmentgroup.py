@@ -4,7 +4,6 @@ from liblathe.boundbox import BoundBox
 from liblathe.command import Command
 from liblathe.point import Point
 from liblathe.segment import Segment
-from liblathe.vector import Vector
 
 
 class SegmentGroup:
@@ -271,20 +270,25 @@ class SegmentGroup:
             if seg.bulge != 0:
 
                 if seg.bulge > 0:
-                    # TO DO: change to Vector(x, y, z).normalise()
-                    vec = Vector().normalise(seg.start, seg.get_centre_point())
-                    vec2 = Vector().normalise(seg.end, seg.get_centre_point())
-                    pt = vec.multiply(step_over)
-                    pt2 = vec2.multiply(step_over)
-                    new_start = seg.start.add(pt)
+                    # get normal from end point to centre
+                    start_normal = seg.start.normal_to(seg.get_centre_point())
+                    end_normal = seg.end.normal_to(seg.get_centre_point())
+                    # get point in the direction of the normal with magnitude of step_over
+                    pt1 = start_normal.multiply(step_over)
+                    pt2 = end_normal.multiply(step_over)
+                    # get the new start and end points
+                    new_start = seg.start.add(pt1)
                     new_end = seg.end.add(pt2)
                     rad = seg.get_radius() - step_over
                 else:
-                    vec = Vector().normalise(seg.get_centre_point(), seg.start)
-                    vec2 = Vector().normalise(seg.get_centre_point(), seg.end)
-                    pt = vec.multiply(step_over)
-                    pt2 = vec2.multiply(step_over)
-                    new_start = pt.add(seg.start)
+                    # get normal from the centre to the end points
+                    start_normal = seg.get_centre_point().normal_to(seg.start)
+                    end_normal = seg.get_centre_point().normal_to(seg.end)
+                    # get point in the direction of the normal with magnitude of step_over
+                    pt1 = start_normal.multiply(step_over)
+                    pt2 = end_normal.multiply(step_over)
+                    # get the new start and end points
+                    new_start = pt1.add(seg.start)
                     new_end = pt2.add(seg.end)
                     rad = seg.get_radius() + step_over
 
@@ -292,9 +296,8 @@ class SegmentGroup:
                 segment.derive_bulge(seg, rad)
 
             if seg.bulge == 0:
-                vec = Vector().normalise(seg.start, seg.end)
-                vec = vec.rotate_x(-1.570796)
-                pt = vec.multiply(step_over)
+                normal = seg.start.normal_to(seg.end).rotate(-90)
+                pt = normal.multiply(step_over)
                 segment = Segment(pt.add(seg.start), pt.add(seg.end))
 
             segmentgroup.add_segment(segment)
