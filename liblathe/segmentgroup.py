@@ -271,6 +271,7 @@ class SegmentGroup:
             if seg.bulge != 0:
 
                 if seg.bulge > 0:
+                    # TO DO: change to Vector(x, y, z).normalise()
                     vec = Vector().normalise(seg.start, seg.get_centre_point())
                     vec2 = Vector().normalise(seg.end, seg.get_centre_point())
                     pt = vec.multiply(step_over)
@@ -278,7 +279,6 @@ class SegmentGroup:
                     new_start = seg.start.add(pt)
                     new_end = seg.end.add(pt2)
                     rad = seg.get_radius() - step_over
-
                 else:
                     vec = Vector().normalise(seg.get_centre_point(), seg.start)
                     vec2 = Vector().normalise(seg.get_centre_point(), seg.end)
