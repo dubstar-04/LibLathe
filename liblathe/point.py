@@ -53,7 +53,7 @@ class Point:
         return p
 
     def multiply(self, val):
-        """Returns a point multiplication between self and pt"""
+        """Returns a point multiplication between self and val"""
 
         p = Point(self.X * val, self.Y * val, self.Z * val)
         return p
@@ -64,13 +64,21 @@ class Point:
         p = Point(self.X + (pt.X - self.X) * t, self.Y + (pt.Y - self.Y) * t, self.Z + (pt.Z - self.Z) * t)
         return p
 
+    def normal_to(self, pnt):
+        p = pnt.sub(self)
+        m = math.sqrt(p.X ** 2 + p.Y ** 2 + p.Z ** 2)
+        if m == 0:
+            return Point(0.0, 0.0, 0.0)
+        else:
+            return Point(p.X / m, p.Y / m, p.Z / m)
+
     def rotate(self, angle):
         """Returns a point rotated by angle in degrees"""
         # TODO: rotate should operate about another point.
         angle = math.radians(angle)
 
-        x = self.X * math.cos(angle) + self.Z * math.sin(angle)
-        z = -self.X * math.sin(angle) + self.Z * math.cos(angle)
+        x = self.X * math.cos(angle) - self.Z * math.sin(angle)
+        z = self.X * math.sin(angle) + self.Z * math.cos(angle)
         p = Point(x, self.Y, z)
         return p
 
