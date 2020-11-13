@@ -78,6 +78,10 @@ class Segment:
         rad = self.get_length() * (1 + math.pow(self.bulge, 2)) / (4 * abs(self.bulge))
         return rad
 
+    def get_rotation(self):
+        """returns the rotation of the segment"""
+        return self.start.angle_to(self.end)
+
     def get_extent_min(self, direction):
         """Return the minimum value of the segment in direction.
         Direction is a string for the axis of interest, X, Y, Z"""
