@@ -78,9 +78,9 @@ class test_point(unittest.TestCase):
 
     def test_rotate(self):
         rotate = self.pt2.rotate(90)
-        self.assertEqual(rotate.X, 100)
+        self.assertEqual(rotate.X, -100)
         self.assertEqual(rotate.Y, 100)
-        self.assertEqual(rotate.Z, -100)
+        self.assertEqual(rotate.Z, 100)
 
     def test_mid(self):
         mid = self.pt2.mid(self.pt4)
