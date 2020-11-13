@@ -59,7 +59,9 @@ class Point:
         return p
 
     def lerp(self, pt, t):
-        """Returns a point linear interpolation between self and pt"""
+        """Returns a point linear interpolation between self and pt
+        t is parameter [0 1] for the distance between self and pt
+        e.g. t = 0.5 will return midpoint between self and pt"""
 
         p = Point(self.X + (pt.X - self.X) * t, self.Y + (pt.Y - self.Y) * t, self.Z + (pt.Z - self.Z) * t)
         return p
