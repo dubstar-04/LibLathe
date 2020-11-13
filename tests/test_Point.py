@@ -82,6 +82,12 @@ class test_point(unittest.TestCase):
         self.assertEqual(lerp.Y, 50)
         self.assertEqual(lerp.Z, 50)
 
+    def test_normalise_to(self):
+        normal = self.pt1.normalise_to(Point(100, 0, 100))
+        self.assertEqual(normal.X, 0.7071067811865475)
+        self.assertEqual(normal.Y, 0)
+        self.assertEqual(normal.Z, 0.7071067811865475)
+
     def test_rotate(self):
         rotate = self.pt2.rotate(90)
         self.assertEqual(rotate.X, -100)

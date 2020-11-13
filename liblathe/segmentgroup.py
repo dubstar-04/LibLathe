@@ -271,8 +271,8 @@ class SegmentGroup:
 
                 if seg.bulge > 0:
                     # get normal from end point to centre
-                    start_normal = seg.start.normal_to(seg.get_centre_point())
-                    end_normal = seg.end.normal_to(seg.get_centre_point())
+                    start_normal = seg.start.normalise_to(seg.get_centre_point())
+                    end_normal = seg.end.normalise_to(seg.get_centre_point())
                     # get point in the direction of the normal with magnitude of step_over
                     pt1 = start_normal.multiply(step_over)
                     pt2 = end_normal.multiply(step_over)
@@ -282,8 +282,8 @@ class SegmentGroup:
                     rad = seg.get_radius() - step_over
                 else:
                     # get normal from the centre to the end points
-                    start_normal = seg.get_centre_point().normal_to(seg.start)
-                    end_normal = seg.get_centre_point().normal_to(seg.end)
+                    start_normal = seg.get_centre_point().normalise_to(seg.start)
+                    end_normal = seg.get_centre_point().normalise_to(seg.end)
                     # get point in the direction of the normal with magnitude of step_over
                     pt1 = start_normal.multiply(step_over)
                     pt2 = end_normal.multiply(step_over)
@@ -296,7 +296,7 @@ class SegmentGroup:
                 segment.derive_bulge(seg, rad)
 
             if seg.bulge == 0:
-                normal = seg.start.normal_to(seg.end).rotate(-90)
+                normal = seg.start.normalise_to(seg.end).rotate(-90)
                 pt = normal.multiply(step_over)
                 segment = Segment(pt.add(seg.start), pt.add(seg.end))
 

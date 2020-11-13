@@ -66,7 +66,7 @@ class Point:
         p = Point(self.X + (pt.X - self.X) * t, self.Y + (pt.Y - self.Y) * t, self.Z + (pt.Z - self.Z) * t)
         return p
 
-    def normal_to(self, pnt):
+    def normalise_to(self, pnt):
         p = pnt.sub(self)
         m = math.sqrt(p.X ** 2 + p.Y ** 2 + p.Z ** 2)
         if m == 0:
