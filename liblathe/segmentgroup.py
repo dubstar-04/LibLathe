@@ -4,7 +4,6 @@ from liblathe.boundbox import BoundBox
 from liblathe.command import Command
 from liblathe.point import Point
 from liblathe.segment import Segment
-from liblathe.vector import Vector
 
 
 class SegmentGroup:
@@ -93,11 +92,9 @@ class SegmentGroup:
 
             if pt1 and pt2:
                 if segments[i].bulge != 0:
-                    nseg = Segment(pt1, pt2)
                     rad = segments[i].get_centre_point().distance_to(pt1)
-                    if segments[i].bulge < 0:
-                        rad = 0 - rad
-                    nseg.set_bulge_from_radius(rad)
+                    nseg = Segment(pt1, pt2)
+                    nseg.derive_bulge(segments[i], rad)
                     segmentgroupOut.add_segment(nseg)
                 else:
                     segmentgroupOut.add_segment(Segment(pt1, pt2))
@@ -128,18 +125,11 @@ class SegmentGroup:
 
                         self.segments[index].end = pt
                         if self.segments[index].bulge:
-                            rad = self.segments[index].get_radius()
-                            if self.segments[index].bulge < 0:
-                                rad = 0 - rad
-                            self.segments[index].set_bulge_from_radius(rad)
+                            self.segments[index].derive_bulge(self.segments[index])
 
                         self.segments[i].start = pt
                         if self.segments[i].bulge:
-                            rad = self.segments[i].get_radius()
-                            if self.segments[i].bulge < 0:
-                                rad = 0 - rad
-                            self.segments[i].set_bulge_from_radius(rad)
-
+                            self.segments[i].derive_bulge(self.segments[i])
                         if i != index + 1:
                             del self.segments[index + 1:i]
 
@@ -206,8 +196,6 @@ class SegmentGroup:
             min_z_retract = stock.ZMax
             z_retract = min_z_retract + step_over
 
-            # print('min_x_retract:', min_x_retract)
-
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
 
@@ -228,7 +216,7 @@ class SegmentGroup:
                     params = {'X': x_retract, 'Y': pt.Y, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
-                    # rapid at xmin to the start of te segment
+                    # rapid at xmin to the start of the segment
                     params = {'X': x_retract, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
@@ -282,36 +270,34 @@ class SegmentGroup:
             if seg.bulge != 0:
 
                 if seg.bulge > 0:
-                    vec = Vector().normalise(seg.start, seg.get_centre_point())
-                    vec2 = Vector().normalise(seg.end, seg.get_centre_point())
-                    pt = vec.multiply(step_over)
-                    pt2 = vec2.multiply(step_over)
-                    new_start = seg.start.add(pt)
+                    # get normal from end point to centre
+                    start_normal = seg.start.normalise_to(seg.get_centre_point())
+                    end_normal = seg.end.normalise_to(seg.get_centre_point())
+                    # get point in the direction of the normal with magnitude of step_over
+                    pt1 = start_normal.multiply(step_over)
+                    pt2 = end_normal.multiply(step_over)
+                    # get the new start and end points
+                    new_start = seg.start.add(pt1)
                     new_end = seg.end.add(pt2)
-
-                    new_start.X = new_start.X - step_over
-                    new_end.X = new_end.X - step_over
                     rad = seg.get_radius() - step_over
-                    # print('offsetPath arc dims', new_start.X, new_start.Z, new_end.X, new_end.Z)
                 else:
-                    vec = Vector().normalise(seg.get_centre_point(), seg.start)
-                    vec2 = Vector().normalise(seg.get_centre_point(), seg.end)
-                    pt = vec.multiply(step_over)
-                    pt2 = vec2.multiply(step_over)
-                    new_start = pt.add(seg.start)
+                    # get normal from the centre to the end points
+                    start_normal = seg.get_centre_point().normalise_to(seg.start)
+                    end_normal = seg.get_centre_point().normalise_to(seg.end)
+                    # get point in the direction of the normal with magnitude of step_over
+                    pt1 = start_normal.multiply(step_over)
+                    pt2 = end_normal.multiply(step_over)
+                    # get the new start and end points
+                    new_start = pt1.add(seg.start)
                     new_end = pt2.add(seg.end)
-                    rad = seg.get_radius() + step_over  # seg.get_centre_point().distance_to(new_start)
+                    rad = seg.get_radius() + step_over
 
                 segment = Segment(new_start, new_end)
-
-                if seg.bulge < 0:
-                    rad = 0 - rad
-                segment.set_bulge_from_radius(rad)
+                segment.derive_bulge(seg, rad)
 
             if seg.bulge == 0:
-                vec = Vector().normalise(seg.start, seg.end)
-                vec = vec.rotate_x(-1.570796)
-                pt = vec.multiply(step_over)
+                normal = seg.start.normalise_to(seg.end).rotate(-90)
+                pt = normal.multiply(step_over)
                 segment = Segment(pt.add(seg.start), pt.add(seg.end))
 
             segmentgroup.add_segment(segment)
@@ -331,39 +317,62 @@ class SegmentGroup:
             pt2 = seg.end
             pt = None
 
-            if seg.bulge != 0:
-                print('arc segment')
-                if seg.bulge > 0:
-                    # TODO: handle segments with a positive bulge
-                    seg = Segment(pt1, pt2)
-                    segs_out.add_segment(seg)
-                if seg.bulge < 0:
-                    # Limit the arc movement to the X extents or the tangent at the max tool angle if allow_grooving
-                    angle_limit = 180 if allow_grooving is False else tool.get_tool_cutting_angle() - 90
-                    if seg.get_centre_point().angle_to(pt2) <= angle_limit:
+            # TO DO: Tidy this mess
+
+            if seg.bulge > 0:
+                segAng = round(math.degrees(seg.get_angle()), 5)
+                # get angle tangent to the start point
+                startPtAng = round(pt1.angle_to(seg.get_centre_point()) + 90, 5)
+                if startPtAng <= tool.get_tool_cutting_angle():
+                    if startPtAng - segAng > 178:
                         segs_out.add_segment(seg)
+                else:
+                    ang = tool.get_tool_cutting_angle()
+                    # calculate the length required to project the point to the centreline
+                    length = abs(pt1.X / math.cos(math.radians(360 - ang)))
+                    proj_pt = pt1.project(ang, length)
+                    projseg = Segment(pt1, proj_pt)
+                    intersect, pts = projseg.intersect(segments[index])
+                    if intersect and allow_grooving:
+                        # add the intersecting line to the segment_group
+                        new_seg = Segment(pt1, pts[0])
+                        segs_out.add_segment(new_seg)
+                        # add the remainer of the arc to the segment_group
+                        remaining_seg = Segment(pts[0], pt2)
+                        remaining_seg.derive_bulge(seg)
+                        segs_out.add_segment(remaining_seg)
                     else:
-                        rad = seg.get_radius()
-                        if not allow_grooving:
-                            x = seg.get_centre_point().X - rad
-                            y = seg.get_centre_point().Y
-                            z = seg.get_centre_point().Z
-                            pt = Point(x, y, z)
+                        if seg.start.angle_to(seg.end) < 270:
+                            seg = Segment(pt1, pt2)
+                            segs_out.add_segment(seg)
                         else:
-                            pt = seg.get_centre_point().project(angle_limit, rad)
+                            pt = seg.start
+                            next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving, pt)
 
-                        if seg.bulge < 0:
-                            rad = 0 - rad
+            if seg.bulge < 0:
+                # Limit the arc movement to the X extents or the tangent at the max tool angle if allow_grooving
+                angle_limit = 180 if allow_grooving is False else tool.get_tool_cutting_angle() - 90
+                if seg.get_centre_point().angle_to(pt2) <= angle_limit:
+                    segs_out.add_segment(seg)
+                else:
+                    rad = seg.get_radius()
+                    if not allow_grooving:
+                        x = seg.get_centre_point().X - rad
+                        y = seg.get_centre_point().Y
+                        z = seg.get_centre_point().Z
+                        pt = Point(x, y, z)
+                    else:
+                        pt = seg.get_centre_point().project(angle_limit, rad)
 
-                        seg = Segment(pt1, pt)
-                        seg.set_bulge_from_radius(rad)
-                        segs_out.add_segment(seg)
+                    nseg = Segment(pt1, pt)
+                    nseg.derive_bulge(seg, rad)
+                    segs_out.add_segment(nseg)
 
-                        pt1 = pt
-                        next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving, pt)
+                    pt1 = pt
+                    next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving, pt)
 
             elif seg.bulge == 0:
-                print('line segment')
+                # print('line segment')
                 if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
                     next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving)
                 else:
@@ -376,10 +385,13 @@ class SegmentGroup:
             if next_index is not False and next_index != index:
                 seg = Segment(pt1, pt)
                 segs_out.add_segment(seg)
+
                 next_pt1 = pt
                 next_pt2 = segments[next_index].end
                 seg = Segment(next_pt1, next_pt2)
+                seg.derive_bulge(segments[next_index])
                 segs_out.add_segment(seg)
+
                 next_index += 1
                 index = next_index
                 continue

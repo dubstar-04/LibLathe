@@ -76,11 +76,23 @@ class test_point(unittest.TestCase):
         self.assertEqual(multiplyNegative.Y, self.pt7.Y)
         self.assertEqual(multiplyNegative.Z, self.pt7.Z)
 
+    def test_lerp(self):
+        lerp = self.pt1.lerp(self.pt2, 0.5)
+        self.assertEqual(lerp.X, 50)
+        self.assertEqual(lerp.Y, 50)
+        self.assertEqual(lerp.Z, 50)
+
+    def test_normalise_to(self):
+        normal = self.pt1.normalise_to(Point(100, 0, 100))
+        self.assertEqual(normal.X, 0.7071067811865475)
+        self.assertEqual(normal.Y, 0)
+        self.assertEqual(normal.Z, 0.7071067811865475)
+
     def test_rotate(self):
         rotate = self.pt2.rotate(90)
-        self.assertEqual(rotate.X, 100)
+        self.assertEqual(rotate.X, -100)
         self.assertEqual(rotate.Y, 100)
-        self.assertEqual(rotate.Z, -100)
+        self.assertEqual(rotate.Z, 100)
 
     def test_mid(self):
         mid = self.pt2.mid(self.pt4)
