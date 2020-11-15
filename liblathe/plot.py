@@ -11,7 +11,7 @@ class Plot:
         self.file_location = ''
         self.image_name = 'image1'
         self.image_type = '.jpg'
-        self.imageSize = (1920, 1080)
+        self.image_size = (1920, 1080)
         self.g0_colour = (256, 0, 0)
         self.g1_colour = (0, 256, 0)
         self.g2_colour = (0, 256, 0)
@@ -76,6 +76,41 @@ class Plot:
         else:
             self.image_type = image_type
 
+    def draw_rapids_only(self):
+        """Draw rapid only on/off"""
+        self.rapidOnly = not self.rapidOnly
+        self.cutsOnly = False
+        self.specifiedPlot = ''
+        self.cutsOnly = ''
+
+    def draw_cuts_only(self):
+        """Draw cuts only on/off"""
+        self.cutsOnly = not self.cutsOnly
+        self.rapidOnly = False
+        self.specifiedPlot = ''
+        self.cutsOnly = ''
+
+    def draw_specified(self, gcode, colour):
+        """Draws only specified cut. For example G2"""
+        self.specifiedPlot = gcode
+        if isinstance(colour, tuple) and len(colour) == 3:
+            try:
+                self.specifiedPlotColour = colour
+            except Exception:
+                raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
+        self.cutsOnly = False
+        self.rapidOnly = False
+
+    def flip_image_horizontal(self):
+        """Flip image horizontally(left to right).Turns On/Off"""
+        self.mirrorImage = not self.mirrorImage
+        self.flipImage = False
+
+    def flip_image_vertical(self):
+        """Flip the image vertically(top to bottom). Turns On/Off"""
+        self.flipImage = not self.flipImage
+        self.mirrorImage = False
+
     def backplot(self, gcode):
         """Backplot creates an image from supplied LibLathe g code"""
         code = []
@@ -108,6 +143,12 @@ class Plot:
                         elif i[0].upper() == 'Y':
                             continue
 
+                        elif i[0].upper() == 'I':
+                            col['i'] = float(i[1:])
+
+                        elif i[0].upper() == 'K':
+                            col['k'] = float(i[1:])
+
                         elif i[0].upper() == 'Z':
                             col['z'] = float(i[1:])
                             self._min_max('y', float(i[1:]))
@@ -116,7 +157,7 @@ class Plot:
                             continue
 
                         else:
-                            print(line)
+                            print(command)
                             raise Warning('Unknown character!')
                 else:
                     continue
@@ -182,7 +223,13 @@ class Plot:
                 x += 1
 
         # Mirror because its draw flipped.
-        img = ImageOps.flip(img)
+        if self.mirrorImage:
+            img = ImageOps.mirror(img)
+        elif self.flipImage:
+            img = ImageOps.flip(img)
+        else:
+            img = ImageOps.flip(img)
+
         if self.transparency:
             img.save(self.file_location + self.image_name + '.png')
         else:
