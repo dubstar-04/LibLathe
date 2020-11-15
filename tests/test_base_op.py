@@ -28,6 +28,12 @@ class test_BaseOP(unittest.TestCase):
         self.assertTrue(self.baseop.allow_roughing)
         self.assertFalse(self.baseop.allow_facing)
 
+    @unittest.expectedFailure
+    def test_get_gcode(self):
+        # Test get_gcode() with no tool set
+        with self.assertWarns(Warning):
+            self.baseop.get_gcode()
+
     def test_get_params(self):
         params = self.baseop.get_params()
         for i in params:
