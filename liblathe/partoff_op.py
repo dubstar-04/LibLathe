@@ -12,14 +12,14 @@ class PartoffOP(liblathe.base_op.BaseOP):
         self.tool_paths = []
 
         toolWidth = self.tool.get_width()
-        xmin = self.stock.XMin - self.extra_dia * 0.5
-        xmax = 0 - self.min_dia * 0.5
-        zmin = self.stock.ZMin - toolWidth
+        x_min = self.stock.x_min - self.extra_dia * 0.5
+        x_max = 0 - self.min_dia * 0.5
+        z_min = self.stock.z_min - toolWidth
 
         # build list of segments
         segmentgroup = SegmentGroup()
-        startPt = Point(xmin, 0, zmin)
-        endPt = Point(xmax, 0, zmin)
+        startPt = Point(x_min, 0, z_min)
+        endPt = Point(x_max, 0, z_min)
         seg = Segment(startPt, endPt)
         segmentgroup.add_segment(seg)
 
@@ -28,8 +28,8 @@ class PartoffOP(liblathe.base_op.BaseOP):
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
-        Path = []
+        path = []
         for segmentgroup in self.tool_paths:
             finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            Path.append(finish)
-        return Path
+            path.append(finish)
+        return path

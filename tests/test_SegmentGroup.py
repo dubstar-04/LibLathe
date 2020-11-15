@@ -76,18 +76,18 @@ class test_segment_group(unittest.TestCase):
     def test_boundbox(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
-        XMin = boundbox.XMin
-        self.assertEqual(XMin, min(self.pt1.X, self.pt2.X))
-        YMin = boundbox.YMin
-        self.assertEqual(YMin, min(self.pt1.Y, self.pt2.Y))
-        ZMin = boundbox.ZMin
-        self.assertEqual(ZMin, min(self.pt1.Z, self.pt2.Z))
-        XMax = boundbox.XMax
-        self.assertEqual(XMax, max(self.pt1.X, self.pt2.X))
-        YMax = boundbox.YMax
-        self.assertEqual(YMax, max(self.pt1.Y, self.pt2.Y))
-        ZMax = boundbox.ZMax
-        self.assertEqual(ZMax, max(self.pt1.Z, self.pt2.Z))
+        x_min = boundbox.x_min
+        self.assertEqual(x_min, min(self.pt1.X, self.pt2.X))
+        y_min = boundbox.y_min
+        self.assertEqual(y_min, min(self.pt1.Y, self.pt2.Y))
+        z_min = boundbox.z_min
+        self.assertEqual(z_min, min(self.pt1.Z, self.pt2.Z))
+        x_max = boundbox.x_max
+        self.assertEqual(x_max, max(self.pt1.X, self.pt2.X))
+        y_max = boundbox.y_max
+        self.assertEqual(y_max, max(self.pt1.Y, self.pt2.Y))
+        z_max = boundbox.z_max
+        self.assertEqual(z_max, max(self.pt1.Z, self.pt2.Z))
 
     def test_join_segments(self):
         self.segmentGroup.add_segment(self.lineSegment1)
@@ -127,22 +127,22 @@ class test_segment_group(unittest.TestCase):
         boundbox = self.segmentGroup.boundbox()
         cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         # Expected return
-        # Command Movements
+        # Command movements
         # ['G18', 'G0', 'G0', 'G0', 'G1', 'G0', 'G0']
-        self.assertEqual(cmds[0].Movement, 'G18')
-        self.assertEqual(cmds[1].Movement, 'G0')
-        self.assertEqual(cmds[2].Movement, 'G0')
-        self.assertEqual(cmds[3].Movement, 'G0')
-        self.assertEqual(cmds[4].Movement, 'G0')
-        self.assertEqual(cmds[5].Movement, 'G0')
-        self.assertEqual(cmds[6].Movement, 'G1')
+        self.assertEqual(cmds[0].movement, 'G18')
+        self.assertEqual(cmds[1].movement, 'G0')
+        self.assertEqual(cmds[2].movement, 'G0')
+        self.assertEqual(cmds[3].movement, 'G0')
+        self.assertEqual(cmds[4].movement, 'G0')
+        self.assertEqual(cmds[5].movement, 'G0')
+        self.assertEqual(cmds[6].movement, 'G1')
 
     def test_to_commands_params(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
         cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         # Expected return
-        # Command Params
+        # Command params
         # {}
         # {'X': 0, 'Y': 0, 'Z': 101.5, 'F': 100}
         # {'X': 0, 'Y': 0, 'Z': 0, 'F': 100}
@@ -150,13 +150,13 @@ class test_segment_group(unittest.TestCase):
         # {'X': 100, 'Y': 0, 'Z': 100, 'F': 100}
         # {'X': 98.5, 'Y': 0, 'Z': 100, 'F': 100}
         # {'X': 98.5, 'Y': 0, 'Z': 101.5, 'F': 100}
-        self.assertEqual(cmds[0].Params, {})
-        self.assertEqual(cmds[1].Params, {'X': 0, 'Y': 0, 'Z': 101.5, 'F': 100})
-        self.assertEqual(cmds[2].Params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[3].Params, {'X': 97.0, 'Y': 0, 'F': 100})
-        self.assertEqual(cmds[4].Params, {'X': 97.0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[5].Params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[6].Params, {'X': 100, 'Y': 0, 'Z': 100, 'F': 100})
+        self.assertEqual(cmds[0].params, {})
+        self.assertEqual(cmds[1].params, {'X': 0, 'Y': 0, 'Z': 101.5, 'F': 100})
+        self.assertEqual(cmds[2].params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[3].params, {'X': 97.0, 'Y': 0, 'F': 100})
+        self.assertEqual(cmds[4].params, {'X': 97.0, 'Y': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[5].params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[6].params, {'X': 100, 'Y': 0, 'Z': 100, 'F': 100})
 
 
 if __name__ == '__main__':

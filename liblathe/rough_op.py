@@ -15,19 +15,19 @@ class RoughOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the Rough operation"""
 
-        self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.ZMin, self.tool, self.allow_grooving)
+        self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
         self.clearing_paths = []
-        zmax = self.stock.ZMax + self.start_offset
+        z_max = self.stock.z_max + self.start_offset
         line_count = int(math.ceil((self.stock.XLength() + self.extra_dia * 0.5) / self.step_over))
         xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
 
         # create roughing boundary offset by the stock to leave value
-        roughing_boundary = self.part_segment_group.offsetPath(self.stock_to_leave)
+        roughing_boundary = self.part_segment_group.offset_path(self.stock_to_leave)
 
         for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over
-            pt1 = Point(xpt, 0, zmax)
-            pt2 = Point(xpt, 0, zmax - self.stock.ZLength() - self.start_offset)
+            pt1 = Point(xpt, 0, z_max)
+            pt2 = Point(xpt, 0, z_max - self.stock.ZLength() - self.start_offset)
             path_line = Segment(pt1, pt2)
             intersections = []
             for seg in roughing_boundary.get_segments():
@@ -103,10 +103,10 @@ class RoughOP(liblathe.base_op.BaseOP):
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
-        Path = []
+        path = []
 
         for segmentgroup in self.tool_paths:
             rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            Path.append(rough)
+            path.append(rough)
 
-        return Path
+        return path

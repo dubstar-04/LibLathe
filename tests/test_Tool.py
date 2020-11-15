@@ -39,20 +39,20 @@ class test_tool(unittest.TestCase):
         shapeAngle = self.tool.get_tip_angle_from_shape("D")
         self.assertEqual(shapeAngle, 55)
 
-    def test_getEdgeLength(self):
-        edgeLength = self.tool.getEdgeLength("D", "07")
+    def test_get_edge_length(self):
+        edgeLength = self.tool.get_edge_length("D", "07")
         self.assertEqual(edgeLength, 6.35)
 
-    def test_getNoseRadius(self):
-        noseRadius = self.tool.getNoseRadius("04")
+    def test_get_nose_radius(self):
+        noseRadius = self.tool.get_nose_radius("04")
         self.assertEqual(noseRadius, 0.4)
 
-    def test_getCuttingDirection(self):
-        cuttingDirection = self.tool.getCuttingDirection()
+    def test_get_cutting_direction(self):
+        cuttingDirection = self.tool.get_cutting_direction()
         self.assertEqual(cuttingDirection, "R")
 
-    def test_getRotation(self):
-        rotation = self.tool.getRotation()
+    def test_get_rotation(self):
+        rotation = self.tool.get_rotation()
         self.assertEqual(rotation, 0)
 
 
