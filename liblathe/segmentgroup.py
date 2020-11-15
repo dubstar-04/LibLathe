@@ -267,7 +267,7 @@ class SegmentGroup:
 
         return cmds
 
-    def offset_path(self, step_over):
+    def offsetPath(self, step_over):
         # TODO Sort Edges to ensure they're in order.
 
         if step_over == 0:
