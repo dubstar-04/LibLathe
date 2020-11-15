@@ -185,18 +185,18 @@ class Segment:
     def intersect(self, seg, extend=False):
 
         if self.bulge == 0 and seg.bulge == 0:
-            intersect, pt = self.intersectLineLine(seg, extend)
+            intersect, pt = self.intersect_line_line(seg, extend)
         elif self.bulge != 0 and seg.bulge != 0:
-            intersect, pt = self.intersectCircleCircle(seg, extend)
+            intersect, pt = self.intersect_circle_circle(seg, extend)
         elif self.bulge != 0 or seg.bulge != 0 and self.bulge == 0 or seg.bulge == 0:
-            intersect, pt = self.intersectCircleLine(seg, extend)
+            intersect, pt = self.intersect_circle_line(seg, extend)
         else:
             print('segment.py - Intersect Error with passed segments')
 
         # TODO: this should return a constent type not Point() or []
         return intersect, pt
 
-    def intersectLineLine(self, seg, extend=False):
+    def intersect_line_line(self, seg, extend=False):
 
         a1 = self.start
         a2 = self.end
@@ -220,7 +220,7 @@ class Segment:
 
         return intersect, pts
 
-    def intersectCircleLine(self, seg, extend=False):
+    def intersect_circle_line(self, seg, extend=False):
 
         if self.bulge == 0 and seg.bulge != 0:
             line = self
@@ -278,7 +278,7 @@ class Segment:
 
         return intersect, ptsout
 
-    def intersectCircleCircle(self, seg, extend=False):
+    def intersect_circle_circle(self, seg, extend=False):
 
         c1 = self.get_centre_point()
         r1 = self.get_radius()
