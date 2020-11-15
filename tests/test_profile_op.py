@@ -15,7 +15,7 @@ from liblathe.tool import Tool
 
 
 class test_ProfileOP(unittest.TestCase):
-    """Test for rough_op.py"""
+    """Test for profile_op.py"""
 
     def setUp(self):
 
