@@ -5,13 +5,15 @@ from PIL import Image, ImageDraw, ImageOps
 
 
 class Plot:
-    def _init_(self):
+    def __init__(self):
         self.background = (168, 168, 168)
         self.transparency = False
         self.file_location = ''
         self.image_name = 'image1'
         self.image_type = '.jpg'
         self.image_size = (1920, 1080)
+        self.mirror_image = False
+        self.flip_image = False
         self.g0_colour = (256, 0, 0)
         self.g1_colour = (0, 256, 0)
         self.g2_colour = (0, 256, 0)
@@ -66,10 +68,10 @@ class Plot:
         else:
             raise Warning('Unknown thickness value! Thickness must be an integer!')
 
-    def set_image_details(self, image_name='image1', image_type='.jpg', imageSize=(1920, 1080)):
+    def set_image_details(self, image_name='image1', image_type='.jpg', image_size=(1920, 1080)):
         """"Set image details. Image name, image type (.jpg, .png) and image size (1080, 720)"""
         self.image_name = image_name
-        self.imageSize = imageSize
+        self.image_size = image_size
 
         if not image_type.startswith('.'):
             self.image_type = '.' + image_type
@@ -103,13 +105,13 @@ class Plot:
 
     def flip_image_horizontal(self):
         """Flip image horizontally(left to right).Turns On/Off"""
-        self.mirrorImage = not self.mirrorImage
-        self.flipImage = False
+        self.mirror_image = not self.mirror_image
+        self.flip_image = False
 
     def flip_image_vertical(self):
         """Flip the image vertically(top to bottom). Turns On/Off"""
-        self.flipImage = not self.flipImage
-        self.mirrorImage = False
+        self.flip_image = not self.flip_image
+        self.mirror_image = False
 
     def backplot(self, gcode):
         """Backplot creates an image from supplied LibLathe g code"""
@@ -186,11 +188,11 @@ class Plot:
         y = math.ceil(abs(self._min_y - self._max_y))
 
         # divide by image size
-        x_scale = math.floor(self.imageSize[0] / x)
-        y_scale = math.floor(self.imageSize[1] / y)
+        x_scale = math.floor(self.image_size[0] / x)
+        y_scale = math.floor(self.image_size[1] / y)
 
         # scale up
-        self.imageSize = ((x * x_scale) + 50, (y * y_scale) + 50)
+        self.image_size = ((x * x_scale) + 50, (y * y_scale) + 50)
 
         return min([x_scale, y_scale])
 
@@ -199,9 +201,9 @@ class Plot:
         scale = self._image_size()
 
         if self.transparency:
-            img = Image.new('RGBA', self.imageSize, (255, 0, 0, 0))
+            img = Image.new('RGBA', self.image_size, (255, 0, 0, 0))
         else:
-            img = Image.new('RGB', self.imageSize, self.background)
+            img = Image.new('RGB', self.image_size, self.background)
 
         draw = ImageDraw.Draw(img)
 
@@ -212,10 +214,10 @@ class Plot:
 
             # / 2 to draw from the center of the image
             # - 25 to offset the draw point from the edge of the image
-            x_start = (self.imageSize[0] / 2) + (code[i]['z'] * scale) - 25
-            y_start = self.imageSize[1] + (code[i]['x'] * scale) - 25
-            x_end = (self.imageSize[0] / 2) + (code[x]['z'] * scale) - 25
-            y_end = self.imageSize[1] + (code[x]['x'] * scale) - 25
+            x_start = (self.image_size[0] / 2) + (code[i]['z'] * scale) - 25
+            y_start = self.image_size[1] + (code[i]['x'] * scale) - 25
+            x_end = (self.image_size[0] / 2) + (code[x]['z'] * scale) - 25
+            y_end = self.image_size[1] + (code[x]['x'] * scale) - 25
 
             draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.line_thickness)
             i += 1
@@ -223,9 +225,9 @@ class Plot:
                 x += 1
 
         # Mirror because its draw flipped.
-        if self.mirrorImage:
+        if self.mirror_image:
             img = ImageOps.mirror(img)
-        elif self.flipImage:
+        elif self.flip_image:
             img = ImageOps.flip(img)
         else:
             img = ImageOps.flip(img)
