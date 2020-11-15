@@ -75,25 +75,22 @@ class test_PartoffOP(unittest.TestCase):
         # check there is a return list
         self.assertTrue(len(gcode))
 
-        for line in gcode:
-            # check the line has commands
-            self.assertTrue(len(line))
+        for command in gcode:
 
-            for command in line:
-                # check the command is a liblathe.command.Command
-                self.assertTrue(isinstance(command, Command))
+            # check the command is a liblathe.command.Command
+            self.assertTrue(isinstance(command, Command))
 
-                # check the command movement contains the a 'G'
-                self.assertTrue(command.get_movement().startswith("G"))
+            # check the command movement contains the a 'G'
+            self.assertTrue(command.get_movement().startswith("G"))
 
-                if command.get_movement() in ["G0", "G1", "G2", "G3"]:
-                    # check command has feed rate
-                    feed_exists = True if "F" in command.get_params() else False
-                    self.assertTrue(feed_exists)
+            if command.get_movement() in ["G0", "G1", "G2", "G3"]:
+                # check command has feed rate
+                feed_exists = True if "F" in command.get_params() else False
+                self.assertTrue(feed_exists)
 
-                    # check the feed rate
-                    if feed_exists:
-                        self.assertEqual(command.get_params()['F'], self.hfeed)
+                # check the feed rate
+                if feed_exists:
+                    self.assertEqual(command.get_params()['F'], self.hfeed)
 
 
 if __name__ == '__main__':
