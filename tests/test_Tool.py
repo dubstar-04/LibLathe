@@ -69,8 +69,8 @@ class test_tool(unittest.TestCase):
         self.assertEqual(max_doc, 1.5875)
 
         with self.assertRaises(Warning):
-            self.tool.set_edge_length(0)
-            max_doc = self.tool.get_max_doc()
+            tool = Tool()
+            max_doc = tool.get_max_doc()
 
     def test_set_tip_angle(self):
         self.tool.set_tip_angle(22.5)
