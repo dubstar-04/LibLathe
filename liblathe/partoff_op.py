@@ -31,5 +31,5 @@ class PartoffOP(liblathe.base_op.BaseOP):
         path = []
         for segmentgroup in self.tool_paths:
             finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            path.append(finish)
+            path.extend(finish)
         return path

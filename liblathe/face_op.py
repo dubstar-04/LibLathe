@@ -48,6 +48,6 @@ class FaceOP(liblathe.base_op.BaseOP):
         path = []
         for segmentgroup in self.clearing_paths:
             rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            path.append(rough)
+            path.extend(rough)
 
         return path
