@@ -15,7 +15,7 @@ from liblathe.boundbox import BoundBox
 from liblathe.point import Point
 from liblathe.profile_op import ProfileOP
 from liblathe.segment import Segment
-from liblathe.plot import Plot
+# from liblathe.plot import Plot
 from liblathe.tool import Tool
 
 # Define Part Geometry
@@ -37,23 +37,21 @@ stockPt2 = Point(-20, 0, -20)
 StockBoundingBox = BoundBox(stockPt1, stockPt2)
 
 # Define Operations Properties
-props = {}
-props['min_dia'] = 0
-props['extra_dia'] = 0
-props['start_offset'] = 0
-props['end_offset'] = 0
-props['allow_grooving'] = False
-props['allow_facing'] = False
-props['allow_roughing'] = True
-props['allow_finishing'] = True
-props['step_over'] = 1
-props['finish_passes'] = 2
-props['hfeed'] = 10
-props['vfeed'] = 10
+params = {}
+params['min_dia'] = 0
+params['extra_dia'] = 0
+params['start_offset'] = 0
+params['end_offset'] = 0
+params['allow_grooving'] = False
+params['step_over'] = 1
+params['finish_passes'] = 2
+params['stock_to_leave'] = 0
+params['hfeed'] = 10
+params['vfeed'] = 10
 
 # Create Profile Operation
 profileOP = ProfileOP()
-profileOP.set_params(props)
+profileOP.set_params(params)
 profileOP.add_stock(StockBoundingBox)
 profileOP.add_part_edges(part_segments)
 tool = Tool()
