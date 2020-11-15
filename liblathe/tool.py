@@ -41,8 +41,8 @@ class Tool:
         radius = tool_string[8:10]
 
         self.tip_angle = self.get_tip_angle_from_shape(shape)
-        self.length = self.getEdgeLength(shape, length)
-        self.nose_radius = self.getNoseRadius(radius)
+        self.length = self.get_edge_length(shape, length)
+        self.nose_radius = self.get_nose_radius(radius)
         self.direction = tool_string[-1]
 
     def set_tip_angle(self, angle):
@@ -125,7 +125,7 @@ class Tool:
         # print('shape Angle:', angle)
         return angle
 
-    def getEdgeLength(self, shape, length):
+    def get_edge_length(self, shape, length):
         """
         Return the edge length for the tool
         Sizes from: http://www.mitsubishicarbide.com/en/technical_information/tec_turning_tools/tec_turning_insert/tec_turning_guide/tec_turning_identification
@@ -149,7 +149,7 @@ class Tool:
         except(KeyError):
             return None
 
-    def getNoseRadius(self, radius):
+    def get_nose_radius(self, radius):
         """
         Return the nose radius for the tool
         """
@@ -176,7 +176,7 @@ class Tool:
         except(KeyError):
             return None
 
-    def getCuttingDirection(self):
+    def get_cutting_direction(self):
         """
         Return the cutting angle defined for this tool
         R = Right [<-]
@@ -185,7 +185,7 @@ class Tool:
         """
         return self.direction
 
-    def getRotation(self):
+    def get_rotation(self):
         """
         Return the tool rotation for this tool
         """
