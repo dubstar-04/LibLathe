@@ -109,7 +109,11 @@ class Tool:
         """
         Return the maximum depth of cut (stepover) the tool is capable of
         """
-        pass
+        # TO DO: calculate proper max DOC
+        if self.edge_length:
+            return self.edge_length / 4
+        else:
+            raise Warning("Tool edge length not set")
 
     def get_width(self):
         """
@@ -165,12 +169,16 @@ class Tool:
 
         }
 
-        try:
-            edge_length = shapeSize[shape][edge_length]
-            # print("shape Size: ", edgeedge_length)
-            return edge_length
-        except(KeyError):
-            return None
+        if shape in shapeSize:
+            try:
+                edge_length = shapeSize[shape][edge_length]
+                # print("shape Size: ", edgeedge_length)
+                return edge_length
+            except(KeyError):
+                raise Warning("Tool length code not valid")
+                return None
+        else:
+            raise Warning("Tool shape not valid")
 
     def get_nose_radius(self, radius):
         """
@@ -197,6 +205,7 @@ class Tool:
             # print("nose radius: ", radius)
             return radius
         except(KeyError):
+            raise Warning("Tool radius not valid")
             return None
 
     def get_cutting_direction(self):
