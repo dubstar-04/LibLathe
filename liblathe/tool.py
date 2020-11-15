@@ -176,7 +176,6 @@ class Tool:
                 return edge_length
             except(KeyError):
                 raise Warning("Tool length code not valid")
-                return None
         else:
             raise Warning("Tool shape not valid")
 
@@ -206,7 +205,6 @@ class Tool:
             return radius
         except(KeyError):
             raise Warning("Tool radius not valid")
-            return None
 
     def get_cutting_direction(self):
         """
