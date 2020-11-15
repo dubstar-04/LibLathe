@@ -53,7 +53,7 @@ class test_RoughOP(unittest.TestCase):
         params['extra_dia'] = 0
         params['start_offset'] = 0
         params['end_offset'] = 0
-        params['allow_grooving'] = False
+        params['allow_grooving'] = True
         params['step_over'] = 1
         params['finish_passes'] = 2
         params['stock_to_leave'] = 0
