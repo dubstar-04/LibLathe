@@ -17,7 +17,7 @@ class test_tool(unittest.TestCase):
 
     def test_create_tool(self):
         shape = "D"
-        length = self.tool.length
+        length = self.tool.edge_length
         nose_radius = self.tool.nose_radius
         direction = self.tool.direction
         orientation = self.tool.orientation
@@ -54,6 +54,66 @@ class test_tool(unittest.TestCase):
     def test_get_rotation(self):
         rotation = self.tool.get_rotation()
         self.assertEqual(rotation, 0)
+
+    def test_set_tip_angle(self):
+        self.tool.set_tip_angle(22.5)
+        self.assertEqual(self.tool.tip_angle, 22.5)
+
+        with self.assertRaises(Warning):
+            self.tool.set_tip_angle("A")
+
+        with self.assertRaises(Warning):
+            self.tool.set_tip_angle(-1)
+
+    def test_set_edge_length(self):
+        self.tool.set_edge_length(5)
+        self.assertEqual(self.tool.edge_length, 5)
+
+        with self.assertRaises(Warning):
+            self.tool.set_edge_length("A")
+
+        with self.assertRaises(Warning):
+            self.tool.set_edge_length(-1)
+
+    def test_set_nose_radius(self):
+        self.tool.set_nose_radius(0.5)
+        self.assertEqual(self.tool.nose_radius, 0.5)
+
+        with self.assertRaises(Warning):
+            self.tool.set_nose_radius("A")
+
+        with self.assertRaises(Warning):
+            self.tool.set_nose_radius(-1)
+
+    def test_set_direction(self):
+        self.tool.set_direction("N")
+        self.assertEqual(self.tool.direction, "N")
+
+        with self.assertRaises(Warning):
+            self.tool.set_direction("A")
+
+    def test_set_rotation(self):
+        self.tool.set_rotation(45)
+        self.assertEqual(self.tool.rotation, 45)
+
+        self.tool.set_rotation(22.5)
+        self.assertEqual(self.tool.rotation, 22.5)
+
+        with self.assertRaises(Warning):
+            self.tool.set_rotation(361)
+
+        with self.assertRaises(Warning):
+            self.tool.set_rotation(-1)
+
+        with self.assertRaises(Warning):
+            self.tool.set_rotation("A")
+
+    def test_set_orientation(self):
+        self.tool.set_orientation(ToolOri.X)
+        self.assertEqual(self.tool.orientation, ToolOri.X)
+
+        with self.assertRaises(Warning):
+            self.tool.set_orientation("X")
 
 
 if __name__ == '__main__':
