@@ -22,7 +22,7 @@ class RoughOP(liblathe.base_op.BaseOP):
         xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
 
         # create roughing boundary offset by the stock to leave value
-        roughing_boundary = self.part_segment_group.offsetPath(self.stock_to_leave)
+        roughing_boundary = self.part_segment_group.offset_path(self.stock_to_leave)
 
         for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over

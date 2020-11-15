@@ -8,11 +8,11 @@ class ProfileOP(liblathe.base_op.BaseOP):
 
         self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
 
-        base_segment_group = self.part_segment_group.offsetPath(self.stock_to_leave)
+        base_segment_group = self.part_segment_group.offset_path(self.stock_to_leave)
         self.tool_paths.append(base_segment_group)
         f_pass = 1
         while f_pass < self.finish_passes:
-            segmentgroup = base_segment_group.offsetPath(self.step_over * f_pass)
+            segmentgroup = base_segment_group.offset_path(self.step_over * f_pass)
             self.tool_paths.append(segmentgroup)
             f_pass += 1
 
