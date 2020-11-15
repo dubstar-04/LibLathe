@@ -43,9 +43,18 @@ class test_tool(unittest.TestCase):
         edgeLength = self.tool.get_edge_length("D", "07")
         self.assertEqual(edgeLength, 6.35)
 
+        with self.assertRaises(Warning):
+            self.tool.get_edge_length("A", "A")
+
+        with self.assertRaises(Warning):
+            self.tool.get_edge_length("D", "A")
+
     def test_get_nose_radius(self):
         noseRadius = self.tool.get_nose_radius("04")
         self.assertEqual(noseRadius, 0.4)
+
+        with self.assertRaises(Warning):
+            self.tool.get_nose_radius("A")
 
     def test_get_cutting_direction(self):
         cuttingDirection = self.tool.get_cutting_direction()
@@ -54,6 +63,10 @@ class test_tool(unittest.TestCase):
     def test_get_rotation(self):
         rotation = self.tool.get_rotation()
         self.assertEqual(rotation, 0)
+
+    def test_get_max_doc(self):
+        max_doc = self.tool.get_max_doc()
+        self.assertEqual(max_doc, 1.5875)
 
     def test_set_tip_angle(self):
         self.tool.set_tip_angle(22.5)
