@@ -76,18 +76,18 @@ class test_segment_group(unittest.TestCase):
     def test_boundbox(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
-        XMin = boundbox.XMin
-        self.assertEqual(XMin, min(self.pt1.X, self.pt2.X))
-        YMin = boundbox.YMin
-        self.assertEqual(YMin, min(self.pt1.Y, self.pt2.Y))
-        ZMin = boundbox.ZMin
-        self.assertEqual(ZMin, min(self.pt1.Z, self.pt2.Z))
-        XMax = boundbox.XMax
-        self.assertEqual(XMax, max(self.pt1.X, self.pt2.X))
-        YMax = boundbox.YMax
-        self.assertEqual(YMax, max(self.pt1.Y, self.pt2.Y))
-        ZMax = boundbox.ZMax
-        self.assertEqual(ZMax, max(self.pt1.Z, self.pt2.Z))
+        x_min = boundbox.x_min
+        self.assertEqual(x_min, min(self.pt1.X, self.pt2.X))
+        y_min = boundbox.y_min
+        self.assertEqual(y_min, min(self.pt1.Y, self.pt2.Y))
+        z_min = boundbox.z_min
+        self.assertEqual(z_min, min(self.pt1.Z, self.pt2.Z))
+        x_max = boundbox.x_max
+        self.assertEqual(x_max, max(self.pt1.X, self.pt2.X))
+        y_max = boundbox.y_max
+        self.assertEqual(y_max, max(self.pt1.Y, self.pt2.Y))
+        z_max = boundbox.z_max
+        self.assertEqual(z_max, max(self.pt1.Z, self.pt2.Z))
 
     def test_join_segments(self):
         self.segmentGroup.add_segment(self.lineSegment1)

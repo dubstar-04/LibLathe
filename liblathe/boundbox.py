@@ -2,32 +2,32 @@ class BoundBox:
     """Generic bounding box implementation"""
 
     def __init__(self, pt1=None, pt2=None):
-        self.XMin = None
-        self.YMin = None
-        self.ZMin = None
-        self.XMax = None
-        self.YMax = None
-        self.ZMax = None
+        self.x_min = None
+        self.y_min = None
+        self.z_min = None
+        self.x_max = None
+        self.y_max = None
+        self.z_max = None
 
         if pt1 and pt2:
-            self.XMin = min(pt1.X, pt2.X)
-            self.YMin = min(pt1.Y, pt2.Y)
-            self.ZMin = min(pt1.Z, pt2.Z)
-            self.XMax = max(pt1.X, pt2.X)
-            self.YMax = max(pt1.Y, pt2.Y)
-            self.ZMax = max(pt1.Z, pt2.Z)
+            self.x_min = min(pt1.X, pt2.X)
+            self.y_min = min(pt1.Y, pt2.Y)
+            self.z_min = min(pt1.Z, pt2.Z)
+            self.x_max = max(pt1.X, pt2.X)
+            self.y_max = max(pt1.Y, pt2.Y)
+            self.z_max = max(pt1.Z, pt2.Z)
 
     def XLength(self):
         """Return length in x direction"""
 
-        return abs(self.XMax - self.XMin)
+        return abs(self.x_max - self.x_min)
 
     def YLength(self):
         """Return length in y direction"""
 
-        return abs(self.YMax - self.YMin)
+        return abs(self.y_max - self.y_min)
 
     def ZLength(self):
         """Return length in z direction"""
 
-        return abs(self.ZMax - self.ZMin)
+        return abs(self.z_max - self.z_min)

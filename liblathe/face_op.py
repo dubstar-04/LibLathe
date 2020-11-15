@@ -12,15 +12,15 @@ class FaceOP(liblathe.base_op.BaseOP):
         """Generate the path for the profile operation"""
 
         partBoundBox = self.part_segment_group.boundbox()
-        xmin = self.stock.XMin - self.extra_dia * 0.5
-        xmax = 0 - self.min_dia * 0.5
-        zmax = self.stock.ZMax + self.start_offset
+        x_min = self.stock.x_min - self.extra_dia * 0.5
+        x_max = 0 - self.min_dia * 0.5
+        z_max = self.stock.z_max + self.start_offset
 
         self.clearing_paths = []
-        length = zmax - partBoundBox.ZMax + self.stock_to_leave
+        length = z_max - partBoundBox.z_max + self.stock_to_leave
         step_over = self.step_over
         line_count = math.ceil(length / step_over)
-        zstart = partBoundBox.ZMax + step_over * line_count + self.stock_to_leave
+        zstart = partBoundBox.z_max + step_over * line_count + self.stock_to_leave
 
         # build list of segments
         segmentgroup = SegmentGroup()
@@ -28,8 +28,8 @@ class FaceOP(liblathe.base_op.BaseOP):
         counter = 0
         while counter < line_count + 1:
             zpt = zstart - counter * self.step_over
-            pt1 = Point(xmin, 0, zpt)
-            pt2 = Point(xmax, 0, zpt)
+            pt1 = Point(x_min, 0, zpt)
+            pt2 = Point(x_max, 0, zpt)
             path_line = Segment(pt1, pt2)
             seg = path_line
             segmentgroup.add_segment(seg)

@@ -45,15 +45,15 @@ class SegmentGroup:
             yvalues.extend(segment.get_all_axis_positions('Y'))
             zvalues.extend(segment.get_all_axis_positions('Z'))
 
-        XMin = min(xvalues, key=abs)
-        XMax = max(xvalues, key=abs)
-        YMin = min(yvalues, key=abs)
-        YMax = max(yvalues, key=abs)
-        ZMin = min(zvalues, key=abs)
-        ZMax = max(zvalues, key=abs)
+        x_min = min(xvalues, key=abs)
+        x_max = max(xvalues, key=abs)
+        y_min = min(yvalues, key=abs)
+        y_max = max(yvalues, key=abs)
+        z_min = min(zvalues, key=abs)
+        z_max = max(zvalues, key=abs)
 
-        pt1 = Point(XMin, YMin, ZMin)
-        pt2 = Point(XMax, YMax, ZMax)
+        pt1 = Point(x_min, y_min, z_min)
+        pt2 = Point(x_max, y_max, z_max)
 
         segmentgroupBoundBox = BoundBox(pt1, pt2)
 
@@ -172,13 +172,13 @@ class SegmentGroup:
         currentIdx = self.segments.index(segment)
         x_values = []
 
-        # get the xmax from the current pass segments
+        # get the x_max from the current pass segments
         for idx, seg in enumerate(self.segments):
             x_values.append(seg.get_extent_max('X'))
             if idx == currentIdx:
                 break
 
-        # get the xmax from the part segments up to the z position of the current segment
+        # get the x_max from the part segments up to the z position of the current segment
         seg_z_max = segment.get_extent_max('Z')
         for part_seg in part_segments:
 
@@ -204,7 +204,7 @@ class SegmentGroup:
         for seg in segments:
             min_x_retract = self.get_min_retract_x(seg, part_segment_group)
             x_retract = min_x_retract - step_over * finish_passes
-            min_z_retract = stock.ZMax
+            min_z_retract = stock.z_max
             z_retract = min_z_retract + step_over
 
             # rapid to the start of the segmentgroup
@@ -223,11 +223,11 @@ class SegmentGroup:
                 # handle unconnected segments
                 if not self.previous_segment_connected(seg):
                     pt = seg.start
-                    # rapid to the xmin
+                    # rapid to the x_min
                     params = {'X': x_retract, 'Y': pt.Y, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
-                    # rapid at xmin to the start of the segment
+                    # rapid at x_min to the start of the segment
                     params = {'X': x_retract, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
@@ -316,7 +316,7 @@ class SegmentGroup:
         segmentgroup.join_segments()
         return segmentgroup
 
-    def remove_the_groove(self, stock_zmin, tool, allow_grooving=False):
+    def remove_the_groove(self, stock_z_min, tool, allow_grooving=False):
         segments = self.get_segments()
         segs_out = SegmentGroup()
         index = 0
@@ -358,7 +358,7 @@ class SegmentGroup:
                             segs_out.add_segment(seg)
                         else:
                             pt = seg.start
-                            next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving, pt)
+                            next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving, pt)
 
             if seg.bulge < 0:
                 # Limit the arc movement to the X extents or the tangent at the max tool angle if allow_grooving
@@ -380,12 +380,12 @@ class SegmentGroup:
                     segs_out.add_segment(nseg)
 
                     pt1 = pt
-                    next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving, pt)
+                    next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving, pt)
 
             elif seg.bulge == 0:
                 # print('line segment')
                 if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
-                    next_index, pt = self.find_next_good_edge(index, stock_zmin, tool, allow_grooving)
+                    next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving)
                 else:
                     segs_out.add_segment(seg)
 
@@ -411,7 +411,7 @@ class SegmentGroup:
         segs_out.merge_segments()
         return segs_out
 
-    def find_next_good_edge(self, current_index, stock_zmin, tool, allow_grooving, pt=None):
+    def find_next_good_edge(self, current_index, stock_z_min, tool, allow_grooving, pt=None):
         segments = self.get_segments()
         index = current_index
         if pt is None:
@@ -429,7 +429,7 @@ class SegmentGroup:
                 length = abs(pt1.X / math.cos(math.radians(360 - ang)))
                 pt2 = pt1.project(ang, length)
             else:
-                pt2 = Point(pt1.X, pt1.Y, stock_zmin)
+                pt2 = Point(pt1.X, pt1.Y, stock_z_min)
 
             # create a new projected segment
             seg = Segment(pt1, pt2)
@@ -443,7 +443,7 @@ class SegmentGroup:
                 idx += 1
             index += 1
 
-        stock_pt = Point(pt1.X, pt1.Y, stock_zmin)
+        stock_pt = Point(pt1.X, pt1.Y, stock_z_min)
         seg = Segment(pt1, stock_pt)
         index = current_index
         index += 1
