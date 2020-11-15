@@ -34,6 +34,10 @@ class test_BaseOP(unittest.TestCase):
         with self.assertWarns(Warning):
             self.baseop.get_gcode()
 
+    def test_generate_gcode(self):
+        gcode = self.baseop.generate_gcode()
+        self.assertEqual(gcode, "")
+
     def test_get_params(self):
         params = self.baseop.get_params()
         for i in params:
