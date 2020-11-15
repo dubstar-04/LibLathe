@@ -1,6 +1,7 @@
-from PIL import Image, ImageDraw, ImageOps
 import math
 import os
+
+from PIL import Image, ImageDraw, ImageOps
 
 
 class Plot:
