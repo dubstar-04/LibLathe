@@ -54,11 +54,9 @@ class test_FaceOP(unittest.TestCase):
         props['start_offset'] = 0
         props['end_offset'] = 0
         props['allow_grooving'] = False
-        props['allow_facing'] = False
-        props['allow_roughing'] = True
-        props['allow_finishing'] = True
         props['step_over'] = 1
         props['finish_passes'] = 2
+        props['stock_to_leave'] = 0
         props['hfeed'] = self.hfeed
         props['vfeed'] = 10
 
