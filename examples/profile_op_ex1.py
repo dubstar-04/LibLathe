@@ -64,8 +64,7 @@ gcode = profileOP.get_gcode()
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")
 
-for line in gcode:
-    for command in line:
-        f.write(command.to_string() + "\n")
+for command in gcode:
+    f.write(command.to_string() + "\n")
 
 f.close()
