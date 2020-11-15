@@ -42,8 +42,8 @@ class BaseOP:
             raise Warning("Tool is unset")
 
         self.generate_path()
-        Path = self.generate_gcode()
-        return Path
+        path = self.generate_gcode()
+        return path
 
     def generate_path(self):
         """Main processing function for each op"""
