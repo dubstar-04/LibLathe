@@ -41,7 +41,7 @@ class test_RoughOP(unittest.TestCase):
 
         # Define stock bounds
         stockPt1 = Point(0, 0, 15)
-        stockPt2 = Point(-25, 0, -55)
+        stockPt2 = Point(-25, 0, -47.5)
         stock_boundbox = BoundBox(stockPt1, stockPt2)
 
         # set feed rate to test
