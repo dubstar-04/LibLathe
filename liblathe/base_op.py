@@ -27,7 +27,10 @@ class BaseOP:
         """Set operations parameters"""
 
         for param in params:
-            setattr(self, param, params[param])
+            if hasattr(self, param):
+                setattr(self, param, params[param])
+            else:
+                raise Warning("Attemping to set undefined parameter '%s'" % param)
 
     def get_params(self):
         """Return operations parameters"""
