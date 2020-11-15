@@ -11,16 +11,16 @@ class FaceOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the profile operation"""
 
-        partBoundBox = self.part_segment_group.boundbox()
+        part_boundbox = self.part_segment_group.boundbox()
         x_min = self.stock.x_min - self.extra_dia * 0.5
         x_max = 0 - self.min_dia * 0.5
         z_max = self.stock.z_max + self.start_offset
 
         self.clearing_paths = []
-        length = z_max - partBoundBox.z_max + self.stock_to_leave
+        length = z_max - part_boundbox.z_max + self.stock_to_leave
         step_over = self.step_over
         line_count = math.ceil(length / step_over)
-        zstart = partBoundBox.z_max + step_over * line_count + self.stock_to_leave
+        zstart = part_boundbox.z_max + step_over * line_count + self.stock_to_leave
 
         # build list of segments
         segmentgroup = SegmentGroup()
@@ -45,9 +45,9 @@ class FaceOP(liblathe.base_op.BaseOP):
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
-        Path = []
+        path = []
         for segmentgroup in self.clearing_paths:
             rough = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            Path.append(rough)
+            path.append(rough)
 
-        return Path
+        return path
