@@ -10,7 +10,7 @@ class Tool:
     """
     Class to hold a lathe tool definition
     Tool String Formatting:
-    Shape | Clearance Angle | Tolerance | Type | Edge Length | Thickness | Nose Radius | Direction
+    Shape | Clearance Angle | Tolerance | Type | Edge edge_length | Thickness | Nose Radius | Direction
     Example Tool Definition: DCMT070204R
     """
     def __init__(self, tool_string=None):
@@ -20,7 +20,7 @@ class Tool:
         # tolerance                         # M
         # type                              # T
         self.tip_angle = None
-        self.length = None                  # 07
+        self.edge_length = None                  # 07
         # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
@@ -37,37 +37,60 @@ class Tool:
 
         # TODO: Validate the values passed in create a valid tool
         shape = tool_string[0]
-        length = tool_string[4:6]
+        edge_length = tool_string[4:6]
         radius = tool_string[8:10]
 
         self.tip_angle = self.get_tip_angle_from_shape(shape)
-        self.length = self.get_edge_length(shape, length)
+        self.edge_length = self.get_edge_length(shape, edge_length)
         self.nose_radius = self.get_nose_radius(radius)
         self.direction = tool_string[-1]
 
     def set_tip_angle(self, angle):
         """Set the tools tip angle"""
-        self.tip_angle = angle
 
-    def set_edge_length(self, length):
-        """Set the tools edge length"""
-        self.length = length
+        if (isinstance(angle, int) or isinstance(angle, float)) and angle > 0 and angle < 90:
+            self.tip_angle = angle
+        else:
+            raise Warning("Tool rotation must be a number [0 - 90]")
+
+    def set_edge_length(self, edge_length):
+        """Set the tools edge edge_length"""
+
+        if (isinstance(edge_length, int) or isinstance(edge_length, float)) and edge_length > 0:
+            self.edge_length = edge_length
+        else:
+            raise Warning("Tool edge length must be a number > 0")
 
     def set_nose_radius(self, radius):
         """Set the tools nose radius"""
-        self.nose_radius = radius
+
+        if (isinstance(radius, int) or isinstance(radius, float)) and radius > 0:
+            self.nose_radius = radius
+        else:
+            raise Warning("Tool nose radius must be a number > 0")
 
     def set_direction(self, direction):
         """ Set the tools cutting direction R-N-L"""
-        self.direction = direction
+        direction = direction.upper()
+        if direction in ["R", "N", "L"]:
+            self.direction = direction
+        else:
+            raise Warning("Tool direction not valid")
 
     def set_rotation(self, rotation):
         """ Set the tools cutting rotation"""
-        self.rotation = rotation
+
+        if (isinstance(rotation, int) or isinstance(rotation, float)) and rotation > 0 and rotation < 360:
+            self.rotation = rotation
+        else:
+            raise Warning("Tool rotation must be a number [0 - 360]")
 
     def set_orientation(self, orientation):
         """ Set the tools cutting rotation"""
-        self.orientation = orientation
+        if orientation in [ToolOri.X, ToolOri.Z]:
+            self.orientation = orientation
+        else:
+            raise Warning("Tool orientation not valid")
 
     def get_tool_cutting_angle(self):
         """
@@ -93,7 +116,7 @@ class Tool:
         Return the width of the cutting tool
         """
         # TODO: Calculate the actual width
-        return self.length
+        return self.edge_length
 
     def get_tip_angle_from_shape(self, shape_char):
         """
@@ -125,7 +148,7 @@ class Tool:
         # print('shape Angle:', angle)
         return angle
 
-    def get_edge_length(self, shape, length):
+    def get_edge_length(self, shape, edge_length):
         """
         Return the edge length for the tool
         Sizes from: http://www.mitsubishicarbide.com/en/technical_information/tec_turning_tools/tec_turning_insert/tec_turning_guide/tec_turning_identification
@@ -143,9 +166,9 @@ class Tool:
         }
 
         try:
-            edgeLength = shapeSize[shape][length]
-            # print("shape Size: ", edgeLength)
-            return edgeLength
+            edge_length = shapeSize[shape][edge_length]
+            # print("shape Size: ", edgeedge_length)
+            return edge_length
         except(KeyError):
             return None
 
