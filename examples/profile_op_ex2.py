@@ -15,7 +15,7 @@ from liblathe.boundbox import BoundBox
 from liblathe.point import Point
 from liblathe.profile_op import ProfileOP
 from liblathe.segment import Segment
-# from liblathe.plot import Plot
+from liblathe.plot import Plot
 from liblathe.tool import Tool
 
 # Define Part Geometry
@@ -49,9 +49,9 @@ params['min_dia'] = 0
 params['extra_dia'] = 0
 params['start_offset'] = 0
 params['end_offset'] = 0
-params['allow_grooving'] = False
-params['step_over'] = 1
-params['finish_passes'] = 2
+params['allow_grooving'] = True
+params['step_over'] = 0.25
+params['finish_passes'] = 10
 params['stock_to_leave'] = 0
 params['hfeed'] = 10
 params['vfeed'] = 10
@@ -65,8 +65,8 @@ tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
 profileOP.add_tool(tool)
 gcode = profileOP.get_gcode()
-# plot = Plot()
-# plot.backplot(gcode)
+plot = Plot()
+plot.backplot(gcode)
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")
