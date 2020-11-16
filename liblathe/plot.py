@@ -13,7 +13,7 @@ class Plot:
         self.image_type = '.jpg'
         self.image_size = (1920, 1080)
         self.mirror_image = False
-        self.flip_image = False
+        self.flip_image = True
         self.g0_colour = (256, 0, 0)
         self.g1_colour = (0, 256, 0)
         self.g2_colour = (0, 256, 0)
@@ -115,57 +115,26 @@ class Plot:
 
     def backplot(self, gcode):
         """Backplot creates an image from supplied LibLathe g code"""
-        code = []
+
         self._reset_min_max()
 
-        for line in gcode:
-            for command in line:
-                command = command.to_string()
+        for command in gcode:
+            # for command in line:
 
-                if command == '':
-                    continue
+            movement = command.get_movement()
+            if movement not in ["G0", "G1", "G2", "G3"]:
+                # remove G18
+                gcode.remove(command)
+                continue
 
-                elif command.startswith('G'):
-                    col = {}
+            params = command.get_params()
 
-                    commands = command.split(' ')
-                    if command[0:] == 'G18':
-                        continue
+            if 'X' in params:
+                self._min_max('y', params['X'])
+            if 'Z' in params:
+                self._min_max('x', params['Z'])
 
-                    col['g'] = commands[0:1]
-
-                    for i in commands[1:]:
-                        if len(commands) <= 1:
-                            continue
-
-                        elif i[0].upper() == 'X':
-                            col['x'] = float(i[1:])
-                            self._min_max('x', float(i[1:]))
-
-                        elif i[0].upper() == 'Y':
-                            continue
-
-                        elif i[0].upper() == 'I':
-                            col['i'] = float(i[1:])
-
-                        elif i[0].upper() == 'K':
-                            col['k'] = float(i[1:])
-
-                        elif i[0].upper() == 'Z':
-                            col['z'] = float(i[1:])
-                            self._min_max('y', float(i[1:]))
-
-                        elif i[0].upper() == 'F':
-                            continue
-
-                        else:
-                            print(command)
-                            raise Warning('Unknown character!')
-                else:
-                    continue
-
-                code.append(col)
-        self._draw_image(code)
+        self._draw_image(gcode)
 
     def _reset_min_max(self):
         self._min_x = 0
@@ -196,7 +165,7 @@ class Plot:
 
         return min([x_scale, y_scale])
 
-    def _draw_image(self, code):
+    def _draw_image(self, gcode):
         # size of the image (should be based on the max path point)
         scale = self._image_size()
 
@@ -207,22 +176,43 @@ class Plot:
 
         draw = ImageDraw.Draw(img)
 
-        i = 0
-        x = 1
-        while i <= (len(code) - 1):
-            line_colour = self._get_line_colour(code[i]['g'][0])
+        for idx, command in enumerate(gcode):
+            print('line:', command.movement, command.params)
+            # for command in line:
 
-            # / 2 to draw from the center of the image
-            # - 25 to offset the draw point from the edge of the image
-            x_start = (self.image_size[0] / 2) + (code[i]['z'] * scale) - 25
-            y_start = self.image_size[1] + (code[i]['x'] * scale) - 25
-            x_end = (self.image_size[0] / 2) + (code[x]['z'] * scale) - 25
-            y_end = self.image_size[1] + (code[x]['x'] * scale) - 25
+            if idx < len(gcode) - 1:
 
-            draw.line((x_start, y_start, x_end, y_end), fill=line_colour, width=self.line_thickness)
-            i += 1
-            if x != (len(code) - 1):
-                x += 1
+                movement = command.get_movement()
+                if movement not in ["G0", "G1", "G2", "G3"]:
+                    continue
+
+                params = command.get_params()
+                prev_params = gcode[idx - 1].get_params()
+
+                line_colour = self._get_line_colour(movement)
+
+                x_start = self.image_size[0] / 2 + prev_params['Z'] * scale - 25
+                y_start = self.image_size[1] + prev_params['X'] * scale - 25
+                x_end = self.image_size[0] / 2 + params['Z'] * scale - 25
+                y_end = self.image_size[1] + params['X'] * scale - 25
+
+                if movement in ["G0", "G1"]:
+                    draw.line([(x_start, y_start), (x_end, y_end)], fill=line_colour, width=self.line_thickness)
+
+                if movement in ["G2", "G3"]:
+                    x_centre = (self.image_size[0] / 2 + (prev_params['Z'] + params['K']) * scale - 25)
+                    y_centre = (self.image_size[1] + (prev_params['X'] + params['I']) * scale - 25)
+
+                    distance = self._get_distance(x_centre, y_centre, x_start, y_start)
+
+                    start_angle = self._get_angle(x_centre, y_centre, x_start, y_start)
+                    end_angle = self._get_angle(x_centre, y_centre, x_end, y_end)
+                    boundbox = [(x_centre - distance, y_centre - distance), (x_centre + distance, y_centre + distance)]
+                    if movement == "G2":
+                        draw.arc(boundbox, end_angle, start_angle, fill=line_colour, width=self.line_thickness)
+
+                    if movement == "G3":
+                        draw.arc(boundbox, start_angle, end_angle, fill=line_colour, width=self.line_thickness)
 
         # Mirror because its draw flipped.
         if self.mirror_image:
@@ -236,6 +226,16 @@ class Plot:
             img.save(self.file_location + self.image_name + '.png')
         else:
             img.save(self.file_location + self.image_name + self.image_type)
+
+    def _get_angle(self, x_start, y_start, x_end, y_end):
+        dX = x_end - x_start
+        dY = y_end - y_start
+        angle = (math.degrees(math.atan2(dY, dX)) + 360) % 360
+        return angle
+
+    def _get_distance(self, x_start, y_start, x_end, y_end):
+        distance = math.sqrt((x_end - x_start) ** 2 + (y_end - y_start) ** 2)
+        return distance
 
     def _get_line_colour(self, value):
         if value == 'G0':
