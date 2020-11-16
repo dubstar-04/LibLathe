@@ -62,48 +62,6 @@ class Plot:
         else:
             raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
 
-    def set_line_thickness(self, value):
-        """Set the line thick to be drawn. Must be an integer value"""
-        if isinstance(value, int):
-            self.line_thickness = value
-        else:
-            raise Warning('Unknown thickness value! Thickness must be an integer!')
-
-    def set_image_details(self, image_name='image1', image_type='.jpg', image_size=(1920, 1080)):
-        """"Set image details. Image name, image type (.jpg, .png) and image size (1080, 720)"""
-        self.image_name = image_name
-        self.image_size = image_size
-
-        if not image_type.startswith('.'):
-            self.image_type = '.' + image_type
-        else:
-            self.image_type = image_type
-
-    def draw_rapids_only(self):
-        """Draw rapid only on/off"""
-        self.rapidOnly = not self.rapidOnly
-        self.cutsOnly = False
-        self.specifiedPlot = ''
-        self.cutsOnly = ''
-
-    def draw_cuts_only(self):
-        """Draw cuts only on/off"""
-        self.cutsOnly = not self.cutsOnly
-        self.rapidOnly = False
-        self.specifiedPlot = ''
-        self.cutsOnly = ''
-
-    def draw_specified(self, gcode, colour):
-        """Draws only specified cut. For example G2"""
-        self.specifiedPlot = gcode
-        if isinstance(colour, tuple) and len(colour) == 3:
-            try:
-                self.specifiedPlotColour = colour
-            except Exception:
-                raise Warning('Unknown colour! Colour is RGB. For example (255, 255, 255)')
-        self.cutsOnly = False
-        self.rapidOnly = False
-
     def flip_image_horizontal(self):
         """Flip image horizontally(left to right).Turns On/Off"""
         self.mirror_image = not self.mirror_image
@@ -114,7 +72,7 @@ class Plot:
         self.flip_image = not self.flip_image
         self.mirror_image = False
 
-    def backplot(self, gcode):
+    def backplot(self, gcode, include_rapids=True):
         """Backplot creates an image from supplied gcode"""
         self._reset_min_max()
 
@@ -132,7 +90,7 @@ class Plot:
             if 'Z' in params:
                 self._min_max('x', params['Z'])
 
-        self._draw_image(gcode)
+        self._draw_image(gcode, include_rapids)
 
     def _reset_min_max(self):
         self._min_x = 0
@@ -160,7 +118,7 @@ class Plot:
 
         return min([x_scale, y_scale])
 
-    def _draw_image(self, gcode):
+    def _draw_image(self, gcode, include_rapids):
         # size of the image (should be based on the max path point)
         scale = self._image_size()
 
@@ -183,6 +141,9 @@ class Plot:
 
                 movement = command.get_movement()
                 if movement not in ["G0", "G1", "G2", "G3"]:
+                    continue
+
+                if movement == "G0" and not include_rapids:
                     continue
 
                 params = command.get_params()
