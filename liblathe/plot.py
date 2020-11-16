@@ -13,12 +13,13 @@ class Plot:
         self.image_type = '.jpg'
         self.image_size = (1920, 1080)
         self.mirror_image = False
-        self.flip_image = True
+        self.flip_image = False
         self.g0_colour = (256, 0, 0)
         self.g1_colour = (0, 256, 0)
         self.g2_colour = (0, 256, 0)
         self.g3_colour = (0, 256, 0)
         self.line_thickness = 2
+        self.margin = 100
 
         self._min_x = 500000
         self._min_y = 500000
@@ -114,13 +115,10 @@ class Plot:
         self.mirror_image = False
 
     def backplot(self, gcode):
-        """Backplot creates an image from supplied LibLathe g code"""
-
+        """Backplot creates an image from supplied gcode"""
         self._reset_min_max()
 
         for command in gcode:
-            # for command in line:
-
             movement = command.get_movement()
             if movement not in ["G0", "G1", "G2", "G3"]:
                 # remove G18
@@ -157,11 +155,8 @@ class Plot:
         y = math.ceil(abs(self._min_y - self._max_y))
 
         # divide by image size
-        x_scale = math.floor(self.image_size[0] / x)
-        y_scale = math.floor(self.image_size[1] / y)
-
-        # scale up
-        self.image_size = ((x * x_scale) + 50, (y * y_scale) + 50)
+        x_scale = math.floor((self.image_size[0] - self.margin) / x)
+        y_scale = math.floor((self.image_size[1] - self.margin) / y)
 
         return min([x_scale, y_scale])
 
@@ -176,9 +171,13 @@ class Plot:
 
         draw = ImageDraw.Draw(img)
 
+        # draw centreline
+        cl_y = (self.image_size[1] / 2 - self._min_y)
+        start = (self.margin * 0.25, cl_y)
+        end = (self.image_size[0] - self.margin * 0.5, cl_y)
+        draw.line([start, end], fill=(252, 226, 5), width=self.line_thickness * 2)
+
         for idx, command in enumerate(gcode):
-            print('line:', command.movement, command.params)
-            # for command in line:
 
             if idx < len(gcode) - 1:
 
@@ -191,17 +190,17 @@ class Plot:
 
                 line_colour = self._get_line_colour(movement)
 
-                x_start = self.image_size[0] / 2 + prev_params['Z'] * scale - 25
-                y_start = self.image_size[1] + prev_params['X'] * scale - 25
-                x_end = self.image_size[0] / 2 + params['Z'] * scale - 25
-                y_end = self.image_size[1] + params['X'] * scale - 25
+                x_start = (prev_params['Z'] - self._min_x) * scale + self.margin / 2
+                y_start = (prev_params['X'] - self._min_y) * scale + self.margin / 2
+                x_end = (params['Z'] - self._min_x) * scale + self.margin / 2
+                y_end = (params['X'] - self._min_y) * scale + self.margin / 2
 
                 if movement in ["G0", "G1"]:
                     draw.line([(x_start, y_start), (x_end, y_end)], fill=line_colour, width=self.line_thickness)
 
                 if movement in ["G2", "G3"]:
-                    x_centre = (self.image_size[0] / 2 + (prev_params['Z'] + params['K']) * scale - 25)
-                    y_centre = (self.image_size[1] + (prev_params['X'] + params['I']) * scale - 25)
+                    x_centre = (prev_params['Z'] + params['K'] - self._min_x) * scale + self.margin / 2
+                    y_centre = (prev_params['X'] + params['I'] - self._min_y) * scale + self.margin / 2
 
                     distance = self._get_distance(x_centre, y_centre, x_start, y_start)
 
