@@ -13,11 +13,11 @@ class Point:
         return math.sqrt((pt.X - self.X) ** 2 + (pt.Y - self.Y) ** 2 + (pt.Z - self.Z) ** 2)
 
     def angle_to(self, pt):
-        """Returns the distance between two points in degrees"""
+        """Returns the angle between two points in degrees"""
 
-        dX = self.X - pt.X
-        dZ = self.Z - pt.Z
-        angle = math.degrees(math.atan2(dZ, dX) + math.pi)
+        dX = pt.X - self.X
+        dZ = pt.Z - self.Z
+        angle = (math.degrees(math.atan2(dX, dZ)) + 360) % 360
         return angle
 
     def nearest(self, pts):
@@ -30,7 +30,7 @@ class Point:
         return nearest
 
     def is_same(self, pt):
-        """Returns True is the coordinates are the same"""
+        """Returns True if the coordinates are the same"""
 
         if pt:
             if round(self.X, 5) == round(pt.X, 5):
@@ -67,6 +67,7 @@ class Point:
         return p
 
     def normalise_to(self, pnt):
+        """returns the normalised direction from self to pt"""
         p = pnt.sub(self)
         m = math.sqrt(p.X ** 2 + p.Y ** 2 + p.Z ** 2)
         if m == 0:
@@ -95,8 +96,9 @@ class Point:
 
     def project(self, angle, distance):
         """Project the point at angle by distance"""
+
         angle = math.radians(angle)
-        x = round(self.X + math.cos(angle) * distance, 5)
-        z = round(self.Z + math.sin(angle) * distance, 5)
+        x = round(self.X + math.sin(angle) * distance, 5)
+        z = round(self.Z + math.cos(angle) * distance, 5)
         p = Point(x, self.Y, z)
         return p
