@@ -81,7 +81,7 @@ class Tool:
         """ Set the tools cutting rotation"""
 
         if (isinstance(rotation, int) or isinstance(rotation, float)) and rotation > 0 and rotation < 360:
-            self.rotation = rotation
+            self.tool_rotation = rotation
         else:
             raise Warning("Tool rotation must be a number [0 - 360]")
 
@@ -95,14 +95,12 @@ class Tool:
     def get_tool_cutting_angle(self):
         """
         Return the maximum cutting angle the tool is capable of
-        Note: Angle is on the XZ plane and inverted.
+        Note: Angle is on the XZ plane with 0 at 3 o'clock and 90 at 12 o'clock.
         """
 
         clearance = 2
-        max_cutting_angle = 360 - (self.tip_angle + self.tool_rotation + clearance)
-
-        # print('max_cutting angle:', max_cutting_angle)
-
+        max_cutting_angle = 180 - self.tool_rotation + self.tip_angle / 2 + clearance
+        
         return max_cutting_angle
 
     def get_max_doc(self):

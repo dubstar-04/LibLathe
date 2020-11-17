@@ -27,8 +27,30 @@ class test_point(unittest.TestCase):
         self.assertEqual(distance, 173.20508075688772)
 
     def test_angle_to(self):
-        angle = self.pt1.angle_to(self.pt2)
+
+        angle = self.pt1.angle_to(Point(0, 0, 100))
+        self.assertEqual(angle, 0)
+
+        angle = self.pt1.angle_to(Point(100, 0, 100))
         self.assertEqual(angle, 45)
+
+        angle = self.pt1.angle_to(Point(100, 0, 0))
+        self.assertEqual(angle, 90)
+
+        angle = self.pt1.angle_to(Point(100, 0, -100))
+        self.assertEqual(angle, 135)
+
+        angle = self.pt1.angle_to(Point(0, 0, -100))
+        self.assertEqual(angle, 180)
+
+        angle = self.pt1.angle_to(Point(-100, 0, -100))
+        self.assertEqual(angle, 225)
+
+        angle = self.pt1.angle_to(Point(-100, 0, 0))
+        self.assertEqual(angle, 270)
+
+        angle = self.pt1.angle_to(Point(-100, 0, 100))
+        self.assertEqual(angle, 315)
 
     def test_nearest(self):
         pts = [self.pt2, self.pt3]
@@ -106,10 +128,40 @@ class test_point(unittest.TestCase):
         self.assertEqual(mid.Z, 150)
 
     def test_project(self):
-        projected = self.pt1.project(270, 5)
-        self.assertEqual(projected.X, self.pt1.X)
-        self.assertEqual(projected.Y, self.pt1.Y)
+        projected = self.pt1.project(0, 5)
+        self.assertEqual(projected.X, 0)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 5)
+
+        projected = self.pt1.project(45, 5)
+        self.assertEqual(projected.X, 3.53553)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 3.53553)
+
+        projected = self.pt1.project(90, 5)
+        self.assertEqual(projected.X, 5)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 0)
+
+        projected = self.pt1.project(135, 5)
+        self.assertEqual(projected.X, 3.53553)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, -3.53553)
+
+        projected = self.pt1.project(180, 5)
+        self.assertEqual(projected.X, 0)
+        self.assertEqual(projected.Y, 0)
         self.assertEqual(projected.Z, -5)
+
+        projected = self.pt1.project(225, 5)
+        self.assertEqual(projected.X, -3.53553)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, -3.53553)
+
+        projected = self.pt1.project(270, 5)
+        self.assertEqual(projected.X, -5)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 0)
 
 
 if __name__ == '__main__':

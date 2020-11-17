@@ -82,13 +82,9 @@ class SegmentGroup:
                 seg2 = segments[i + 1]
                 intersect2, pt = seg2.intersect(segments[i], extend=True)
                 if intersect2:
-                    # print('intersect2')
                     if type(pt) is list:
-                        # print('join_segments type of', type(pt))
                         pt = pt2.nearest(pt)
                     pt2 = pt
-
-                    # print('join_segments', i, pt1, pt2, pt2.X, pt2.Z)
 
             if pt1 and pt2:
                 if segments[i].bulge != 0:
@@ -100,7 +96,6 @@ class SegmentGroup:
                     segmentgroupOut.add_segment(Segment(pt1, pt2))
             else:
                 # No Intersections found. Return the segment in its current state
-                # print('join_segments - No Intersection found for index:', i)
                 segmentgroupOut.add_segment(segments[i])
 
         self.segments = segmentgroupOut.get_segments()
@@ -333,14 +328,14 @@ class SegmentGroup:
             if seg.bulge > 0:
                 segAng = round(math.degrees(seg.get_angle()), 5)
                 # get angle tangent to the start point
-                startPtAng = round(pt1.angle_to(seg.get_centre_point()) + 90, 5)
-                if startPtAng <= tool.get_tool_cutting_angle():
-                    if startPtAng - segAng > 178:
+                startPtAng = round(pt1.angle_to(seg.get_centre_point()) - 90, 5)
+                if startPtAng >= tool.get_tool_cutting_angle():
+                    if startPtAng + segAng <= 270:
                         segs_out.add_segment(seg)
                 else:
                     ang = tool.get_tool_cutting_angle()
                     # calculate the length required to project the point to the centreline
-                    length = abs(pt1.X / math.cos(math.radians(360 - ang)))
+                    length = abs(pt1.X / math.cos(math.radians(ang - 90)))
                     proj_pt = pt1.project(ang, length)
                     projseg = Segment(pt1, proj_pt)
                     intersect, pts = projseg.intersect(segments[index])
@@ -353,7 +348,7 @@ class SegmentGroup:
                         remaining_seg.derive_bulge(seg)
                         segs_out.add_segment(remaining_seg)
                     else:
-                        if seg.start.angle_to(seg.end) <= 270:
+                        if seg.start.angle_to(seg.end) <= 180:
                             seg = Segment(pt1, pt2)
                             segs_out.add_segment(seg)
                         else:
@@ -362,17 +357,19 @@ class SegmentGroup:
 
             if seg.bulge < 0:
                 # Limit the arc movement to the X extents or the tangent at the max tool angle if allow_grooving
-                angle_limit = 180 if allow_grooving is False else tool.get_tool_cutting_angle() - 90
-                if seg.get_centre_point().angle_to(pt2) <= angle_limit:
+                angle_limit = 270 if allow_grooving is False else tool.get_tool_cutting_angle() + 90
+                if seg.get_centre_point().angle_to(pt2) >= angle_limit:
                     segs_out.add_segment(seg)
                 else:
                     rad = seg.get_radius()
                     if not allow_grooving:
+                        # define a point vertically down on the x axis.
                         x = seg.get_centre_point().X - rad
                         y = seg.get_centre_point().Y
                         z = seg.get_centre_point().Z
                         pt = Point(x, y, z)
                     else:
+                        # project a point from the centre of the arc along the angle limit to the radius
                         pt = seg.get_centre_point().project(angle_limit, rad)
 
                     nseg = Segment(pt1, pt)
@@ -383,8 +380,7 @@ class SegmentGroup:
                     next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving, pt)
 
             elif seg.bulge == 0:
-                # print('line segment')
-                if pt1.angle_to(pt2) > tool.get_tool_cutting_angle():
+                if pt1.angle_to(pt2) < tool.get_tool_cutting_angle():
                     next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving)
                 else:
                     segs_out.add_segment(seg)
@@ -426,7 +422,7 @@ class SegmentGroup:
                 # create a new point at the max angle from pt1
                 ang = tool.get_tool_cutting_angle()
                 # calculate the length required to project the point to the centreline
-                length = abs(pt1.X / math.cos(math.radians(360 - ang)))
+                length = abs(pt1.X / math.cos(math.radians(ang - 90)))
                 pt2 = pt1.project(ang, length)
             else:
                 pt2 = Point(pt1.X, pt1.Y, stock_z_min)
