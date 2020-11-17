@@ -128,6 +128,36 @@ class test_point(unittest.TestCase):
         self.assertEqual(mid.Z, 150)
 
     def test_project(self):
+        projected = self.pt1.project(0, 5)
+        self.assertEqual(projected.X, 0)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 5)
+
+        projected = self.pt1.project(45, 5)
+        self.assertEqual(projected.X, 3.53553)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 3.53553)
+
+        projected = self.pt1.project(90, 5)
+        self.assertEqual(projected.X, 5)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, 0)
+
+        projected = self.pt1.project(135, 5)
+        self.assertEqual(projected.X, 3.53553)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, -3.53553)
+
+        projected = self.pt1.project(180, 5)
+        self.assertEqual(projected.X, 0)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, -5)
+
+        projected = self.pt1.project(225, 5)
+        self.assertEqual(projected.X, -3.53553)
+        self.assertEqual(projected.Y, 0)
+        self.assertEqual(projected.Z, -3.53553)
+
         projected = self.pt1.project(270, 5)
         self.assertEqual(projected.X, -5)
         self.assertEqual(projected.Y, 0)
