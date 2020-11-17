@@ -33,7 +33,7 @@ class test_tool(unittest.TestCase):
 
     def test_get_tool_cutting_angle(self):
         cuttingAngle = self.tool.get_tool_cutting_angle()
-        self.assertEqual(cuttingAngle, 303)
+        self.assertEqual(cuttingAngle, 209.5)
 
     def test_getShapeAngle(self):
         shapeAngle = self.tool.get_tip_angle_from_shape("D")
@@ -111,10 +111,10 @@ class test_tool(unittest.TestCase):
 
     def test_set_rotation(self):
         self.tool.set_rotation(45)
-        self.assertEqual(self.tool.rotation, 45)
+        self.assertEqual(self.tool.tool_rotation, 45)
 
         self.tool.set_rotation(22.5)
-        self.assertEqual(self.tool.rotation, 22.5)
+        self.assertEqual(self.tool.tool_rotation, 22.5)
 
         with self.assertRaises(Warning):
             self.tool.set_rotation(361)
