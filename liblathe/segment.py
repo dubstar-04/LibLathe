@@ -345,22 +345,22 @@ class Segment:
 
             if self.bulge > 0:
                 if sa < ea:
-                    # print('sa > ea - positive bulge')
-                    if pnt_ang <= sa or pnt_ang >= ea:
-                        return True
-
-                if sa > ea:
                     # print('sa < ea - positive bulge')
-                    if pnt_ang <= sa and pnt_ang >= ea:
-                        return True
-
-            elif self.bulge < 0:
-                if sa < ea:
-                    # print('sa < ea - negative bulge')
                     if pnt_ang >= sa and pnt_ang <= ea:
                         return True
 
                 if sa > ea:
-                    # print('sa > ea - negative bulge')
+                    # print('sa > ea - positive bulge')
                     if pnt_ang >= sa or pnt_ang <= ea:
+                        return True
+
+            elif self.bulge < 0:
+                if sa < ea:
+                    # print('sa > ea - negative bulge')
+                    if pnt_ang <= sa or pnt_ang >= ea:
+                        return True
+
+                if sa > ea:
+                    # print('sa < ea - negative bulge')
+                    if pnt_ang <= sa and pnt_ang >= ea:
                         return True
