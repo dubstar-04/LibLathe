@@ -27,8 +27,30 @@ class test_point(unittest.TestCase):
         self.assertEqual(distance, 173.20508075688772)
 
     def test_angle_to(self):
-        angle = self.pt1.angle_to(self.pt2)
+
+        angle = self.pt1.angle_to(Point(0, 0, 100))
+        self.assertEqual(angle, 0)
+
+        angle = self.pt1.angle_to(Point(100, 0, 100))
         self.assertEqual(angle, 45)
+
+        angle = self.pt1.angle_to(Point(100, 0, 0))
+        self.assertEqual(angle, 90)
+
+        angle = self.pt1.angle_to(Point(100, 0, -100))
+        self.assertEqual(angle, 135)
+
+        angle = self.pt1.angle_to(Point(0, 0, -100))
+        self.assertEqual(angle, 180)
+
+        angle = self.pt1.angle_to(Point(-100, 0, -100))
+        self.assertEqual(angle, 225)
+
+        angle = self.pt1.angle_to(Point(-100, 0, 0))
+        self.assertEqual(angle, 270)
+
+        angle = self.pt1.angle_to(Point(-100, 0, 100))
+        self.assertEqual(angle, 315)
 
     def test_nearest(self):
         pts = [self.pt2, self.pt3]
