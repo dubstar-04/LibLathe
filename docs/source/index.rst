@@ -5,11 +5,11 @@ Welcome to LibLathe
    :maxdepth: 2
    :hidden:
    
-   pages/tooling
-   pages/Geometry
-   pages/GCode
-   pages/Operations
-   pages/Usage
+   pages/liblathe_tooling
+   pages/geometry
+   pages/gcode
+   pages/operations
+   pages/usage
 
 
 About LibLathe
