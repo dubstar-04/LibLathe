@@ -22,10 +22,10 @@ paths and outputting `GCode`_
 .. _GCode: https://en.wikipedia.org/wiki/G-code
 
 
-.. figure:: /LL_static/images/liblathepawn.png
+.. figure:: /LL_static/images/profiling_op.png
     :align: center
-    :figwidth: 300px
-    :target: /LL_static/images/liblathepawn.png
+    :figwidth: 450px
+    :target: /LL_static/images/profiling_op.png
     
     LibLathe profile operation generated in `FreeCAD`_ 
     
