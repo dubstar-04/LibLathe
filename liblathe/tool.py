@@ -100,7 +100,7 @@ class Tool:
 
         clearance = 2
         max_cutting_angle = 180 - self.tool_rotation + self.tip_angle / 2 + clearance
-        
+
         return max_cutting_angle
 
     def get_max_doc(self):
