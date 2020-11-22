@@ -280,6 +280,7 @@ class Segment:
         return intersect, ptsout
 
     def intersect_circle_circle(self, seg, extend=False):
+        # ref http://paulbourke.net/geometry/circlesphere/
 
         c1 = self.get_centre_point()
         r1 = self.get_radius()
@@ -292,19 +293,22 @@ class Segment:
         # Determine actual distance between circle centres
         c_dist = c1.distance_to(c2)
 
-        if c_dist > r1 + r2:
-            # too far apart to intersect
+        if round(c_dist, 5) >= round(r1 + r2, 5):
+            # too far apart to intersect or just touching
             return intersect, ptsout
 
         if c_dist < abs(r1 - r2):
             # inside each other
             return intersect, ptsout
 
-        if c1.is_same(c2):
+        if c1.is_same(c2) or round(c_dist, 5) == 0:
             # concentric
             return intersect, ptsout
 
+        # get the chord distance
         a = (r1 ** 2 - r2 ** 2 + c_dist ** 2) / (2 * c_dist)
+
+        # A**2 + B**2 = C**2; h**2 + a**2 = r1**2 therefore:
         h = math.sqrt(r1 ** 2 - a ** 2)
         p = c1.lerp(c2, a / c_dist)
         b = h / c_dist
