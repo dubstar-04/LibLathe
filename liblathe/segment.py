@@ -280,6 +280,7 @@ class Segment:
         return intersect, ptsout
 
     def intersect_circle_circle(self, seg, extend=False):
+        # ref http://paulbourke.net/geometry/circlesphere/
 
         c1 = self.get_centre_point()
         r1 = self.get_radius()
@@ -304,7 +305,9 @@ class Segment:
             # concentric
             return intersect, ptsout
 
+        # get the chord distance
         a = (r1 ** 2 - r2 ** 2 + c_dist ** 2) / (2 * c_dist)
+        # A**2 + B**2 = C**2; h**2 + a**2 = r1**2 therefore:
         h = math.sqrt(r1 ** 2 - a ** 2)
         p = c1.lerp(c2, a / c_dist)
         b = h / c_dist
