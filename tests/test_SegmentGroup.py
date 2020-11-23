@@ -151,12 +151,12 @@ class test_segment_group(unittest.TestCase):
         # {'X': 98.5, 'Y': 0, 'Z': 100, 'F': 100}
         # {'X': 98.5, 'Y': 0, 'Z': 101.5, 'F': 100}
         self.assertEqual(cmds[0].params, {})
-        self.assertEqual(cmds[1].params, {'X': 0, 'Y': 0, 'Z': 101.5, 'F': 100})
-        self.assertEqual(cmds[2].params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[3].params, {'X': 97.0, 'Y': 0, 'F': 100})
-        self.assertEqual(cmds[4].params, {'X': 97.0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[5].params, {'X': 0, 'Y': 0, 'Z': 0, 'F': 100})
-        self.assertEqual(cmds[6].params, {'X': 100, 'Y': 0, 'Z': 100, 'F': 100})
+        self.assertEqual(cmds[1].params, {'X': 0, 'Z': 101.5, 'F': 100})
+        self.assertEqual(cmds[2].params, {'X': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[3].params, {'X': 97.0, 'F': 100})
+        self.assertEqual(cmds[4].params, {'X': 97.0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[5].params, {'X': 0, 'Z': 0, 'F': 100})
+        self.assertEqual(cmds[6].params, {'X': 100, 'Z': 100, 'F': 100})
 
 
 if __name__ == '__main__':
