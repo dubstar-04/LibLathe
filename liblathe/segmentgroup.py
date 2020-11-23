@@ -205,11 +205,11 @@ class SegmentGroup:
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
 
-                params = {'X': seg.start.X, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
+                params = {'X': seg.start.X, 'Z': z_retract, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
-                params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z, 'F': hSpeed}
+                params = {'X': seg.start.X, 'Z': seg.start.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
@@ -219,20 +219,20 @@ class SegmentGroup:
                 if not self.previous_segment_connected(seg):
                     pt = seg.start
                     # rapid to the x_min
-                    params = {'X': x_retract, 'Y': pt.Y, 'F': hSpeed}
+                    params = {'X': x_retract, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
                     # rapid at x_min to the start of the segment
-                    params = {'X': x_retract, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                    params = {'X': x_retract, 'Z': pt.Z, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
                     # rapid to the start of the start of the cutting move
-                    params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                    params = {'X': pt.X, 'Z': pt.Z, 'F': hSpeed}
                     cmd = Command('G0', params)
                     cmds.append(cmd)
                 # perform the cutting
                 pt = seg.end
-                params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
+                params = {'X': pt.X, 'Z': pt.Z, 'F': hSpeed}
                 cmd = Command('G1', params)
                 cmds.append(cmd)
             # handle arc segments
@@ -252,11 +252,11 @@ class SegmentGroup:
 
             # handle the lead out at the end of the segmentgroup
             if segments.index(seg) == len(segments) - 1:
-                params = {'X': x_retract, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
+                params = {'X': x_retract, 'Z': seg.end.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
-                params = {'X': x_retract, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
+                params = {'X': x_retract, 'Z': z_retract, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
