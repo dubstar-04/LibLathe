@@ -15,9 +15,6 @@ class RoughOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the Rough operation"""
 
-        leadin_angle = 270
-        leadout_angle = 315
-
         self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset + self.clearance
@@ -29,8 +26,14 @@ class RoughOP(liblathe.base_op.BaseOP):
 
         for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over
+
+            # check if the roughing pass start is outside the stock
+            boundary_z = roughing_boundary.z_at_x(xpt)
+            if boundary_z and round(boundary_z, 5) >= round(self.stock.z_max, 5):
+                continue
+
             pt1 = Point(xpt, 0, z_max)
-            pt2 = Point(xpt, 0, z_max - self.stock.ZLength() - self.start_offset)
+            pt2 = Point(xpt, 0, z_max - self.stock.z_length() - self.start_offset)
             path_line = Segment(pt1, pt2)
             intersections = []
             for seg in roughing_boundary.get_segments():
@@ -54,7 +57,7 @@ class RoughOP(liblathe.base_op.BaseOP):
                 if intersections[0].seg:
                     # add lead out
                     startPt = intersections[0].point
-                    endPt = startPt.project(leadout_angle, self.step_over)
+                    endPt = startPt.project(self.leadout_angle, self.step_over)
                     path_line = Segment(startPt, endPt)
                     segmentgroup.add_segment(path_line)
 
@@ -85,7 +88,7 @@ class RoughOP(liblathe.base_op.BaseOP):
                                 # add a lead in
                                 # TODO: optimise this to match the max tool angle
                                 endPt = intersections[i].point
-                                startPt = endPt.project(leadin_angle, self.step_over)
+                                startPt = endPt.project(self.leadin_angle, self.step_over)
                                 path_line = Segment(startPt, endPt)
                                 segmentgroup.add_segment(path_line)
 
@@ -96,7 +99,7 @@ class RoughOP(liblathe.base_op.BaseOP):
                             if intersections[i + 1].seg:
                                 # add a lead out
                                 startPt = intersections[i + 1].point
-                                endPt = startPt.project(leadout_angle, self.step_over)
+                                endPt = startPt.project(self.leadout_angle, self.step_over)
                                 path_line = Segment(startPt, endPt)
                                 segmentgroup.add_segment(path_line)
 

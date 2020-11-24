@@ -20,25 +20,25 @@ class test_boundbox(unittest.TestCase):
         self.pt4 = Point(100, 100, 100)
         self.boundBox2 = BoundBox(self.pt3, self.pt4)
 
-    def test_XLength(self):
-        xlen = self.boundBox1.XLength()
+    def test_x_length(self):
+        xlen = self.boundBox1.x_length()
         self.assertEqual(xlen, 100)
 
-        xlenNegative = self.boundBox2.XLength()
+        xlenNegative = self.boundBox2.x_length()
         self.assertEqual(xlenNegative, 200)
 
-    def test_YLength(self):
-        ylen = self.boundBox1.YLength()
+    def test_y_length(self):
+        ylen = self.boundBox1.y_length()
         self.assertEqual(ylen, 100)
 
-        ylenNegative = self.boundBox2.YLength()
+        ylenNegative = self.boundBox2.y_length()
         self.assertEqual(ylenNegative, 200)
 
-    def test_ZLength(self):
-        zlen = self.boundBox1.YLength()
+    def test_z_length(self):
+        zlen = self.boundBox1.y_length()
         self.assertEqual(zlen, 100)
 
-        zlenNegative = self.boundBox2.ZLength()
+        zlenNegative = self.boundBox2.z_length()
         self.assertEqual(zlenNegative, 200.5)
 
 

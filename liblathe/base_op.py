@@ -24,6 +24,9 @@ class BaseOP:
         self.vfeed = 50
         self.clearance = 3
 
+        self.leadin_angle = 270
+        self.leadout_angle = 315
+
     def set_params(self, params):
         """Set operations parameters"""
 
