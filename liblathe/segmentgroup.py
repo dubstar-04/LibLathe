@@ -213,15 +213,10 @@ class SegmentGroup:
         for seg in segments:
             min_x_retract = self.get_min_retract_x(seg, part_segment_group)
             x_retract = min_x_retract - step_over * finish_passes
-            min_z_retract = stock.z_max
-            z_retract = min_z_retract + step_over
+            z_retract = segments[0].start.Z
 
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
-
-                params = {'X': seg.start.X, 'Y': 0, 'Z': z_retract, 'F': hSpeed}
-                rapid = Command('G0', params)
-                cmds.append(rapid)
 
                 params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
@@ -230,7 +225,7 @@ class SegmentGroup:
             # handle line segments
             if seg.bulge == 0:
                 # handle unconnected segments
-                if not self.previous_segment_connected(seg):
+                if not self.previous_segment_connected(seg) and segments.index(seg) != 0:
                     pt = seg.start
                     # rapid to the x_min
                     params = {'X': x_retract, 'Y': pt.Y, 'F': hSpeed}
