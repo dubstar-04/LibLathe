@@ -12,7 +12,7 @@ class FaceOP(liblathe.base_op.BaseOP):
         """Generate the path for the profile operation"""
 
         part_boundbox = self.part_segment_group.boundbox()
-        x_min = self.stock.x_min - self.extra_dia * 0.5
+        x_min = self.stock.x_min - self.extra_dia * 0.5 - self.clearance
         x_max = 0 - self.min_dia * 0.5
         z_max = self.stock.z_max + self.start_offset
 
