@@ -17,17 +17,17 @@ class BoundBox:
             self.y_max = max(pt1.Y, pt2.Y)
             self.z_max = max(pt1.Z, pt2.Z)
 
-    def XLength(self):
+    def x_length(self):
         """Return length in x direction"""
 
         return abs(self.x_max - self.x_min)
 
-    def YLength(self):
+    def y_length(self):
         """Return length in y direction"""
 
         return abs(self.y_max - self.y_min)
 
-    def ZLength(self):
+    def z_length(self):
         """Return length in z direction"""
 
         return abs(self.z_max - self.z_min)

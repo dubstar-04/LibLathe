@@ -18,7 +18,7 @@ class RoughOP(liblathe.base_op.BaseOP):
         self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset
-        line_count = int(math.ceil((self.stock.XLength() + self.extra_dia * 0.5) / self.step_over))
+        line_count = int(math.ceil((self.stock.x_length() + self.extra_dia * 0.5) / self.step_over))
         xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
 
         # create roughing boundary offset by the stock to leave value
@@ -26,8 +26,14 @@ class RoughOP(liblathe.base_op.BaseOP):
 
         for roughing_pass in range(line_count):
             xpt = xstart + roughing_pass * self.step_over
+
+            # check if the roughing pass start is outside the stock
+            boundary_z = roughing_boundary.z_at_x(xpt)
+            if boundary_z and round(boundary_z, 5) >= round(self.stock.z_max, 5):
+                continue
+
             pt1 = Point(xpt, 0, z_max)
-            pt2 = Point(xpt, 0, z_max - self.stock.ZLength() - self.start_offset)
+            pt2 = Point(xpt, 0, z_max - self.stock.z_length() - self.start_offset)
             path_line = Segment(pt1, pt2)
             intersections = []
             for seg in roughing_boundary.get_segments():

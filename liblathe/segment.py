@@ -18,7 +18,7 @@ class Segment:
         self.bulge = bulge
 
     def get_angle(self):
-        """Returns the included angle between the start and end points in radians"""
+        """Returns the included angle between the start and end points in degrees"""
 
         if self.bulge == 0:
             return 180
