@@ -22,6 +22,7 @@ class BaseOP:
         self.stock_to_leave = 0
         self.hfeed = 100
         self.vfeed = 50
+        self.clearance = 3
 
     def set_params(self, params):
         """Set operations parameters"""
@@ -36,7 +37,8 @@ class BaseOP:
         """Return operations parameters"""
         return {'min_dia': self.min_dia, 'extra_dia': self.extra_dia, 'start_offset': self.start_offset,
                 'end_offset': self.end_offset, 'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
-                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed, 'vfeed': self.vfeed}
+                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed, 
+                'vfeed': self.vfeed, 'clearance': self.clearance}
 
     def get_gcode(self):
         """Base function for all turning operations"""
