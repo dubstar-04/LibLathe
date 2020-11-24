@@ -34,7 +34,7 @@ class FaceOP(liblathe.base_op.BaseOP):
             seg = path_line
             segmentgroup.add_segment(seg)
 
-            pt3 = pt2.project(135, self.step_over)
+            pt3 = pt2.project(self.leadout_angle, self.step_over)
             leadout = Segment(pt2, pt3)
             segmentgroup.add_segment(leadout)
 

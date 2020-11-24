@@ -23,6 +23,9 @@ class BaseOP:
         self.hfeed = 100
         self.vfeed = 50
 
+        self.leadin_angle = 270
+        self.leadout_angle = 315
+
     def set_params(self, params):
         """Set operations parameters"""
 
