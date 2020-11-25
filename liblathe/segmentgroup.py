@@ -200,8 +200,26 @@ class SegmentGroup:
         min_retract_x = max(x_values, key=abs)
         return min_retract_x
 
-    def to_commands(self, part_segment_group, stock, step_over, finish_passes, hSpeed, vSpeed):
+    def to_commands(self, part_segment_group, stock, step_over, finish_passes, hSpeed, vSpeed, invert_x=True):
         """converts segmentgroup to gcode commands"""
+
+        def get_pos(pnt):
+            x = pnt.X
+            y = pnt.Y
+            z = pnt.Z
+
+            if invert_x:
+                x = 0 - x
+
+            return Point(x, y, z)
+
+        def get_arc_type(bulge):
+            if bulge > 0:
+                arcType = 'G2' if invert_x else 'G3'
+            else:
+                arcType = 'G3' if invert_x else 'G2'
+
+            return arcType
 
         segments = self.get_segments()
 
@@ -215,10 +233,13 @@ class SegmentGroup:
             x_retract = min_x_retract - step_over * finish_passes
             z_retract = segments[0].start.Z
 
+            if invert_x:
+                x_retract = 0 - x_retract
+
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
-
-                params = {'X': seg.start.X, 'Y': 0, 'Z': seg.start.Z, 'F': hSpeed}
+                pt = get_pos(seg.start)
+                params = {'X': pt.X, 'Y': 0, 'Z': pt.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
@@ -226,7 +247,7 @@ class SegmentGroup:
             if seg.bulge == 0:
                 # handle unconnected segments
                 if not self.previous_segment_connected(seg) and segments.index(seg) != 0:
-                    pt = seg.start
+                    pt = get_pos(seg.start)
                     # rapid to the x_min
                     params = {'X': x_retract, 'Y': pt.Y, 'F': hSpeed}
                     rapid = Command('G0', params)
@@ -240,28 +261,27 @@ class SegmentGroup:
                     cmd = Command('G0', params)
                     cmds.append(cmd)
                 # perform the cutting
-                pt = seg.end
+                pt = get_pos(seg.end)
                 params = {'X': pt.X, 'Y': pt.Y, 'Z': pt.Z, 'F': hSpeed}
                 cmd = Command('G1', params)
                 cmds.append(cmd)
             # handle arc segments
             if seg.bulge != 0:
-                pt1 = seg.start
-                pt2 = seg.end
+                pt1 = get_pos(seg.start)
+                pt2 = get_pos(seg.end)
                 # set the arc direction
-                if seg.bulge < 0:
-                    arcType = 'G2'
-                else:
-                    arcType = 'G3'
+                arcType = get_arc_type(seg.bulge)
+
                 # set the arc parameters
-                cen = seg.get_centre_point().sub(pt1)
+                cen = get_pos(seg.get_centre_point()).sub(pt1)
                 params = {'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': hSpeed}
                 cmd = Command(arcType, params)
                 cmds.append(cmd)
 
             # handle the lead out at the end of the segmentgroup
             if segments.index(seg) == len(segments) - 1:
-                params = {'X': x_retract, 'Y': 0, 'Z': seg.end.Z, 'F': hSpeed}
+                pt = get_pos(seg.end)
+                params = {'X': x_retract, 'Y': 0, 'Z': pt.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
 
