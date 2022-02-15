@@ -35,7 +35,7 @@ part_segments.append(Segment(PartPt2, PartPt3))
 part_segments.append(Segment(PartPt3, PartPt4))
 part_segments.append(Segment(PartPt4, PartPt5))
 part_segments.append(Segment(PartPt5, PartPt6))
-part_segments.append(Segment(PartPt6, PartPt8))
+part_segments.append(Segment(PartPt6, PartPt7))
 part_segments.append(Segment(PartPt7, PartPt8))
 
 # Define stock bounds
