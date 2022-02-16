@@ -45,12 +45,12 @@ class SegmentGroup:
             yvalues.extend(segment.get_all_axis_positions('Y'))
             zvalues.extend(segment.get_all_axis_positions('Z'))
 
-        x_min = min(xvalues, key=abs)
-        x_max = max(xvalues, key=abs)
-        y_min = min(yvalues, key=abs)
-        y_max = max(yvalues, key=abs)
-        z_min = min(zvalues, key=abs)
-        z_max = max(zvalues, key=abs)
+        x_min = math.floor(min(xvalues))
+        x_max = math.floor(max(xvalues))
+        y_min = math.floor(min(yvalues))
+        y_max = math.floor(max(yvalues))
+        z_min = math.floor(min(zvalues))
+        z_max = math.floor(max(zvalues))
 
         pt1 = Point(x_min, y_min, z_min)
         pt2 = Point(x_max, y_max, z_max)
