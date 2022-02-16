@@ -44,4 +44,4 @@ for step_over in range(30):
 
 
 plot = Plot()
-plot.debug_segment_group(groups)
+plot.backplot(groups)
