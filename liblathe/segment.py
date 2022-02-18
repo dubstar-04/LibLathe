@@ -57,9 +57,10 @@ class Segment:
         # Add or subtract the gamma angle to get the direction to the centre
         # project the start point at the calculated angle by the arc radius
 
-        angle = self.get_rotation() + math.degrees(self.get_gamma())
+        # print("rotation", self.get_rotation())
+        angle = self.get_rotation() - math.degrees(self.get_gamma())
         if self.get_angle() > 180:
-            angle = self.get_rotation() - math.degrees(self.get_gamma())
+            angle = self.get_rotation() + math.degrees(self.get_gamma())
 
         dist = math.copysign(self.get_radius(), self.bulge)
         centre_pt = self.start.project(angle, dist)
