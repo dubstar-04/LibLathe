@@ -292,6 +292,7 @@ class SegmentGroup:
         return cmds
 
     def offset_path(self, step_over):
+        """Create an offset segmentgroup by the distance of step_over"""
         # TODO Sort Edges to ensure they're in order.
 
         if step_over == 0:
@@ -302,19 +303,13 @@ class SegmentGroup:
 
         for i in range(len(segs)):
             seg = segs[i]
-            if seg.bulge != 0:
+            segment = seg.offset(step_over)
+            segmentgroup.add_segment(segment)
 
-                if seg.bulge > 0:
-                    # get normal from end point to centre
-                    start_normal = seg.start.normalise_to(seg.get_centre_point())
-                    end_normal = seg.end.normalise_to(seg.get_centre_point())
-                    # get point in the direction of the normal with magnitude of step_over
-                    pt1 = start_normal.multiply(step_over)
-                    pt2 = end_normal.multiply(step_over)
-                    # get the new start and end points
-                    new_start = seg.start.add(pt1)
-                    new_end = seg.end.add(pt2)
-                    rad = seg.get_radius() - step_over
+        # TODO: create arcs at the intersections between segments, radius needs to be matched to the selected tool
+
+        segmentgroup.join_segments()
+        return segmentgroup
                 else:
                     # get normal from the centre to the end points
                     start_normal = seg.get_centre_point().normalise_to(seg.start)

@@ -183,8 +183,45 @@ class Segment:
         if rad != 0:
             self.set_bulge_from_radius(rad)
 
-    def intersect(self, seg, extend=False):
+    def offset(self, distance):
+        """Returns a new segment offset by distance"""
 
+        if self.bulge != 0:
+
+            if self.bulge > 0:
+                # get normal from end point to centre
+                start_normal = self.start.normalise_to(self.get_centre_point())
+                end_normal = self.end.normalise_to(self.get_centre_point())
+                # get point in the direction of the normal with magnitude of step_over
+                pt1 = start_normal.multiply(distance)
+                pt2 = end_normal.multiply(distance)
+                # get the new start and end points
+                new_start = self.start.add(pt1)
+                new_end = self.end.add(pt2)
+                rad = self.get_radius() - distance
+            else:
+                # get normal from the centre to the end points
+                start_normal = self.get_centre_point().normalise_to(self.start)
+                end_normal = self.get_centre_point().normalise_to(self.end)
+                # get point in the direction of the normal with magnitude of step_over
+                pt1 = start_normal.multiply(distance)
+                pt2 = end_normal.multiply(distance)
+                # get the new start and end points
+                new_start = pt1.add(self.start)
+                new_end = pt2.add(self.end)
+                rad = self.get_radius() + distance
+
+            segment = Segment(new_start, new_end)
+            segment.derive_bulge(self, rad)
+
+        if self.bulge == 0:
+            normal = self.start.normalise_to(self.end).rotate(-90)
+            pt = normal.multiply(distance)
+            segment = Segment(pt.add(self.start), pt.add(self.end))
+
+        return segment
+
+    def intersect(self, seg, extend=False):
         if self.bulge == 0 and seg.bulge == 0:
             intersect, pt = self.intersect_line_line(seg, extend)
         elif self.bulge != 0 and seg.bulge != 0:
