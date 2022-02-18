@@ -73,92 +73,6 @@ class SegmentGroup:
                 return pts[0].Z
         return None
 
-    def join_segments(self):
-        """join segments of the segmentgroup"""
-
-        segments = self.get_segments()
-        segmentgroupOut = SegmentGroup()
-
-        for i in range(len(segments)):
-
-            pt1 = segments[i].start
-            pt2 = segments[i].end
-
-            if i != 0:
-                seg1 = segments[i - 1]
-                intersect, pt = seg1.intersect(segments[i], extend=True)
-                if intersect:
-                    if type(pt) is list:
-                        pt = pt1.nearest(pt)
-                    pt1 = pt
-
-            if i != len(segments) - 1:
-                seg2 = segments[i + 1]
-                intersect2, pt = seg2.intersect(segments[i], extend=True)
-                if intersect2:
-                    if type(pt) is list:
-                        pt = pt2.nearest(pt)
-                    pt2 = pt
-
-            if pt1 and pt2:
-                if segments[i].bulge != 0:
-                    rad = segments[i].get_centre_point().distance_to(pt1)
-                    nseg = Segment(pt1, pt2)
-                    nseg.derive_bulge(segments[i], rad)
-                    segmentgroupOut.add_segment(nseg)
-                else:
-                    segmentgroupOut.add_segment(Segment(pt1, pt2))
-            else:
-                # No Intersections found. Return the segment in its current state
-                segmentgroupOut.add_segment(segments[i])
-
-        self.segments = segmentgroupOut.get_segments()
-        self.clean_offset_path()
-
-    def merge_segments(self):
-        """merge adjacent line segments"""
-        for i in range(len(self.segments)):
-            if i + 1 < len(self.segments):
-                if self.segments[i].get_rotation() == self.segments[i + 1].get_rotation():
-                    if self.segments[i].bulge == 0 and self.segments[i + 1].bulge == 0:
-                        self.segments[i].end = self.segments[i + 1].end
-                        self.segments.pop(i + 1)
-                        # call merge segments again
-                        self.merge_segments()
-
-    def clean_offset_path(self, index=0):
-        """
-        remove any self intersecting features from the path.
-        index is the segment to evaluate
-        """
-        segments = self.get_segments()
-        if index + 1 < len(segments):
-            for i in range(len(segments) - 1, index, -1):
-                if i != index:
-                    if segments[index].end.is_same(segments[i].start):
-                        continue
-
-                    intersect, pt = segments[index].intersect(segments[i])
-                    if intersect:
-                        if type(pt) is list:
-                            pt = pt[0]
-
-                        self.segments[index].end = pt
-                        if self.segments[index].bulge:
-                            self.segments[index].derive_bulge(self.segments[index])
-
-                        self.segments[i].start = pt
-                        if self.segments[i].bulge:
-                            self.segments[i].derive_bulge(self.segments[i])
-                        if i != index + 1:
-                            del self.segments[index + 1:i]
-
-                        break
-
-            if index < self.count():
-                # run again with the next segment
-                self.clean_offset_path(index + 1)
-
     def previous_segment_connected(self, segment):
         """returns bool if segment is connect to the previous segment"""
 
@@ -310,30 +224,92 @@ class SegmentGroup:
 
         segmentgroup.join_segments()
         return segmentgroup
+
+    def join_segments(self):
+        """join segments of the segmentgroup"""
+
+        segments = self.get_segments()
+        segmentgroupOut = SegmentGroup()
+
+        for i in range(len(segments)):
+
+            pt1 = segments[i].start
+            pt2 = segments[i].end
+
+            if i != 0:
+                seg1 = segments[i - 1]
+                intersect, pt = seg1.intersect(segments[i], extend=True)
+                if intersect:
+                    if type(pt) is list:
+                        pt = pt1.nearest(pt)
+                    pt1 = pt
+
+            if i != len(segments) - 1:
+                seg2 = segments[i + 1]
+                intersect2, pt = seg2.intersect(segments[i], extend=True)
+                if intersect2:
+                    if type(pt) is list:
+                        pt = pt2.nearest(pt)
+                    pt2 = pt
+
+            if pt1 and pt2:
+                if segments[i].bulge != 0:
+                    rad = segments[i].get_centre_point().distance_to(pt1)
+                    nseg = Segment(pt1, pt2)
+                    nseg.derive_bulge(segments[i], rad)
+                    segmentgroupOut.add_segment(nseg)
                 else:
-                    # get normal from the centre to the end points
-                    start_normal = seg.get_centre_point().normalise_to(seg.start)
-                    end_normal = seg.get_centre_point().normalise_to(seg.end)
-                    # get point in the direction of the normal with magnitude of step_over
-                    pt1 = start_normal.multiply(step_over)
-                    pt2 = end_normal.multiply(step_over)
-                    # get the new start and end points
-                    new_start = pt1.add(seg.start)
-                    new_end = pt2.add(seg.end)
-                    rad = seg.get_radius() + step_over
+                    segmentgroupOut.add_segment(Segment(pt1, pt2))
+            else:
+                # No Intersections found. Return the segment in its current state
+                segmentgroupOut.add_segment(segments[i])
 
-                segment = Segment(new_start, new_end)
-                segment.derive_bulge(seg, rad)
+        self.segments = segmentgroupOut.get_segments()
+        self.clean_offset_path()
 
-            if seg.bulge == 0:
-                normal = seg.start.normalise_to(seg.end).rotate(-90)
-                pt = normal.multiply(step_over)
-                segment = Segment(pt.add(seg.start), pt.add(seg.end))
+    def merge_segments(self):
+        """merge adjacent line segments"""
+        for i in range(len(self.segments)):
+            if i + 1 < len(self.segments):
+                if self.segments[i].get_rotation() == self.segments[i + 1].get_rotation():
+                    if self.segments[i].bulge == 0 and self.segments[i + 1].bulge == 0:
+                        self.segments[i].end = self.segments[i + 1].end
+                        self.segments.pop(i + 1)
+                        # call merge segments again
+                        self.merge_segments()
 
-            segmentgroup.add_segment(segment)
+    def clean_offset_path(self, index=0):
+        """
+        remove any self intersecting features from the path.
+        index is the segment to evaluate
+        """
+        segments = self.get_segments()
+        if index + 1 < len(segments):
+            for i in range(len(segments) - 1, index, -1):
+                if i != index:
+                    if segments[index].end.is_same(segments[i].start):
+                        continue
 
-        segmentgroup.join_segments()
-        return segmentgroup
+                    intersect, pt = segments[index].intersect(segments[i])
+                    if intersect:
+                        if type(pt) is list:
+                            pt = pt[0]
+
+                        self.segments[index].end = pt
+                        if self.segments[index].bulge:
+                            self.segments[index].derive_bulge(self.segments[index])
+
+                        self.segments[i].start = pt
+                        if self.segments[i].bulge:
+                            self.segments[i].derive_bulge(self.segments[i])
+                        if i != index + 1:
+                            del self.segments[index + 1:i]
+
+                        break
+
+            if index < self.count():
+                # run again with the next segment
+                self.clean_offset_path(index + 1)
 
     def remove_the_groove(self, stock_z_min, tool, allow_grooving=False):
         segments = self.get_segments()
