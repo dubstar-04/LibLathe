@@ -41,9 +41,9 @@ class SegmentGroup:
 
         # collect all points from each segment by direction
         for segment in self.get_segments():
-            xvalues.extend(segment.get_all_axis_positions('X'))
-            yvalues.extend(segment.get_all_axis_positions('Y'))
-            zvalues.extend(segment.get_all_axis_positions('Z'))
+            xvalues.extend(segment.get_axis_extents('X'))
+            yvalues.extend(segment.get_axis_extents('Y'))
+            zvalues.extend(segment.get_axis_extents('Z'))
 
         x_min = math.floor(min(xvalues))
         x_max = math.floor(max(xvalues))

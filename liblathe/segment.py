@@ -83,44 +83,9 @@ class Segment:
         """returns the rotation of the segment"""
         return self.start.angle_to(self.end)
 
-    def get_extent_min(self, direction):
-        """Return the minimum value of the segment in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
-
-        values = []
-        values.append(getattr(self.start, direction))
-        values.append(getattr(self.end, direction))
-
-        if self.bulge != 0:
-            centre_pt = getattr(self.get_centre_point(), direction)
-            rad = self.get_radius()
-            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            bulge = centre_pt - rad
-            values.append(bulge)
-
-        return min(values, key=abs)
-
-    def get_extent_max(self, direction):
-        """Return the maximum value of the segment in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
-
-        values = []
-        values.append(getattr(self.start, direction))
-        values.append(getattr(self.end, direction))
-
-        if self.bulge != 0:
-            centre_pt = getattr(self.get_centre_point(), direction)
-            rad = self.get_radius()
-            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            bulge = centre_pt - rad
-            values.append(bulge)
-
-        return max(values, key=abs)
-
-    def get_all_axis_positions(self, direction):
+    def get_axis_extents(self, direction):
         """Return an array of the axis positions in direction.
         Direction is a string for the axis of interest, X, Y, Z"""
-
         values = []
         values.append(getattr(self.start, direction))
         values.append(getattr(self.end, direction))
@@ -133,6 +98,18 @@ class Segment:
             values.append(bulge)
 
         return values
+
+    def get_extent_min(self, direction):
+        """Return the minimum value of the segment in direction.
+        Direction is a string for the axis of interest, X, Y, Z"""
+
+        return min(self.get_axis_extents(direction), key=abs)
+
+    def get_extent_max(self, direction):
+        """Return the maximum value of the segment in direction.
+        Direction is a string for the axis of interest, X, Y, Z"""
+
+        return max(self.get_axis_extents(direction), key=abs)
 
     def get_length(self):
         """Returns the distance between the start and end points"""
