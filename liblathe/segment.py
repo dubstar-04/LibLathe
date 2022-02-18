@@ -53,22 +53,18 @@ class Segment:
         if self.bulge == 0:
             return None
 
-        normal = math.sqrt(math.pow((self.end.X - self.start.X), 2) + math.pow((self.end.Z - self.start.Z), 2))
+        # get the angle from start to end
+        # Add or subtract the gamma angle to get the direction to the centre
+        # project the start point at the calculated angle by the arc radius
 
-        basex = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.start.Z - self.end.Z) / normal
-        basey = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.end.X - self.start.X) / normal
+        angle = self.get_rotation() + math.degrees(self.get_gamma())
+        if self.get_angle() > 180:
+            angle = self.get_rotation() - math.degrees(self.get_gamma())
 
-        # invert for positive bulge values
-        if self.bulge > 0:
-            basex = -basex
-            basey = -basey
+        dist = math.copysign(self.get_radius(), self.bulge)
+        centre_pt = self.start.project(angle, dist)
 
-        x = (self.start.X + self.end.X) / 2 + basex
-        z = (self.start.Z + self.end.Z) / 2 + basey
-
-        p = Point(x, 0, z)
-
-        return p
+        return centre_pt
 
     def get_radius(self):
         """Return the radius of the arc"""
