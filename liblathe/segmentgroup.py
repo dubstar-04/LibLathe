@@ -215,10 +215,10 @@ class SegmentGroup:
         segs = self.get_segments()
         segmentgroup = SegmentGroup()
 
-        for i in range(len(segs)):
-            seg = segs[i]
+        for seg in segs:
             segment = seg.offset(step_over)
-            segmentgroup.add_segment(segment)
+            if segment:
+                segmentgroup.add_segment(segment)
 
         # TODO: create arcs at the intersections between segments, radius needs to be matched to the selected tool
 
