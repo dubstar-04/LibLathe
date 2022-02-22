@@ -24,7 +24,7 @@ class Segment:
         if self.bulge == 0:
             return math.pi
 
-        return math.atan(self.bulge) * 4
+        return math.atan(abs(self.bulge)) * 4
 
     def set_bulge(self, angle):
         """
@@ -375,22 +375,22 @@ class Segment:
 
             if self.bulge > 0:
                 if sa < ea:
-                    # print('sa < ea - positive bulge')
+                    #print('sa < ea - positive bulge')
                     if pnt_ang >= sa and pnt_ang <= ea:
                         return True
 
                 if sa > ea:
-                    # print('sa > ea - positive bulge')
+                    #print('sa > ea - positive bulge')
                     if pnt_ang >= sa or pnt_ang <= ea:
                         return True
 
             elif self.bulge < 0:
                 if sa < ea:
-                    # print('sa > ea - negative bulge')
+                    #print('sa > ea - negative bulge')
                     if pnt_ang <= sa or pnt_ang >= ea:
                         return True
 
                 if sa > ea:
-                    # print('sa < ea - negative bulge')
+                    #print('sa > ea - negative bulge')
                     if pnt_ang <= sa and pnt_ang >= ea:
                         return True
