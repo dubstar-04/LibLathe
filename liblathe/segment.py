@@ -52,7 +52,7 @@ class Segment:
         """Returns the centre point of the arc"""
 
         if self.bulge == 0:
-            return None
+            return self.start.mid(self.end)
 
         # get the angle from start to end
         # Add or subtract the gamma angle to get the direction to the centre
