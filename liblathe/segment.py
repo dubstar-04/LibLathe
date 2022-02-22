@@ -207,7 +207,28 @@ class Segment:
 
         return seg
 
+    def angle_from_points(self, new_start, new_end):
 
+            centre_pt = self.get_centre_point()
+            cenToStart = centre_pt.distance_to(new_start)
+            cenToEnd = centre_pt.distance_to(new_end)
+            startToEnd = new_start.distance_to(new_end)
+
+            calc = 0
+            if cenToStart > 0 and cenToEnd > 0:
+                calc = (pow(cenToStart, 2) + pow(cenToEnd, 2) - pow(startToEnd, 2)) / (2 * cenToStart * cenToEnd)
+
+            if calc < -1 or calc > 1:
+                calc = min(1, max(calc, -1))
+
+            ang = math.acos(calc)
+
+            if self.get_angle() > math.pi:
+                    ang = 2 * math.pi -ang
+
+            angle = math.copysign(ang, self.bulge)
+
+            return angle
 
     def intersect(self, seg, extend=False):
         """Determin intersections between self and seg"""
