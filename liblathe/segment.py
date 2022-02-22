@@ -88,6 +88,9 @@ class Segment:
         values.append(getattr(self.start, direction))
         values.append(getattr(self.end, direction))
 
+        if direction is "Y":
+            return values
+
         if self.bulge != 0:
             centre_pt = getattr(self.get_centre_point(), direction)
             rad = self.get_radius()
