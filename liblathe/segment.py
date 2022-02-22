@@ -182,34 +182,32 @@ class Segment:
                 # get normal from end point to centre
                 start_normal = self.start.normalise_to(self.get_centre_point())
                 end_normal = self.end.normalise_to(self.get_centre_point())
-                # get point in the direction of the normal with magnitude of step_over
-                pt1 = start_normal.multiply(distance)
-                pt2 = end_normal.multiply(distance)
-                # get the new start and end points
-                new_start = self.start.add(pt1)
-                new_end = self.end.add(pt2)
-                rad = self.get_radius() - distance
             else:
                 # get normal from the centre to the end points
                 start_normal = self.get_centre_point().normalise_to(self.start)
                 end_normal = self.get_centre_point().normalise_to(self.end)
-                # get point in the direction of the normal with magnitude of step_over
-                pt1 = start_normal.multiply(distance)
-                pt2 = end_normal.multiply(distance)
-                # get the new start and end points
-                new_start = pt1.add(self.start)
-                new_end = pt2.add(self.end)
-                rad = self.get_radius() + distance
 
-            segment = Segment(new_start, new_end)
-            segment.derive_bulge(self, rad)
+            pt1 = start_normal.multiply(distance)
+            pt2 = end_normal.multiply(distance)
+            new_start = pt1.add(self.start)
+            new_end = pt2.add(self.end)
 
-        if self.bulge == 0:
+            angle = self.angle_from_points(new_start, new_end)
+            seg = Segment(new_start, new_end)
+            # segment.derive_bulge(self, rad)
+            seg.set_bulge(angle)
+            #if self.get_centre_point().X != segment.get_centre_point().X:
+            #print("offset:", distance, "bulge:", self.bulge, seg.bulge)
+            #print("Centre:", self.get_centre_point().X, self.get_centre_point().Z, "n_cen:", seg.get_centre_point().X, seg.get_centre_point().Z)
+
+        else:# self.bulge == 0:
             normal = self.start.normalise_to(self.end).rotate(-90)
             pt = normal.multiply(distance)
-            segment = Segment(pt.add(self.start), pt.add(self.end))
+            seg = Segment(pt.add(self.start), pt.add(self.end))
 
-        return segment
+        return seg
+
+
 
     def intersect(self, seg, extend=False):
         """Determin intersections between self and seg"""
