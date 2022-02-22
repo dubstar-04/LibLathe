@@ -18,10 +18,11 @@ class Segment:
         self.bulge = bulge
 
     def get_angle(self):
-        """Returns the included angle between the start and end points in degrees"""
+        """Returns the included angle between the start and end points in radians"""
+        #TODO: Is this supposed to return 0 to 2 * math.pi?
 
         if self.bulge == 0:
-            return 180
+            return math.pi
 
         return math.atan(self.bulge) * 4
 
@@ -114,24 +115,33 @@ class Segment:
         return self.start.distance_to(self.end)
 
     def get_eta(self):
-        """Return eta angle (half the included angle)"""
+        """Return eta angle (half the included angle) in radians"""
 
         return self.get_angle() / 2
 
     def get_epsilon(self):
-        """Returns epsilon angle ()"""
+        """Returns signless epsilon angle in radians"""
+        if self.bulge == 0:
+            return 0
 
-        return math.atan(self.bulge)
+        return abs(math.atan(self.bulge))
 
     def get_phi(self):
-        """Return phi angle"""
+        """Return signless phi angle in radians"""
 
-        return self.get_gamma() + self.get_epsilon()
+        if self.bulge == 0:
+            return 0
+
+        #return self.get_gamma() + self.get_epsilon()
+        return abs((math.pi - abs(self.get_angle()) / 2) / 2)
 
     def get_gamma(self):
-        """Returns gamma angle"""
+        """Returns signless gamma angle in radians"""
 
-        return (math.pi - self.get_angle()) / 2
+        if self.bulge == 0:
+            return 0
+
+        return (math.pi - abs(self.get_angle())) / 2
 
     def is_same(self, seg):
         """Returns True is the segment is the same"""
