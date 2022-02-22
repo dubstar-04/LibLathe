@@ -104,7 +104,6 @@ class Segment:
         """Return the minimum value of the segment in direction.
         Direction is a string for the axis of interest, X, Y, Z"""
 
-        return min(self.get_axis_extents(direction), key=abs)
 
     def get_extent_max(self, direction):
         """Return the maximum value of the segment in direction.
@@ -176,6 +175,10 @@ class Segment:
         if self.bulge != 0:
 
             if self.bulge > 0:
+
+                if self.get_radius() < distance:
+                    return None
+                    
                 # get normal from end point to centre
                 start_normal = self.start.normalise_to(self.get_centre_point())
                 end_normal = self.end.normalise_to(self.get_centre_point())
