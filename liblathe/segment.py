@@ -158,7 +158,7 @@ class Segment:
 
     def derive_bulge(self, seg, rad=None):
         """Derive the segment bulge from seg.
-        optional rad value to overide the seg radius"""
+        optional rad value to override the seg radius"""
 
         if rad is None:
             rad = seg.get_radius()
@@ -231,7 +231,7 @@ class Segment:
             return angle
 
     def intersect(self, seg, extend=False):
-        """Determin intersections between self and seg"""
+        """Determine intersections between self and seg"""
         if self.bulge == 0 and seg.bulge == 0:
             intersect, pt = self.intersect_line_line(seg, extend)
         elif self.bulge != 0 and seg.bulge != 0:
@@ -245,7 +245,7 @@ class Segment:
         return intersect, pt
 
     def intersect_line_line(self, seg, extend=False):
-        """Determin intersections between self and seg when both are line segments"""
+        """Determine intersections between self and seg when both are line segments"""
 
         a1 = self.start
         a2 = self.end
@@ -270,7 +270,7 @@ class Segment:
         return intersect, pts
 
     def intersect_circle_line(self, seg, extend=False):
-        """Determin intersections between self and seg when one is a line segment and one is an arc segment"""
+        """Determine intersections between self and seg when one is a line segment and one is an arc segment"""
 
         if self.bulge == 0 and seg.bulge != 0:
             line = self
@@ -329,7 +329,7 @@ class Segment:
         return intersect, ptsout
 
     def intersect_circle_circle(self, seg, extend=False):
-        """Determin intersections between self and seg when both are arc segments"""
+        """Determine intersections between self and seg when both are arc segments"""
         # ref http://paulbourke.net/geometry/circlesphere/
 
         c1 = self.get_centre_point()
@@ -376,7 +376,7 @@ class Segment:
         return intersect, ptsout
 
     def point_on_segment(self, point):
-        """Determin if point is on self"""
+        """Determine if point is on self"""
 
         if self.bulge == 0:
             # Line
@@ -396,7 +396,7 @@ class Segment:
 
             # print('point_on_segment', pnt_ang, 'X:', point.X, 'Y:', point.Y, 'Z:', point.Z)
 
-            # TODO: There must be a slicker way to determin if the point is on the arc. Current method good for debug.
+            # TODO: There must be a slicker way to determine if the point is on the arc. Current method good for debug.
 
             if self.bulge > 0:
                 if sa < ea:
