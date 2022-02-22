@@ -254,9 +254,11 @@ class SegmentGroup:
 
             if pt1 and pt2:
                 if segments[i].bulge != 0:
-                    rad = segments[i].get_centre_point().distance_to(pt1)
+                    #rad = segments[i].get_centre_point().distance_to(pt1)
                     nseg = Segment(pt1, pt2)
-                    nseg.derive_bulge(segments[i], rad)
+                    ang = segments[i].angle_from_points(pt1, pt2)
+                    nseg.set_bulge(ang)
+                    # nseg.derive_bulge(segments[i], rad)
                     segmentgroupOut.add_segment(nseg)
                 else:
                     segmentgroupOut.add_segment(Segment(pt1, pt2))
