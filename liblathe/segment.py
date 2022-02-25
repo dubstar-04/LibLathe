@@ -179,19 +179,6 @@ class Segment:
 
         return False
 
-    def derive_bulge(self, seg, rad=None):
-        """Derive the segment bulge from seg.
-        optional rad value to overide the seg radius"""
-
-        if rad is None:
-            rad = seg.get_radius()
-
-        if seg.bulge < 0:
-            rad = 0 - abs(rad)
-
-        if rad != 0:
-            self.set_bulge_from_radius(rad)
-
     def offset(self, distance):
         """Returns a new segment offset by distance"""
 
