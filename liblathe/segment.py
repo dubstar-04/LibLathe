@@ -1,4 +1,5 @@
 import math
+from liblathe.boundbox import BoundBox
 
 from liblathe.point import Point
 
@@ -18,12 +19,13 @@ class Segment:
         self.bulge = bulge
 
     def get_angle(self):
-        """Returns the included angle between the start and end points in degrees"""
+        """Returns the included angle between the start and end points in radians"""
+        #TODO: Is this supposed to return 0 to 2 * math.pi?
 
         if self.bulge == 0:
-            return 180
+            return math.pi
 
-        return math.atan(self.bulge) * 4
+        return math.atan(abs(self.bulge)) * 4
 
     def set_bulge(self, angle):
         """
@@ -35,40 +37,26 @@ class Segment:
 
         self.bulge = math.tan(angle / 4)
 
-    def set_bulge_from_radius(self, radius):
-        """Sets the bulge of the arc using a known radius"""
-
-        angle = (self.get_length() * 0.5) / radius
-        if angle < -1 or angle > 1:
-            print('error with angle input')
-            # limit asin input range 1:-1
-            angle = min(1, max(angle, -1))
-        bulge_angle = math.asin(angle) * 2
-
-        self.set_bulge(bulge_angle)
-
     def get_centre_point(self):
         """Returns the centre point of the arc"""
-
+        
+        midp = self.start.mid(self.end)
+        
         if self.bulge == 0:
-            return None
+            return midp
+        
+        a = self.get_apothem()
 
-        normal = math.sqrt(math.pow((self.end.X - self.start.X), 2) + math.pow((self.end.Z - self.start.Z), 2))
+        # check if the center point is inverted. i.e. at 180 it goes inside the arc
+        if self.get_angle() > math.pi:
+            a = -a
 
-        basex = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.start.Z - self.end.Z) / normal
-        basey = math.sqrt(math.pow(self.get_radius(), 2) - math.pow((normal / 2), 2)) * (self.end.X - self.start.X) / normal
+        centre_pt = midp.project(self.get_rotation() - 90, a)
 
-        # invert for positive bulge values
         if self.bulge > 0:
-            basex = -basex
-            basey = -basey
+            centre_pt = midp.project(self.get_rotation() + 90, a)
 
-        x = (self.start.X + self.end.X) / 2 + basex
-        z = (self.start.Z + self.end.Z) / 2 + basey
-
-        p = Point(x, 0, z)
-
-        return p
+        return centre_pt
 
     def get_radius(self):
         """Return the radius of the arc"""
@@ -83,81 +71,91 @@ class Segment:
         """returns the rotation of the segment"""
         return self.start.angle_to(self.end)
 
-    def get_extent_min(self, direction):
-        """Return the minimum value of the segment in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
+    def get_boundbox(self):
 
-        values = []
-        values.append(getattr(self.start, direction))
-        values.append(getattr(self.end, direction))
+        if self.bulge == 0:
 
-        if self.bulge != 0:
-            centre_pt = getattr(self.get_centre_point(), direction)
-            rad = self.get_radius()
-            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            bulge = centre_pt - rad
-            values.append(bulge)
+            pt1 = self.start
+            pt2 = self.end
 
-        return min(values, key=abs)
+        else:
 
-    def get_extent_max(self, direction):
-        """Return the maximum value of the segment in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
+            #TODO: Make this more sexy
 
-        values = []
-        values.append(getattr(self.start, direction))
-        values.append(getattr(self.end, direction))
+            startAngle = min(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
+            endAngle = max(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
 
-        if self.bulge != 0:
-            centre_pt = getattr(self.get_centre_point(), direction)
-            rad = self.get_radius()
-            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            bulge = centre_pt - rad
-            values.append(bulge)
+            if self.get_angle() > math.pi:
+                endAngle = min(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
+                startAngle = max(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
 
-        return max(values, key=abs)
+            cross0 = startAngle%360 >= endAngle%360
+            cross90 = (startAngle - 90)%360 >= (endAngle - 90)%360
+            cross180 = (startAngle - 180)%360 >= (endAngle - 180)%360
+            cross270 = (startAngle - 270)%360 >= (endAngle - 270)%360
 
-    def get_all_axis_positions(self, direction):
-        """Return an array of the axis positions in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
+            startX = self.get_radius() * math.cos(math.radians(startAngle))
+            startY = self.get_radius()  * math.sin(math.radians(startAngle))
+            endX = self.get_radius()  * math.cos(math.radians(endAngle))
+            endY = self.get_radius()  * math.sin(math.radians(endAngle))
 
-        values = []
-        values.append(getattr(self.start, direction))
-        values.append(getattr(self.end, direction))
+            right = self.get_radius() if cross0 else max(startX, endX)
+            bottom = self.get_radius() if cross90 else max(startY, endY)
+            left = -self.get_radius() if cross180 else min(startX, endX)
+            top = -self.get_radius() if cross270 else min(startY, endY)
 
-        if self.bulge != 0:
-            centre_pt = getattr(self.get_centre_point(), direction)
-            rad = self.get_radius()
-            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            bulge = centre_pt - rad
-            values.append(bulge)
+            xmin = top + self.get_centre_point().X
+            xmax = bottom + self.get_centre_point().X
+            zmin = left + self.get_centre_point().Z
+            zmax = right + self.get_centre_point().Z
 
-        return values
+            pt1 = Point(xmin, 0, zmin)
+            pt2 = Point(xmax, 0, zmax)
+     
+        boundbox = BoundBox(pt1, pt2)
+        return boundbox
+
 
     def get_length(self):
         """Returns the distance between the start and end points"""
         # TODO: Arc length should be the true length not the distance between the start and endpoints?
         return self.start.distance_to(self.end)
 
+    def get_sagitta(self):
+        """Returns the arc height, typically refered to as the sagitta"""
+        return self.get_length / 2 * self.bulge
+
+    def get_apothem(self):
+        """Returns apothem. distance from arc center to cord midpoint"""
+        return math.sqrt(pow(self.get_radius(), 2) - pow(self.get_length() / 2, 2))
+
     def get_eta(self):
-        """Return eta angle (half the included angle)"""
+        """Return eta angle (half the included angle) in radians"""
 
         return self.get_angle() / 2
 
     def get_epsilon(self):
-        """Returns epsilon angle ()"""
+        """Returns signless epsilon angle in radians"""
+        if self.bulge == 0:
+            return 0
 
-        return math.atan(self.bulge)
+        return abs(math.atan(self.bulge))
 
     def get_phi(self):
-        """Return phi angle"""
+        """Return signless phi angle in radians"""
 
-        return self.get_gamma() + self.get_epsilon()
+        if self.bulge == 0:
+            return 0
+
+        return abs((math.pi - abs(self.get_angle()) / 2) / 2)
 
     def get_gamma(self):
-        """Returns gamma angle"""
+        """Returns signless gamma angle in radians"""
 
-        return (math.pi - self.get_angle()) / 2
+        if self.bulge == 0:
+            return 0
+
+        return (math.pi - abs(self.get_angle())) / 2
 
     def is_same(self, seg):
         """Returns True is the segment is the same"""
@@ -170,21 +168,67 @@ class Segment:
 
         return False
 
-    def derive_bulge(self, seg, rad=None):
-        """Derive the segment bulge from seg.
-        optional rad value to overide the seg radius"""
+    def offset(self, distance):
+        """Returns a new segment offset by distance"""
 
-        if rad is None:
-            rad = seg.get_radius()
+        if self.bulge != 0:
 
-        if seg.bulge < 0:
-            rad = 0 - abs(rad)
+            if self.bulge > 0:
 
-        if rad != 0:
-            self.set_bulge_from_radius(rad)
+                # can't offset because the distance is bigger than the radius
+                if self.get_radius() < distance:
+                    return None
+                    
+                # get normal from end point to centre
+                start_normal = self.start.normalise_to(self.get_centre_point())
+                end_normal = self.end.normalise_to(self.get_centre_point())
+            else:
+                # get normal from the centre to the end points
+                start_normal = self.get_centre_point().normalise_to(self.start)
+                end_normal = self.get_centre_point().normalise_to(self.end)
+
+            pt1 = start_normal.multiply(distance)
+            pt2 = end_normal.multiply(distance)
+            new_start = pt1.add(self.start)
+            new_end = pt2.add(self.end)
+
+            angle = self.angle_from_points(new_start, new_end)
+            seg = Segment(new_start, new_end)
+
+            if self.bulge:
+                seg.set_bulge(angle)
+
+        else:
+            normal = self.start.normalise_to(self.end).rotate(-90)
+            pt = normal.multiply(distance)
+            seg = Segment(pt.add(self.start), pt.add(self.end))
+
+        return seg
+
+    def angle_from_points(self, new_start, new_end):
+        """
+        Get the new angle for a segment using new start and end points
+        returned angle can be used to set the new bulge using .set_bulge(new_angle)
+        """
+    
+        if self.bulge == 0:
+            return math.pi
+
+        centre_pt = self.get_centre_point()
+        startAngle = centre_pt.angle_to(new_start)
+        endAngle = centre_pt.angle_to(new_end)
+
+        if self.bulge > 0:
+            totalAng = endAngle - startAngle
+        else:
+            totalAng = startAngle - endAngle
+
+        incAng = math.copysign((totalAng - 360)%360, self.bulge)
+
+        return math.radians(incAng)
 
     def intersect(self, seg, extend=False):
-
+        """Determin intersections between self and seg"""
         if self.bulge == 0 and seg.bulge == 0:
             intersect, pt = self.intersect_line_line(seg, extend)
         elif self.bulge != 0 and seg.bulge != 0:
@@ -194,10 +238,11 @@ class Segment:
         else:
             print('segment.py - Intersect Error with passed segments')
 
-        # TODO: this should return a constent type not Point() or []
+        # TODO: this should return a nt type not Point() or []
         return intersect, pt
 
     def intersect_line_line(self, seg, extend=False):
+        """Determin intersections between self and seg when both are line segments"""
 
         a1 = self.start
         a2 = self.end
@@ -222,6 +267,7 @@ class Segment:
         return intersect, pts
 
     def intersect_circle_line(self, seg, extend=False):
+        """Determin intersections between self and seg when one is a line segment and one is an arc segment"""
 
         if self.bulge == 0 and seg.bulge != 0:
             line = self
@@ -280,6 +326,7 @@ class Segment:
         return intersect, ptsout
 
     def intersect_circle_circle(self, seg, extend=False):
+        """Determin intersections between self and seg when both are arc segments"""
         # ref http://paulbourke.net/geometry/circlesphere/
 
         c1 = self.get_centre_point()
@@ -326,6 +373,7 @@ class Segment:
         return intersect, ptsout
 
     def point_on_segment(self, point):
+        """Determin if point is on self"""
 
         if self.bulge == 0:
             # Line
@@ -344,27 +392,29 @@ class Segment:
                 return False
 
             # print('point_on_segment', pnt_ang, 'X:', point.X, 'Y:', point.Y, 'Z:', point.Z)
+            # print('point_on_segment arc:, sa:',sa, 'ea:', ea)
+            # print("centre point", c.X, c.Z)
 
             # TODO: There must be a slicker way to determin if the point is on the arc. Current method good for debug.
 
             if self.bulge > 0:
                 if sa < ea:
-                    # print('sa < ea - positive bulge')
+                    #print('sa < ea - positive bulge')
                     if pnt_ang >= sa and pnt_ang <= ea:
                         return True
 
                 if sa > ea:
-                    # print('sa > ea - positive bulge')
+                    #print('sa > ea - positive bulge')
                     if pnt_ang >= sa or pnt_ang <= ea:
                         return True
 
             elif self.bulge < 0:
                 if sa < ea:
-                    # print('sa > ea - negative bulge')
+                    #print('sa > ea - negative bulge')
                     if pnt_ang <= sa or pnt_ang >= ea:
                         return True
 
                 if sa > ea:
-                    # print('sa < ea - negative bulge')
+                    #print('sa > ea - negative bulge')
                     if pnt_ang <= sa and pnt_ang >= ea:
                         return True
