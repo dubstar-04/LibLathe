@@ -116,6 +116,14 @@ class Segment:
         # TODO: Arc length should be the true length not the distance between the start and endpoints?
         return self.start.distance_to(self.end)
 
+    def get_sagitta(self):
+        """Returns the arc height, typically refered to as the sagitta"""
+        return self.get_length / 2 * self.bulge
+
+    def get_apothem(self):
+        """Returns apothem. distance from arc center to cord midpoint"""
+        return math.sqrt(pow(self.get_radius(), 2) - pow(self.get_length() / 2, 2))
+
     def get_eta(self):
         """Return eta angle (half the included angle) in radians"""
 
