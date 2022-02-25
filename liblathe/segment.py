@@ -43,9 +43,13 @@ class Segment:
         angle = (self.get_length() * 0.5) / radius
         if angle < -1 or angle > 1:
             print('error with angle input')
+            # print("input radius:", radius, angle)
             # limit asin input range 1:-1
             angle = min(1, max(angle, -1))
         bulge_angle = math.asin(angle) * 2
+        
+        # math.pi rad in an triangle
+        # bulge_angle = (math.pi * 0.5 - math.acos(angle)) * 2
 
         self.set_bulge(bulge_angle)
 
@@ -55,11 +59,7 @@ class Segment:
         if self.bulge == 0:
             return self.start.mid(self.end)
 
-        # get the angle from start to end
-        # Add or subtract the gamma angle to get the direction to the centre
-        # project the start point at the calculated angle by the arc radius
 
-        # print("rotation", self.get_rotation())
         angle = self.get_rotation() - math.degrees(self.get_gamma())
         if self.get_angle() > 180:
             angle = self.get_rotation() + math.degrees(self.get_gamma())
@@ -158,7 +158,6 @@ class Segment:
         if self.bulge == 0:
             return 0
 
-        #return self.get_gamma() + self.get_epsilon()
         return abs((math.pi - abs(self.get_angle()) / 2) / 2)
 
     def get_gamma(self):
@@ -200,6 +199,7 @@ class Segment:
 
             if self.bulge > 0:
 
+                # can't offset because the distance is bigger than the radius
                 if self.get_radius() < distance:
                     return None
                     
@@ -218,13 +218,9 @@ class Segment:
 
             angle = self.angle_from_points(new_start, new_end)
             seg = Segment(new_start, new_end)
-            # segment.derive_bulge(self, rad)
             seg.set_bulge(angle)
-            #if self.get_centre_point().X != segment.get_centre_point().X:
-            #print("offset:", distance, "bulge:", self.bulge, seg.bulge)
-            #print("Centre:", self.get_centre_point().X, self.get_centre_point().Z, "n_cen:", seg.get_centre_point().X, seg.get_centre_point().Z)
 
-        else:# self.bulge == 0:
+            if self.bulge:
             normal = self.start.normalise_to(self.end).rotate(-90)
             pt = normal.multiply(distance)
             seg = Segment(pt.add(self.start), pt.add(self.end))
@@ -265,7 +261,7 @@ class Segment:
         else:
             print('segment.py - Intersect Error with passed segments')
 
-        # TODO: this should return a constent type not Point() or []
+        # TODO: this should return a nt type not Point() or []
         return intersect, pt
 
     def intersect_line_line(self, seg, extend=False):
@@ -419,6 +415,8 @@ class Segment:
                 return False
 
             # print('point_on_segment', pnt_ang, 'X:', point.X, 'Y:', point.Y, 'Z:', point.Z)
+            # print('point_on_segment arc:, sa:',sa, 'ea:', ea)
+            # print("centre point", c.X, c.Z)
 
             # TODO: There must be a slicker way to determin if the point is on the arc. Current method good for debug.
 
