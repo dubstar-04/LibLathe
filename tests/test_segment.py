@@ -110,12 +110,6 @@ class test_segment(unittest.TestCase):
         tempSegment.set_bulge(math.radians(self.arc1_angle))
         self.assertEqual(tempSegment.bulge, self.arc1_bulge)
 
-    def test_set_bulge_from_radius(self):
-        tempSegment = self.lineSegment1
-        tempSegment.set_bulge_from_radius(-75)
-        #TODO: investigate the errors from 5 decimal places onwards
-        self.assertAlmostEqual(tempSegment.bulge, self.arc1_bulge, 4)
-
     def test_get_centre_point(self):
         
         lineCentrePt = self.lineSegment1.get_centre_point()
