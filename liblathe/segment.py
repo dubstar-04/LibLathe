@@ -39,17 +39,22 @@ class Segment:
 
     def get_centre_point(self):
         """Returns the centre point of the arc"""
-
+        
+        midp = self.start.mid(self.end)
+        
         if self.bulge == 0:
-            return self.start.mid(self.end)
+            return midp
+        
+        a = self.get_apothem()
 
+        # check if the center point is inverted. i.e. at 180 it goes inside the arc
+        if self.get_angle() > math.pi:
+            a = -a
 
-        angle = self.get_rotation() - math.degrees(self.get_gamma())
-        if self.get_angle() > 180:
-            angle = self.get_rotation() + math.degrees(self.get_gamma())
+        centre_pt = midp.project(self.get_rotation() - 90, a)
 
-        dist = math.copysign(self.get_radius(), self.bulge)
-        centre_pt = self.start.project(angle, dist)
+        if self.bulge > 0:
+            centre_pt = midp.project(self.get_rotation() + 90, a)
 
         return centre_pt
 
@@ -189,7 +194,6 @@ class Segment:
 
             angle = self.angle_from_points(new_start, new_end)
             seg = Segment(new_start, new_end)
-            seg.set_bulge(angle)
 
             if self.bulge:
             normal = self.start.normalise_to(self.end).rotate(-90)
