@@ -34,7 +34,7 @@ paths and outputting `GCode`_
     
 Getting LibLathe
 ++++++++++++++++
-LibLathe is opensource making it free to use, change and redistrubute. 
+LibLathe is opensource making it free to use, change and redistribute. 
 LibLathe sourcecode can be found at `GitHub`_
 
 .. _GitHub: https://github.com/dubstar-04/LibLathe 
