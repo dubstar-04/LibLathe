@@ -1,4 +1,5 @@
 import math
+from liblathe.boundbox import BoundBox
 
 from liblathe.point import Point
 
@@ -81,35 +82,50 @@ class Segment:
         """returns the rotation of the segment"""
         return self.start.angle_to(self.end)
 
-    def get_axis_extents(self, direction):
-        """Return an array of the axis positions in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
-        values = []
-        values.append(getattr(self.start, direction))
-        values.append(getattr(self.end, direction))
+    def get_boundbox(self):
 
-        if direction is "Y":
-            return values
+        if self.bulge == 0:
 
-        if self.bulge != 0:
-            centre_pt = getattr(self.get_centre_point(), direction)
-            rad = self.get_radius()
-            # TODO: Revisit the sign of the offset here. assumes that all lathes use -x
-            bulge = centre_pt - rad
-            values.append(bulge)
+            pt1 = self.start
+            pt2 = self.end
 
-        return values
+        else:
 
-    def get_extent_min(self, direction):
-        """Return the minimum value of the segment in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
+            #TODO: Make this more sexy
 
+            startAngle = min(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
+            endAngle = max(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
 
-    def get_extent_max(self, direction):
-        """Return the maximum value of the segment in direction.
-        Direction is a string for the axis of interest, X, Y, Z"""
+            if self.get_angle() > math.pi:
+                endAngle = min(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
+                startAngle = max(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
 
-        return max(self.get_axis_extents(direction), key=abs)
+            cross0 = startAngle%360 >= endAngle%360
+            cross90 = (startAngle - 90)%360 >= (endAngle - 90)%360
+            cross180 = (startAngle - 180)%360 >= (endAngle - 180)%360
+            cross270 = (startAngle - 270)%360 >= (endAngle - 270)%360
+
+            startX = self.get_radius() * math.cos(math.radians(startAngle))
+            startY = self.get_radius()  * math.sin(math.radians(startAngle))
+            endX = self.get_radius()  * math.cos(math.radians(endAngle))
+            endY = self.get_radius()  * math.sin(math.radians(endAngle))
+
+            right = self.get_radius() if cross0 else max(startX, endX)
+            bottom = self.get_radius() if cross90 else max(startY, endY)
+            left = -self.get_radius() if cross180 else min(startX, endX)
+            top = -self.get_radius() if cross270 else min(startY, endY)
+
+            xmin = top + self.get_centre_point().X
+            xmax = bottom + self.get_centre_point().X
+            zmin = left + self.get_centre_point().Z
+            zmax = right + self.get_centre_point().Z
+
+            pt1 = Point(xmin, 0, zmin)
+            pt2 = Point(xmax, 0, zmax)
+     
+        boundbox = BoundBox(pt1, pt2)
+        return boundbox
+
 
     def get_length(self):
         """Returns the distance between the start and end points"""

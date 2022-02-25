@@ -34,16 +34,17 @@ class SegmentGroup:
 
     def boundbox(self):
         """Return the boundbox for the segmentgroup"""
-
+        
         xvalues = []
         yvalues = []
         zvalues = []
 
         # collect all points from each segment by direction
         for segment in self.get_segments():
-            xvalues.extend(segment.get_axis_extents('X'))
-            yvalues.extend(segment.get_axis_extents('Y'))
-            zvalues.extend(segment.get_axis_extents('Z'))
+            bb = segment.get_boundbox()
+            xvalues.extend([bb.x_min, bb.x_max])
+            yvalues.extend([bb.y_min, bb.y_max])
+            zvalues.extend([bb.z_min, bb.z_max])
 
         x_min = math.floor(min(xvalues))
         x_max = math.floor(max(xvalues))
@@ -97,16 +98,16 @@ class SegmentGroup:
 
         # get the x_max from the current pass segments
         for idx, seg in enumerate(self.segments):
-            x_values.append(seg.get_extent_max('X'))
+            x_values.extend([seg.get_boundbox().x_min, seg.get_boundbox().x_max])
             if idx == currentIdx:
                 break
 
         # get the x_max from the part segments up to the z position of the current segment
-        seg_z_max = segment.get_extent_max('Z')
+        seg_z_max = segment.get_boundbox().z_max
         for part_seg in part_segments:
 
-            part_seg_z_max = part_seg.get_extent_max('Z')
-            x_values.append(part_seg.get_extent_max('X'))
+            part_seg_z_max = part_seg.get_boundbox().z_max
+            x_values.extend([part_seg.get_boundbox().x_min, part_seg.get_boundbox().x_max])
 
             if part_seg_z_max < seg_z_max:
                 break
