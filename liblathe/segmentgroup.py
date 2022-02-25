@@ -257,7 +257,7 @@ class SegmentGroup:
                 if segments[i].bulge != 0:
                     #rad = segments[i].get_centre_point().distance_to(pt1)
                     nseg = Segment(pt1, pt2)
-                    ang = segments[i].angle_from_points(pt1, pt2)
+                    ang = segments[i].angle_from_points(nseg.start, nseg.end)
                     nseg.set_bulge(ang)
                     # nseg.derive_bulge(segments[i], rad)
                     segmentgroupOut.add_segment(nseg)
@@ -298,13 +298,16 @@ class SegmentGroup:
                         if type(pt) is list:
                             pt = pt[0]
 
+                        angle = self.segments[index].angle_from_points(self.segments[index].start, pt)
                         self.segments[index].end = pt
                         if self.segments[index].bulge:
-                            self.segments[index].derive_bulge(self.segments[index])
+                            self.segments[index].set_bulge(angle)
 
+                        angle = self.segments[i].angle_from_points(pt, self.segments[i].end)
                         self.segments[i].start = pt
-                        if self.segments[i].bulge:
-                            self.segments[i].derive_bulge(self.segments[i])
+                        if self.segments[i].bulge != 0:
+                            self.segments[i].set_bulge(angle)
+                            #self.segments[i].derive_bulge(self.segments[i])
                         if i != index + 1:
                             del self.segments[index + 1:i]
 
@@ -326,7 +329,7 @@ class SegmentGroup:
             pt2 = seg.end
             pt = None
 
-            # TO DO: Tidy this mess
+            # TODO: Tidy this mess
 
             if seg.bulge > 0:
                 segAng = round(math.degrees(seg.get_angle()), 5)
@@ -348,7 +351,9 @@ class SegmentGroup:
                         segs_out.add_segment(new_seg)
                         # add the remainder of the arc to the segment_group
                         remaining_seg = Segment(pts[0], pt2)
-                        remaining_seg.derive_bulge(seg)
+                        angle = seg.angle_from_points(remaining_seg.start, remaining_seg.end)
+                        #remaining_seg.derive_bulge(seg)
+                        remaining_seg.set_bulge(angle)
                         segs_out.add_segment(remaining_seg)
                     else:
                         if seg.start.angle_to(seg.end) <= 180:
@@ -376,7 +381,9 @@ class SegmentGroup:
                         pt = seg.get_centre_point().project(angle_limit, rad)
 
                     nseg = Segment(pt1, pt)
-                    nseg.derive_bulge(seg, rad)
+                    #nseg.derive_bulge(seg, rad)
+                    angle = seg.angle_from_points(nseg.start, nseg.end)
+                    nseg.set_bulge(angle)
                     segs_out.add_segment(nseg)
 
                     pt1 = pt
@@ -387,7 +394,7 @@ class SegmentGroup:
                     next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving)
                 else:
                     segs_out.add_segment(seg)
-
+            
             if next_index is False and pt is not None:
                 seg = Segment(pt1, pt)
                 segs_out.add_segment(seg)
@@ -399,7 +406,11 @@ class SegmentGroup:
                 next_pt1 = pt
                 next_pt2 = segments[next_index].end
                 seg = Segment(next_pt1, next_pt2)
-                seg.derive_bulge(segments[next_index])
+                
+                #seg.derive_bulge(segments[next_index])
+                if segments[next_index].bulge != 0:
+                    n_angle = segments[next_index].angle_from_points(seg.start, seg.end)
+                    seg.set_bulge(n_angle)
                 segs_out.add_segment(seg)
 
                 next_index += 1
