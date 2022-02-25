@@ -196,6 +196,9 @@ class Segment:
             seg = Segment(new_start, new_end)
 
             if self.bulge:
+                seg.set_bulge(angle)
+
+        else:
             normal = self.start.normalise_to(self.end).rotate(-90)
             pt = normal.multiply(distance)
             seg = Segment(pt.add(self.start), pt.add(self.end))
