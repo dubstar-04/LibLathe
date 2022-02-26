@@ -43,12 +43,7 @@ method arcs can be simplified to a three component representation.
 As with lines arcs also need start and end points, arcs however require a non-zero 
 bulge value
 
-Bulge values are calculated:
-
- ``bulge = tan(angle/4)``
- 
-where;
-angle is the central arc angle between the start and end points. 
+refer to :doc:`bulge` for more information.
 
 
 The Segment Group

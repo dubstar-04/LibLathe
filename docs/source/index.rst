@@ -7,9 +7,9 @@ Welcome to LibLathe
    
    pages/liblathe_tooling
    pages/geometry
+   pages/bulge
    pages/gcode
    pages/operations
-   pages/usage
 
 
 About LibLathe
