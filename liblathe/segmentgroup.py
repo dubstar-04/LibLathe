@@ -46,12 +46,12 @@ class SegmentGroup:
             yvalues.extend([bb.y_min, bb.y_max])
             zvalues.extend([bb.z_min, bb.z_max])
 
-        x_min = math.floor(min(xvalues))
-        x_max = math.floor(max(xvalues))
-        y_min = math.floor(min(yvalues))
-        y_max = math.floor(max(yvalues))
-        z_min = math.floor(min(zvalues))
-        z_max = math.floor(max(zvalues))
+        x_min = min(xvalues)
+        x_max = max(xvalues)
+        y_min = min(yvalues)
+        y_max = max(yvalues)
+        z_min = min(zvalues)
+        z_max = max(zvalues)
 
         pt1 = Point(x_min, y_min, z_min)
         pt2 = Point(x_max, y_max, z_max)
