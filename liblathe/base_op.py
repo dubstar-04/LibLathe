@@ -70,6 +70,8 @@ class BaseOP:
         for segment in part_edges:
             self.part_segment_group.add_segment(segment)
 
+        self.part_segment_group.validate()
+
     def add_stock(self, stock_bb):
         """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""
         self.stock = stock_bb

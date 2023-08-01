@@ -229,6 +229,7 @@ class SegmentGroup:
         # TODO: create arcs at the intersections between segments, radius needs to be matched to the selected tool
 
         segmentgroup.join_segments()
+        segmentgroup.validate()
         return segmentgroup
 
     def join_segments(self):
@@ -471,3 +472,23 @@ class SegmentGroup:
             index += 1
         # No solution :(
         return False, stock_pt
+    
+    def validate(self):
+        """validate the segment group"""
+
+        if self.count == 0:
+            return
+        
+        # check the first segment starts at x = 0
+        startSegment = self.segments[0]
+        
+        if startSegment.start.X != 0:
+            newStartSeg = Segment(Point(0, 0, startSegment.start.Z), startSegment.start)
+            self.insert_segment(newStartSeg, 0)
+
+        # check the last segment end at x = 0
+        endSegment = self.segments[-1]
+        
+        if endSegment.end.X != 0:
+            newEndSeg = Segment(endSegment.end, Point(0, 0, endSegment.end.Z))
+            self.add_segment(newEndSeg)
