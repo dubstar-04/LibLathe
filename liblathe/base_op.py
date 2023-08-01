@@ -18,7 +18,7 @@ class BaseOP:
         self.end_offset = 0
         self.allow_grooving = False
         self.step_over = 1.5
-        self.finish_passes = 2
+        self.finish_passes = 1
         self.stock_to_leave = 0
         self.hfeed = 100
         self.vfeed = 50
