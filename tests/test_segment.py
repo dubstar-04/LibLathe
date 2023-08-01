@@ -31,6 +31,8 @@ class test_segment(unittest.TestCase):
         self.pt6 = Point(-88.39, 0, -163.39)
         self.pt7 = Point(-88.388, 0, -177.86)
         self.pt8 = Point(-88.388, 0, -222.14)
+        self.pt9 = Point(0, 0,0 -100) # partial arc center
+        self.pt10 = Point(-42.26,  0,  -9.37,) # partial arc end
 
         self.lineSegment1 = Segment(self.pt1, self.pt2)
         self.lineSegment2 = Segment(self.pt5, self.pt6)
@@ -47,19 +49,25 @@ class test_segment(unittest.TestCase):
         large_arc_start_angle = -202.5
         large_arc_end_angle = 67.5
 
+        partial_arc_start_angle = -25
+        partial_arc_end_angle = 0
+
         self.arc1_angle = -abs(arc1_end_angle - arc1_start_angle) 
         self.arc2_angle = abs(arc2_end_angle - arc2_start_angle) 
-        self.large_arc_angle = -abs(large_arc_end_angle - large_arc_start_angle) 
-
+        self.large_arc_angle = -abs(large_arc_end_angle - large_arc_start_angle)
+        self.partial_arc_angle = -abs(partial_arc_end_angle - partial_arc_start_angle)  
+        
         self.arc1_bulge = math.tan(math.radians((self.arc1_angle) / 4))  # radius: 75, CentrePt: 0, -75, direction: CW
         self.arc2_bulge = math.tan(math.radians((self.arc2_angle) / 4))  # radius: 25, CentrePt: 100, -100, direction: CCW
         self.large_arc_bulge = math.tan(math.radians((self.large_arc_angle) / 4))  # radius: 97.99, CentrePt: self.pt3, direction: CW
+        self.partial_arc_bulge = math.tan(math.radians((self.partial_arc_angle) / 4))  # radius: 100, CentrePt: self.pt9, direction: CW
 
         self.arcSegment1 = Segment(self.pt1, self.pt2, self.arc1_bulge)    
         self.arcSegment2 = Segment(self.pt7, self.pt8, self.arc2_bulge)
         self.largeArcSegment = Segment(self.pt1, self.pt2, self.large_arc_bulge)
         self.inverseArcSegment1 = Segment(self.pt1, self.pt2, abs(self.arc1_bulge))
         self.inverseArcSegment2 = Segment(self.pt7, self.pt8, -self.arc2_bulge)
+        self.partialArcSegment = Segment(self.pt1, self.pt10, self.partial_arc_bulge)
 
 
     def test_plot(self):
@@ -199,6 +207,12 @@ class test_segment(unittest.TestCase):
         self.assertAlmostEqual(bb.z_min,  -135.492, 2)
         self.assertAlmostEqual(bb.x_max, 0.0, 2)
         self.assertAlmostEqual(bb.z_max,  60.4922, 2)
+
+        bb = self.partialArcSegment.get_boundbox()
+        self.assertAlmostEqual(bb.x_min, -42.26, 2)
+        self.assertAlmostEqual(bb.z_min,  -9.37, 2)
+        self.assertAlmostEqual(bb.x_max, 0.0, 2)
+        self.assertAlmostEqual(bb.z_max,  0.0, 2)
 
     def test_get_rotation(self):
 
