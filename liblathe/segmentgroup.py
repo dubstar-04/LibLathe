@@ -17,6 +17,10 @@ class SegmentGroup:
 
         self.segments.append(segment)
 
+    def insert_segment(self, segment, position):
+        """Insert segment into group at position"""
+        self.segments.insert(position, segment)
+
     def get_segments(self):
         """Return segments of group as a list"""
 
