@@ -25,7 +25,7 @@ class SegmentGroup:
         """Return segments of group as a list"""
 
         return self.segments
-
+    
     def extend(self, segmentgroup):
         """Add segment group to this segmentgroup"""
 
@@ -223,6 +223,7 @@ class SegmentGroup:
 
         for seg in segs:
             segment = seg.offset(step_over)
+
             if segment:
                 segmentgroup.add_segment(segment)
 
