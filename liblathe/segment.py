@@ -70,51 +70,47 @@ class Segment:
     def get_rotation(self):
         """returns the rotation of the segment"""
         return self.start.angle_to(self.end)
-
+    
     def get_boundbox(self):
-
+        """returns the segments boundingbox"""
         if self.bulge == 0:
-
-            pt1 = self.start
-            pt2 = self.end
-
+            topLeft = self.start
+            bottomRight = self.end
         else:
+            startAngle = math.radians(self.get_centre_point().angle_to(self.start))
+            endAngle = math.radians(self.get_centre_point().angle_to(self.end))
 
-            #TODO: Make this more sexy
+            cross0 = self.crossesAxis(startAngle, endAngle, 0)
+            cross90 = self.crossesAxis(startAngle, endAngle, math.pi * 0.5)
+            cross180 = self.crossesAxis(startAngle, endAngle, math.pi)
+            cross270 = self.crossesAxis(startAngle, endAngle, math.pi * 1.5)
 
-            startAngle = min(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
-            endAngle = max(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
+            # if the arc crosses the axis the min or max is where the arc intersects the axis
+            # otherwise max/min is the arc endpoint
+            zmax = self.get_centre_point().Z + self.get_radius() if cross0 else max(self.start.Z, self.end.Z)
+            xmax = self.get_centre_point().X + self.get_radius() if cross90 else max(self.start.X, self.end.X)
+            zmin = self.get_centre_point().Z - self.get_radius() if cross180 else min(self.start.Z, self.end.Z)
+            xmin = self.get_centre_point().X - self.get_radius() if cross270 else min(self.start.X, self.end.X)
 
-            if self.get_angle() > math.pi:
-                endAngle = min(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
-                startAngle = max(self.get_centre_point().angle_to(self.start), self.get_centre_point().angle_to(self.end))
+            topLeft = Point(xmin, 0, zmax)
+            bottomRight = Point(xmax, 0, zmin)
 
-            cross0 = startAngle%360 >= endAngle%360
-            cross90 = (startAngle - 90)%360 >= (endAngle - 90)%360
-            cross180 = (startAngle - 180)%360 >= (endAngle - 180)%360
-            cross270 = (startAngle - 270)%360 >= (endAngle - 270)%360
+        return BoundBox(topLeft, bottomRight)
+    
 
-            startX = self.get_radius() * math.cos(math.radians(startAngle))
-            startY = self.get_radius()  * math.sin(math.radians(startAngle))
-            endX = self.get_radius()  * math.cos(math.radians(endAngle))
-            endY = self.get_radius()  * math.sin(math.radians(endAngle))
+    def crossesAxis(self, startAngle, endAngle, axisAngle):
+        circle = math.pi * 2
+        referenceStartAngle = (startAngle - axisAngle + circle) % circle
+        referenceEndAngle = (endAngle - axisAngle + circle ) % circle
 
-            right = self.get_radius() if cross0 else max(startX, endX)
-            bottom = self.get_radius() if cross90 else max(startY, endY)
-            left = -self.get_radius() if cross180 else min(startX, endX)
-            top = -self.get_radius() if cross270 else min(startY, endY)
+        # if refStartAngle > refEndAngle then the arc crosses the axis
+        crosses = referenceStartAngle >= referenceEndAngle
 
-            xmin = top + self.get_centre_point().X
-            xmax = bottom + self.get_centre_point().X
-            zmin = left + self.get_centre_point().Z
-            zmax = right + self.get_centre_point().Z
+        if self.bulge < 0:
+            # if refStartAngle < refEndAngle then the arc crosses the axis
+            crosses = referenceStartAngle <= referenceEndAngle
 
-            pt1 = Point(xmin, 0, zmin)
-            pt2 = Point(xmax, 0, zmax)
-     
-        boundbox = BoundBox(pt1, pt2)
-        return boundbox
-
+        return crosses
 
     def get_length(self):
         """Returns the distance between the start and end points"""
@@ -355,7 +351,7 @@ class Segment:
         # get the chord distance
         a = (r1 ** 2 - r2 ** 2 + c_dist ** 2) / (2 * c_dist)
 
-        # A**2 + B**2 = C**2; h**2 + a**2 = r1**2 therefore:
+        # A**2 + B**2 = C**2 h**2 + a**2 = r1**2 therefore:
         h = math.sqrt(r1 ** 2 - a ** 2)
         p = c1.lerp(c2, a / c_dist)
         b = h / c_dist
