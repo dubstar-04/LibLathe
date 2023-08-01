@@ -18,7 +18,7 @@ class BaseOP:
         self.end_offset = 0
         self.allow_grooving = False
         self.step_over = 1.5
-        self.finish_passes = 2
+        self.finish_passes = 1
         self.stock_to_leave = 0
         self.hfeed = 100
         self.vfeed = 50
@@ -69,6 +69,8 @@ class BaseOP:
 
         for segment in part_edges:
             self.part_segment_group.add_segment(segment)
+
+        self.part_segment_group.validate()
 
     def add_stock(self, stock_bb):
         """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""

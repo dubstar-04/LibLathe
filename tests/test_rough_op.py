@@ -75,6 +75,9 @@ class test_RoughOP(unittest.TestCase):
         # check there is a return list
         self.assertTrue(len(gcode))
 
+        # get the minimum z value
+        min_z = 0
+
         for command in gcode:
 
             # check the command is a liblathe.command.Command
@@ -91,6 +94,12 @@ class test_RoughOP(unittest.TestCase):
                 # check the feed rate
                 if feed_exists:
                     self.assertEqual(command.get_params()['F'], self.hfeed)
+                
+                # capture the min z value
+                min_z = min(command.get_params()['Z'], min_z)
+
+        # test the z value matches the stock z_min
+        self.assertEqual(min_z, self.op.stock.z_min)
 
 
 if __name__ == '__main__':

@@ -17,11 +17,15 @@ class SegmentGroup:
 
         self.segments.append(segment)
 
+    def insert_segment(self, segment, position):
+        """Insert segment into group at position"""
+        self.segments.insert(position, segment)
+
     def get_segments(self):
         """Return segments of group as a list"""
 
         return self.segments
-
+    
     def extend(self, segmentgroup):
         """Add segment group to this segmentgroup"""
 
@@ -46,12 +50,12 @@ class SegmentGroup:
             yvalues.extend([bb.y_min, bb.y_max])
             zvalues.extend([bb.z_min, bb.z_max])
 
-        x_min = math.floor(min(xvalues))
-        x_max = math.floor(max(xvalues))
-        y_min = math.floor(min(yvalues))
-        y_max = math.floor(max(yvalues))
-        z_min = math.floor(min(zvalues))
-        z_max = math.floor(max(zvalues))
+        x_min = min(xvalues)
+        x_max = max(xvalues)
+        y_min = min(yvalues)
+        y_max = max(yvalues)
+        z_min = min(zvalues)
+        z_max = max(zvalues)
 
         pt1 = Point(x_min, y_min, z_min)
         pt2 = Point(x_max, y_max, z_max)
@@ -196,6 +200,7 @@ class SegmentGroup:
             # handle the lead out at the end of the segmentgroup
             if segments.index(seg) == len(segments) - 1:
                 pt = get_pos(seg.end)
+                #TODO: Remove the F parameter from rapid moves
                 params = {'X': x_retract, 'Y': 0, 'Z': pt.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
@@ -218,12 +223,14 @@ class SegmentGroup:
 
         for seg in segs:
             segment = seg.offset(step_over)
+
             if segment:
                 segmentgroup.add_segment(segment)
 
         # TODO: create arcs at the intersections between segments, radius needs to be matched to the selected tool
 
         segmentgroup.join_segments()
+        segmentgroup.validate()
         return segmentgroup
 
     def join_segments(self):
@@ -466,3 +473,23 @@ class SegmentGroup:
             index += 1
         # No solution :(
         return False, stock_pt
+    
+    def validate(self):
+        """validate the segment group"""
+
+        if self.count == 0:
+            return
+        
+        # check the first segment starts at x = 0
+        startSegment = self.segments[0]
+        
+        if startSegment.start.X != 0:
+            newStartSeg = Segment(Point(0, 0, startSegment.start.Z), startSegment.start)
+            self.insert_segment(newStartSeg, 0)
+
+        # check the last segment end at x = 0
+        endSegment = self.segments[-1]
+        
+        if endSegment.end.X != 0:
+            newEndSeg = Segment(endSegment.end, Point(0, 0, endSegment.end.Z))
+            self.add_segment(newEndSeg)
