@@ -10,9 +10,11 @@ sys.path.append(parentFolder)
 from liblathe.point import Point
 from liblathe.segment import Segment
 from liblathe.segmentgroup import SegmentGroup
-from liblathe.plot import Plot
 
-#TODO: evaluate errors where AlmostEqual tests are t0 <5 decimal places, note coordinate input is only to 2 decimal places
+if 'PIL' in sys.modules:
+    from liblathe.plot import Plot
+
+#TODO: evaluate errors where AlmostEqual tests are to <5 decimal places, note coordinate input is only to 2 decimal places
 
 
 class test_segment(unittest.TestCase):
@@ -74,9 +76,10 @@ class test_segment(unittest.TestCase):
         for step_over in range(10):
             offset_group = segment_group.offset_path(step_over)
             groups.append(offset_group)
-            
-        plot = Plot()
-        plot.backplot(groups)
+
+        if 'PIL' in sys.modules:
+            plot = Plot()
+            plot.backplot(groups)
 
 
     def test_get_angle(self):
