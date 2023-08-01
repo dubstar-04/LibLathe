@@ -40,6 +40,14 @@ class test_segment_group(unittest.TestCase):
         self.finish_passes = 2
 
     def test_add_segment(self):
+        self.segmentGroup.add_segment(self.lineSegment2)
+        self.segmentGroup.insert_segment(self.lineSegment1, 0)
+        segmentStart = self.segmentGroup.segments[0].start
+        segmentEnd = self.segmentGroup.segments[0].end
+        self.assertEqual(segmentStart, self.pt1)
+        self.assertEqual(segmentEnd, self.pt2)
+
+    def test_insert_segment(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         segmentStart = self.segmentGroup.segments[0].start
         segmentEnd = self.segmentGroup.segments[0].end
