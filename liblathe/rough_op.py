@@ -19,20 +19,14 @@ class RoughOP(liblathe.base_op.BaseOP):
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset + self.clearance
         z_min = z_max - self.stock.z_length() - self.start_offset - self.clearance
-        # line_count = int(math.ceil((self.stock.x_length() + self.extra_dia * 0.5) / self.step_over))
-        # xstart = 0 - (self.step_over * line_count + self.min_dia * 0.5)
-
         # create roughing boundary offset by the stock to leave value
         roughing_boundary = self.part_segment_group.offset_path(self.stock_to_leave)
         # define the x limit for roughing
         x_min = -abs(math.ceil(self.stock.x_length() + self.extra_dia * 0.5))
 
-        #for roughing_pass in range(line_count):
         x_pos = 0
         # work from 0 to x_min creating roughing passes
         while x_pos > x_min:
-            #xpt = xstart + roughing_pass * self.step_over
-
             # check if the roughing pass start is outside the stock
             boundary_z = roughing_boundary.z_at_x(x_pos)
             if boundary_z and round(boundary_z, 5) >= round(self.stock.z_max, 5):
