@@ -200,6 +200,7 @@ class SegmentGroup:
             # handle the lead out at the end of the segmentgroup
             if segments.index(seg) == len(segments) - 1:
                 pt = get_pos(seg.end)
+                #TODO: Remove the F parameter from rapid moves
                 params = {'X': x_retract, 'Y': 0, 'Z': pt.Z, 'F': hSpeed}
                 rapid = Command('G0', params)
                 cmds.append(rapid)
