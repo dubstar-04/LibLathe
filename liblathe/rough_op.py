@@ -14,7 +14,6 @@ class RoughOP(liblathe.base_op.BaseOP):
 
     def generate_path(self):
         """Generate the path for the Rough operation"""
-
         self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
         # self.part_segment_group.createFreeCADShape('segment_group')
         self.clearing_paths = []
@@ -25,7 +24,9 @@ class RoughOP(liblathe.base_op.BaseOP):
         # define the x limit for roughing
         x_min = -abs(math.ceil(self.stock.x_length() + self.extra_dia * 0.5))
 
-        x_pos = 0
+        # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
+        # TODO: This is a bit hacky, is there a better way?
+        x_pos = -1e-6
         # work from 0 to x_min creating roughing passes
         while x_pos > x_min:
             # check if the roughing pass start is outside the stock
