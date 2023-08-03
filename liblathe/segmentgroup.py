@@ -493,3 +493,36 @@ class SegmentGroup:
         if endSegment.end.X != 0:
             newEndSeg = Segment(endSegment.end, Point(0, 0, endSegment.end.Z))
             self.add_segment(newEndSeg)
+    def createFreeCADShape(self, name):
+        """ create a FreeCAD shape for debugging"""
+        import FreeCAD
+        import Part
+
+        if self.count == 0:
+            raise ValueError("Input Segment Group")
+
+        part_edges = []
+        for segment in self.segments:
+            startPoint = FreeCAD.Vector(segment.start.X, segment.start.Y, segment.start.Z)
+            endPoint = FreeCAD.Vector(segment.end.X, segment.end.Y, segment.end.Z)
+
+            if segment.bulge == 0:
+                edge = Part.makeLine(startPoint, endPoint)
+            else:
+                center = segment.get_centre_point()
+                cen = FreeCAD.Vector(center.X, center.Y, center.Z)
+                axis = FreeCAD.Vector(0.0, 1.0, 0.0)
+                startAngle = center.angle_to(segment.start) - 90
+                endAngle = center.angle_to(segment.end) - 90
+                if segment.bulge > 0:
+                    edge = Part.makeCircle(segment.get_radius(), cen, axis, startAngle, endAngle)
+                else:
+                    edge = Part.makeCircle(segment.get_radius(), cen, axis, endAngle, startAngle)
+            
+            part_edges.append(edge)
+
+        path_profile = Part.makeCompound(part_edges)
+        Part.show(path_profile, name)
+
+        
+
