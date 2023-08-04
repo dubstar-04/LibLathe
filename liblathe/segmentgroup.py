@@ -493,6 +493,8 @@ class SegmentGroup:
 
     def validate(self):
         """validate the segment group"""
+        # check first segment starts at X0
+        # check if the last segment ends at x0
 
         count = self.count()
 
