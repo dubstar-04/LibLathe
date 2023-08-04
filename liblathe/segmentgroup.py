@@ -333,7 +333,8 @@ class SegmentGroup:
                 # run again with the next segment
                 self.clean_offset_path(index + 1)
 
-    def remove_the_groove(self, stock_z_min, tool, allow_grooving=False):
+    def defeature(self, stock_z_min, tool, allow_grooving=False):
+        """Defeature the segment group. Remove features that cannot be turned. e.g. undercuts / grooves"""
         segments = self.get_segments()
         segs_out = SegmentGroup()
         index = 0
