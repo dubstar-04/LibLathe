@@ -6,8 +6,8 @@ class ProfileOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the profile operation"""
 
-        self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
-        base_segment_group = self.part_segment_group.offset_path(self.stock_to_leave)
+        profile_segment_group = self.part_segment_group.defeature(self.stock.z_min, self.tool, self.allow_grooving)
+        base_segment_group = profile_segment_group.offset_path(self.stock_to_leave)
         self.tool_paths.append(base_segment_group)
         f_pass = 1
         while f_pass < self.finish_passes:
