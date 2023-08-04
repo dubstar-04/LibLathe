@@ -15,7 +15,7 @@ class RoughOP(liblathe.base_op.BaseOP):
     def generate_path(self):
         """Generate the path for the Rough operation"""
         self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
-        # self.part_segment_group.createFreeCADShape('segment_group')
+        # self.part_segment_group.create_freecad_shape('roughing_segment_group')
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset + self.clearance
         z_min = z_max - self.stock.z_length() - self.start_offset - self.clearance
