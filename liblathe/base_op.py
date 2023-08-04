@@ -71,6 +71,7 @@ class BaseOP:
             self.part_segment_group.add_segment(segment)
 
         self.part_segment_group.validate()
+        # self.part_segment_group.createFreeCADShape('part_segment_group')
 
     def add_stock(self, stock_bb):
         """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""

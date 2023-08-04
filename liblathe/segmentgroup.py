@@ -477,19 +477,70 @@ class SegmentGroup:
     def validate(self):
         """validate the segment group"""
 
-        if self.count == 0:
-            return
+        count = self.count()
+
+        if count == 0:
+            raise ValueError("Input Geometry Invalid")
         
         # check the first segment starts at x = 0
         startSegment = self.segments[0]
         
         if startSegment.start.X != 0:
-            newStartSeg = Segment(Point(0, 0, startSegment.start.Z), startSegment.start)
-            self.insert_segment(newStartSeg, 0)
+            print('start seg x:', startSegment.start.X)
+            newStartPoint = Point(0, 0, startSegment.start.Z)
+            # check if the points are the same within rounding errors
+            if newStartPoint.is_same(startSegment.start):
+                startSegment.start = newStartPoint
+                print('updated start seg x:', startSegment.start.X)
+            else:
+                newStartSeg = Segment(newStartPoint, startSegment.start)
+                self.insert_segment(newStartSeg, 0)
+                if self.count() != count + 1:
+                    raise ValueError("Segmentgroup Validation Failed")
+
 
         # check the last segment end at x = 0
+        count = self.count()
         endSegment = self.segments[-1]
         
         if endSegment.end.X != 0:
-            newEndSeg = Segment(endSegment.end, Point(0, 0, endSegment.end.Z))
-            self.add_segment(newEndSeg)
+            print('end seg x:', endSegment.start.X)
+            newEndPoint = Point(0, 0, startSegment.end.Z)
+            # check if the points are the same within rounding errors
+            if newEndPoint.is_same(endSegment.end):
+                endSegment.end = newEndPoint
+                print('updated end seg x:', endSegment.end.X)
+    
+    def createFreeCADShape(self, name):
+        """ create a FreeCAD shape for debugging"""
+        import FreeCAD
+        import Part
+
+        if self.count == 0:
+            raise ValueError("Input Segment Group")
+
+        part_edges = []
+        for segment in self.segments:
+            startPoint = FreeCAD.Vector(segment.start.X, segment.start.Y, segment.start.Z)
+            endPoint = FreeCAD.Vector(segment.end.X, segment.end.Y, segment.end.Z)
+
+            if segment.bulge == 0:
+                edge = Part.makeLine(startPoint, endPoint)
+            else:
+                center = segment.get_centre_point()
+                cen = FreeCAD.Vector(center.X, center.Y, center.Z)
+                axis = FreeCAD.Vector(0.0, 1.0, 0.0)
+                startAngle = center.angle_to(segment.start) - 90
+                endAngle = center.angle_to(segment.end) - 90
+                if segment.bulge > 0:
+                    edge = Part.makeCircle(segment.get_radius(), cen, axis, startAngle, endAngle)
+                else:
+                    edge = Part.makeCircle(segment.get_radius(), cen, axis, endAngle, startAngle)
+            
+            part_edges.append(edge)
+
+        path_profile = Part.makeCompound(part_edges)
+        Part.show(path_profile, name)
+
+        
+
