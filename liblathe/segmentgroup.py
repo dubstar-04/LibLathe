@@ -511,7 +511,7 @@ class SegmentGroup:
                 endSegment.end = newEndPoint
                 print('updated end seg x:', endSegment.end.X)
     
-    def createFreeCADShape(self, name):
+    def create_freecad_shape(self, name):
         """ create a FreeCAD shape for debugging"""
         import FreeCAD
         import Part
