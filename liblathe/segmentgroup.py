@@ -505,12 +505,10 @@ class SegmentGroup:
         start_segment = self.segments[0]
 
         if start_segment.start.X != 0:
-            print('start seg x:', start_segment.start.X)
             new_start_point = Point(0, 0, start_segment.start.Z)
             # check if the points are the same within rounding errors
             if new_start_point.is_same(start_segment.start):
                 start_segment.start = new_start_point
-                print('updated start seg x:', start_segment.start.X)
             else:
                 new_start_seg = Segment(new_start_point, start_segment.start)
                 self.insert_segment(new_start_seg, 0)
@@ -522,12 +520,10 @@ class SegmentGroup:
         end_segment = self.segments[-1]
 
         if end_segment.end.X != 0:
-            print('end seg x:', end_segment.start.X)
             new_end_point = Point(0, 0, end_segment.end.Z)
             # check if the points are the same within rounding errors
             if new_end_point.is_same(end_segment.end):
                 end_segment.end = new_end_point
-                print('updated end seg x:', end_segment.end.X)
 
     def create_freecad_shape(self, name):
         """ create a FreeCAD shape for debugging"""
