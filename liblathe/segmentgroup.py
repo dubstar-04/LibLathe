@@ -63,6 +63,15 @@ class SegmentGroup:
         segmentgroupBoundBox = BoundBox(pt1, pt2)
 
         return segmentgroupBoundBox
+    
+    def intersects_group(self, segment_group):
+        """check if the segment_group intersects self"""
+        for segment in segment_group.get_segments():
+            for seg in self.segments:
+                intersect, point = segment.intersect(seg)
+                if intersect:
+                    print('intersects part:', intersect, point)
+                    return True
 
     def z_at_x(self, x):
         """get the z value at the first intersection at the given x position"""
@@ -426,6 +435,13 @@ class SegmentGroup:
 
             index += 1
         segs_out.merge_segments()
+        # create an inset version of the part_segmentgroup
+        # check if the defeatured segmentgroup intersects the part
+        # TODO: This is a bit hacky. Is there a better way?
+        if self.offset_path(-0.0001).intersects_group(segs_out):
+            segs_out.create_freecad_shape("defeatured_part_segment_group")
+            raise ValueError("Part defeaturing failed")
+
         return segs_out
 
     def find_next_good_edge(self, current_index, stock_z_min, tool, allow_grooving, pt=None):

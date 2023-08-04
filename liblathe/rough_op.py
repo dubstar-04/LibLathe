@@ -111,6 +111,9 @@ class RoughOP(liblathe.base_op.BaseOP):
             x_pos -= self.step_over
 
             if segmentgroup.count():
+                if segmentgroup.intersects_group(self.part_segment_group):
+                    raise ValueError("Calculated roughing path intersects part")
+
                 self.tool_paths.append(segmentgroup)
 
     def generate_gcode(self):

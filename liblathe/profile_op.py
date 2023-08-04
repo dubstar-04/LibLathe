@@ -12,6 +12,10 @@ class ProfileOP(liblathe.base_op.BaseOP):
         f_pass = 1
         while f_pass < self.finish_passes:
             segmentgroup = base_segment_group.offset_path(self.step_over * f_pass)
+            
+            if segmentgroup.intersects_group(self.part_segment_group):
+                raise ValueError("Calculated profile path intersects part")
+            
             self.tool_paths.append(segmentgroup)
             f_pass += 1
 
