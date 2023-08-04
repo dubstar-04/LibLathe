@@ -20,6 +20,8 @@ class RoughOP(liblathe.base_op.BaseOP):
         z_max = self.stock.z_max + self.start_offset + self.clearance
         z_min = z_max - self.stock.z_length() - self.start_offset - self.clearance
         # create roughing boundary offset by the stock to leave value
+        # include a minimal offset to ensure the roughing passes don't intersect the part
+        offset = 0.01 + self.stock_to_leave
         roughing_boundary = roughing_segment_group.offset_path(offset)
         # define the x limit for roughing
         x_min = -abs(math.ceil(self.stock.x_length() + self.extra_dia * 0.5))
