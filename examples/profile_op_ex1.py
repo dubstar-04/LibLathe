@@ -15,7 +15,7 @@ from liblathe.boundbox import BoundBox
 from liblathe.point import Point
 from liblathe.profile_op import ProfileOP
 from liblathe.segment import Segment
-# from liblathe.plot import Plot
+from liblathe.plot import Plot
 from liblathe.tool import Tool
 
 # Define Part Geometry
@@ -58,8 +58,8 @@ tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
 profileOP.add_tool(tool)
 gcode = profileOP.get_gcode()
-# plot = Plot()
-# plot.backplot(gcode)
+plot = Plot()
+plot.backplot(gcode)
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")
