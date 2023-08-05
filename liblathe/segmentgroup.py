@@ -439,7 +439,7 @@ class SegmentGroup:
         # check if the defeatured segmentgroup intersects the part
         # TODO: This is a bit hacky. Is there a better way?
         if self.offset_path(-0.0001).intersects_group(segs_out):
-            segs_out.create_freecad_shape("defeatured_part_segment_group")
+            # segs_out.create_freecad_shape("defeatured_part_segment_group")
             raise ValueError("Part defeaturing failed")
 
         return segs_out
