@@ -36,7 +36,7 @@ class test_RoughOP(unittest.TestCase):
         part_segments.append(Segment(PartPt3, PartPt4))
         part_segments.append(Segment(PartPt4, PartPt5))
         part_segments.append(Segment(PartPt5, PartPt6))
-        part_segments.append(Segment(PartPt6, PartPt8))
+        part_segments.append(Segment(PartPt6, PartPt7))
         part_segments.append(Segment(PartPt7, PartPt8))
 
         # Define stock bounds
@@ -66,6 +66,7 @@ class test_RoughOP(unittest.TestCase):
         self.op.add_part_edges(part_segments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
+        tool.set_rotation(45)
         self.op.add_tool(tool)
 
     def test_get_gcode(self):
@@ -79,6 +80,8 @@ class test_RoughOP(unittest.TestCase):
         min_z = 0
 
         for command in gcode:
+
+            print(command.get_movement(), command.get_params())
 
             # check the command is a liblathe.command.Command
             self.assertTrue(isinstance(command, Command))
@@ -96,7 +99,8 @@ class test_RoughOP(unittest.TestCase):
                     self.assertEqual(command.get_params()['F'], self.hfeed)
                 
                 # capture the min z value
-                min_z = min(command.get_params()['Z'], min_z)
+                if "Z" in command.get_params():
+                    min_z = min(command.get_params()['Z'], min_z)
 
         # test the z value matches the stock z_min
         self.assertEqual(min_z, self.op.stock.z_min)
