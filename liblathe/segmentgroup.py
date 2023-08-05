@@ -70,7 +70,6 @@ class SegmentGroup:
             for seg in self.segments:
                 intersect, point = segment.intersect(seg)
                 if intersect:
-                    print('intersects part:', intersect, point)
                     return True
 
     def z_at_x(self, x):
