@@ -15,7 +15,7 @@ from liblathe.boundbox import BoundBox
 from liblathe.point import Point
 from liblathe.profile_op import ProfileOP
 from liblathe.segment import Segment
-# from liblathe.plot import Plot
+from liblathe.plot import Plot
 from liblathe.tool import Tool
 
 # Define Part Geometry
@@ -29,7 +29,7 @@ PartPt4 = Point(0, 0, -20)
 part_segments.append(Segment(PartPt1, PartPt2))
 part_segments.append(Segment(PartPt2, PartPt3))
 part_segments.append(Segment(PartPt3, PartPt4))
-part_segments.append(Segment(PartPt4, PartPt1))
+# part_segments.append(Segment(PartPt4, PartPt1))
 
 # Define stock bounds
 stockPt1 = Point(0, 0, 5)
@@ -56,10 +56,11 @@ profileOP.add_stock(StockBoundingBox)
 profileOP.add_part_edges(part_segments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
+# tool.set_rotation(45)
 profileOP.add_tool(tool)
 gcode = profileOP.get_gcode()
-# plot = Plot()
-# plot.backplot(gcode)
+plot = Plot()
+plot.backplot(gcode)
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")

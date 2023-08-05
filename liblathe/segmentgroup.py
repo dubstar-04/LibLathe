@@ -63,6 +63,14 @@ class SegmentGroup:
         segmentgroupBoundBox = BoundBox(pt1, pt2)
 
         return segmentgroupBoundBox
+    
+    def intersects_group(self, segment_group):
+        """check if the segment_group intersects self"""
+        for segment in segment_group.get_segments():
+            for seg in self.segments:
+                intersect, point = segment.intersect(seg)
+                if intersect:
+                    return True
 
     def z_at_x(self, x):
         """get the z value at the first intersection at the given x position"""
@@ -324,7 +332,8 @@ class SegmentGroup:
                 # run again with the next segment
                 self.clean_offset_path(index + 1)
 
-    def remove_the_groove(self, stock_z_min, tool, allow_grooving=False):
+    def defeature(self, stock_z_min, tool, allow_grooving=False):
+        """Defeature the segment group. Remove features that cannot be turned. e.g. undercuts / grooves"""
         segments = self.get_segments()
         segs_out = SegmentGroup()
         index = 0
@@ -426,6 +435,13 @@ class SegmentGroup:
 
             index += 1
         segs_out.merge_segments()
+        # create an inset version of the part_segmentgroup
+        # check if the defeatured segmentgroup intersects the part
+        # TODO: This is a bit hacky. Is there a better way?
+        if self.offset_path(-0.0001).intersects_group(segs_out):
+            # segs_out.create_freecad_shape("defeatured_part_segment_group")
+            raise ValueError("Part defeaturing failed")
+
         return segs_out
 
     def find_next_good_edge(self, current_index, stock_z_min, tool, allow_grooving, pt=None):
@@ -476,6 +492,8 @@ class SegmentGroup:
 
     def validate(self):
         """validate the segment group"""
+        # check first segment starts at X0
+        # check if the last segment ends at x0
 
         count = self.count()
 
@@ -486,12 +504,10 @@ class SegmentGroup:
         start_segment = self.segments[0]
 
         if start_segment.start.X != 0:
-            print('start seg x:', start_segment.start.X)
             new_start_point = Point(0, 0, start_segment.start.Z)
             # check if the points are the same within rounding errors
             if new_start_point.is_same(start_segment.start):
                 start_segment.start = new_start_point
-                print('updated start seg x:', start_segment.start.X)
             else:
                 new_start_seg = Segment(new_start_point, start_segment.start)
                 self.insert_segment(new_start_seg, 0)
@@ -503,12 +519,10 @@ class SegmentGroup:
         end_segment = self.segments[-1]
 
         if end_segment.end.X != 0:
-            print('end seg x:', end_segment.start.X)
             new_end_point = Point(0, 0, end_segment.end.Z)
             # check if the points are the same within rounding errors
             if new_end_point.is_same(end_segment.end):
                 end_segment.end = new_end_point
-                print('updated end seg x:', end_segment.end.X)
 
     def create_freecad_shape(self, name):
         """ create a FreeCAD shape for debugging"""

@@ -14,13 +14,15 @@ class RoughOP(liblathe.base_op.BaseOP):
 
     def generate_path(self):
         """Generate the path for the Rough operation"""
-        self.part_segment_group = self.part_segment_group.remove_the_groove(self.stock.z_min, self.tool, self.allow_grooving)
+        roughing_segment_group = self.part_segment_group.defeature(self.stock.z_min, self.tool, self.allow_grooving)
         # self.part_segment_group.create_freecad_shape('roughing_segment_group')
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset + self.clearance
         z_min = z_max - self.stock.z_length() - self.start_offset - self.clearance
         # create roughing boundary offset by the stock to leave value
-        roughing_boundary = self.part_segment_group.offset_path(self.stock_to_leave)
+        # include a minimal offset to ensure the roughing passes don't intersect the part
+        offset = 0.01 + self.stock_to_leave
+        roughing_boundary = roughing_segment_group.offset_path(offset)
         # define the x limit for roughing
         x_min = -abs(math.ceil(self.stock.x_length() + self.extra_dia * 0.5))
 
@@ -109,6 +111,9 @@ class RoughOP(liblathe.base_op.BaseOP):
             x_pos -= self.step_over
 
             if segmentgroup.count():
+                if segmentgroup.intersects_group(self.part_segment_group):
+                    raise ValueError("Calculated roughing path intersects part")
+
                 self.tool_paths.append(segmentgroup)
 
     def generate_gcode(self):
