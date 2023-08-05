@@ -38,7 +38,7 @@ class test_ProfileOP(unittest.TestCase):
         part_segments.append(Segment(PartPt3, PartPt4))
         part_segments.append(Segment(PartPt4, PartPt5, 0.25))
         part_segments.append(Segment(PartPt5, PartPt6))
-        part_segments.append(Segment(PartPt6, PartPt8))
+        part_segments.append(Segment(PartPt6, PartPt7))
         part_segments.append(Segment(PartPt7, PartPt8))
         part_segments.append(Segment(PartPt8, PartPt9))
         part_segments.append(Segment(PartPt9, PartPt10))
@@ -70,6 +70,7 @@ class test_ProfileOP(unittest.TestCase):
         self.op.add_part_edges(part_segments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
+        tool.set_rotation(45)
         self.op.add_tool(tool)
 
     def test_get_gcode(self):
