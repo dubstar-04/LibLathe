@@ -5,8 +5,8 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from liblathe.point import Point
-from liblathe.boundbox import BoundBox
+from liblathe.base.point import Point
+from liblathe.base.boundbox import BoundBox
 
 
 class test_boundbox(unittest.TestCase):

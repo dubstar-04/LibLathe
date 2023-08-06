@@ -1,7 +1,7 @@
 import math
-from liblathe.boundbox import BoundBox
+from liblathe.base.boundbox import BoundBox
 
-from liblathe.point import Point
+from liblathe.base.point import Point
 
 
 ##########################################################

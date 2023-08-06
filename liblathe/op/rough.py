@@ -1,16 +1,16 @@
 import math
 from collections import namedtuple
 
-import liblathe.base_op
-from liblathe.point import Point
-from liblathe.segment import Segment
-from liblathe.segmentgroup import SegmentGroup
+import liblathe.op.base
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
+from liblathe.base.segmentgroup import SegmentGroup
 
 # create a namedtuple to hold intersection data
 Intersection = namedtuple('Intersection', 'point, seg')
 
 
-class RoughOP(liblathe.base_op.BaseOP):
+class RoughOP(liblathe.op.base.BaseOP):
 
     def generate_path(self):
         """Generate the path for the Rough operation"""

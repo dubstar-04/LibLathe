@@ -6,12 +6,12 @@ thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
-from liblathe.face_op import FaceOP
-from liblathe.command import Command
-from liblathe.boundbox import BoundBox
-from liblathe.point import Point
-from liblathe.segment import Segment
-from liblathe.tool import Tool
+from liblathe.op.face import FaceOP
+from liblathe.base.command import Command
+from liblathe.base.boundbox import BoundBox
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
+from liblathe.base.tool import Tool
 
 
 class test_FaceOP(unittest.TestCase):

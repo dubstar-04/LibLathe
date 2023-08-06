@@ -5,7 +5,7 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from liblathe.command import Command
+from liblathe.base.command import Command
 
 
 class test_command(unittest.TestCase):

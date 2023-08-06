@@ -1,10 +1,10 @@
-import liblathe.base_op
-from liblathe.point import Point
-from liblathe.segment import Segment
-from liblathe.segmentgroup import SegmentGroup
+import liblathe.op.base
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
+from liblathe.base.segmentgroup import SegmentGroup
 
 
-class ProfileOP(liblathe.base_op.BaseOP):
+class ProfileOP(liblathe.op.base.BaseOP):
 
     def generate_path(self):
         """Generate the path for the profile operation"""
