@@ -1,9 +1,9 @@
 import math
 
-from liblathe.boundbox import BoundBox
-from liblathe.command import Command
-from liblathe.point import Point
-from liblathe.segment import Segment
+from liblathe.base.boundbox import BoundBox
+from liblathe.base.command import Command
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
 
 
 class SegmentGroup:

@@ -1,4 +1,4 @@
-from liblathe.segmentgroup import SegmentGroup
+from liblathe.base.segmentgroup import SegmentGroup
 
 
 class BaseOP:

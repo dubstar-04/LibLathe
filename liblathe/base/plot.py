@@ -3,8 +3,8 @@ import os
 
 from PIL import Image, ImageDraw, ImageOps
 
-from liblathe.point import Point
-from liblathe.command import Command
+from liblathe.base.point import Point
+from liblathe.base.command import Command
 
 
 class Plot:

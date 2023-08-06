@@ -5,7 +5,7 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from liblathe.base_op import BaseOP
+from liblathe.base.base_op import BaseOP
 
 
 class test_BaseOP(unittest.TestCase):

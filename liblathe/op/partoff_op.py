@@ -1,10 +1,10 @@
-import liblathe.base_op
-from liblathe.point import Point
-from liblathe.segment import Segment
-from liblathe.segmentgroup import SegmentGroup
+import liblathe.base.base_op
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
+from liblathe.base.segmentgroup import SegmentGroup
 
 
-class PartoffOP(liblathe.base_op.BaseOP):
+class PartoffOP(liblathe.base.base_op.BaseOP):
 
     def generate_path(self):
         """Generate the path for the Part operation"""

@@ -5,7 +5,7 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from liblathe.plot import Plot
+from liblathe.base.plot import Plot
 
 
 class test_Plot(unittest.TestCase):

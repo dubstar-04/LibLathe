@@ -5,9 +5,9 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from liblathe.point import Point
-from liblathe.segment import Segment
-from liblathe.segmentgroup import SegmentGroup
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
+from liblathe.base.segmentgroup import SegmentGroup
 
 
 class test_segment_group(unittest.TestCase):
