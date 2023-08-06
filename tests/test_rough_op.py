@@ -6,7 +6,7 @@ thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
-from liblathe.op.rough_op import RoughOP
+from liblathe.op.rough import RoughOP
 from liblathe.base.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point

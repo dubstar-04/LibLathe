@@ -12,7 +12,7 @@ from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
 if 'PIL' in sys.modules:
-    from liblathe.plot import Plot
+    from liblathe.base.plot import Plot
 
 #TODO: evaluate errors where AlmostEqual tests are to <5 decimal places, note coordinate input is only to 2 decimal places
 

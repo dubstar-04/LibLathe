@@ -13,9 +13,9 @@ sys.path.append(parentFolder)
 
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
-from liblathe.op.profile_op import ProfileOP
+from liblathe.op.profile import ProfileOP
 from liblathe.base.segment import Segment
-from liblathe.plot import Plot
+from liblathe.base.plot import Plot
 from liblathe.base.tool import Tool
 
 # Define Part Geometry

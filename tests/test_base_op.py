@@ -5,11 +5,11 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
-from liblathe.base.base_op import BaseOP
+from liblathe.op.base import BaseOP
 
 
 class test_BaseOP(unittest.TestCase):
-    """Test for base_op.py"""
+    """Test for op.py"""
 
     def setUp(self):
         self.baseop = BaseOP()
@@ -32,10 +32,10 @@ class test_BaseOP(unittest.TestCase):
         params = {}
         params['wrong_para'] = "error"
 
-        self.test_base_op = BaseOP()
+        self.test_op = BaseOP()
 
         with self.assertWarns(Warning):
-            self.test_base_op.set_params(params)
+            self.test_op.set_params(params)
 
     @unittest.expectedFailure
     def test_get_gcode(self):
