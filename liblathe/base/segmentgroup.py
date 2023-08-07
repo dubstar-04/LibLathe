@@ -154,7 +154,7 @@ class SegmentGroup:
 
         for seg in segments:
             min_x_retract = self.get_min_retract_x(seg, part_segment_group)
-            x_retract = min_x_retract - step_over * finish_passes
+            x_retract = min_x_retract + step_over * finish_passes
             z_retract = segments[0].start.Z
 
             # rapid to the start of the segmentgroup
@@ -169,11 +169,11 @@ class SegmentGroup:
                 # handle unconnected segments
                 if not self.previous_segment_connected(seg) and segments.index(seg) != 0:
                     pt = get_pos(seg.start)
-                    # rapid to the x_min
+                    # rapid to the x_max
                     params = {'X': x_retract, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
-                    # rapid at x_min to the start of the segment
+                    # rapid at x_max to the start of the segment
                     params = {'X': x_retract, 'Z': pt.Z, 'F': hSpeed}
                     rapid = Command('G0', params)
                     cmds.append(rapid)
