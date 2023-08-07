@@ -24,9 +24,8 @@ class BaseOP:
         self.vfeed = 50
         self.clearance = 3
 
-        self.leadin_angle = 270
-        self.leadout_angle = 315
-        # TODO: implement invert_x to pass to segment_group().to_commands()
+        self.leadin_angle = 90
+        self.leadout_angle = 45
 
     def set_params(self, params):
         """Set operations parameters"""

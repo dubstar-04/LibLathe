@@ -218,3 +218,44 @@ class Tool:
         Return the tool rotation for this tool
         """
         return self.tool_rotation
+    
+    def get_shape_group(self, datum=Point()):
+        """
+        Return a segment group for the shape
+        """
+
+        rotation = 45
+
+        # print('tool datum', datum.X, datum.X)
+
+        #print('tip angle', self.tip_angle)
+        shape_group = SegmentGroup()
+        start_point = datum
+        ang = (90 - self.tip_angle / 2) - rotation
+        #print('ang', ang)
+        pt2 = start_point.project(ang, self.edge_length)
+
+        ang += 180 - (180 - self.tip_angle)
+        #print('ang', ang)
+        pt3 = pt2.project(ang, self.edge_length)
+
+        ang += 180 - self.tip_angle
+        #print('ang', ang)
+        pt4 = pt3.project(ang, self.edge_length)
+
+        seg1 = Segment(start_point, pt2)
+        seg2 = Segment(pt2, pt3)
+        seg3 = Segment(pt3, pt4)
+        seg4 = Segment(pt4, start_point)
+
+        shape_group.add_segment(seg1)
+        shape_group.add_segment(seg2)
+        shape_group.add_segment(seg3)
+        shape_group.add_segment(seg4)
+
+        return shape_group
+    
+    def draw_shape(self, datum=Point()):
+        shape_group = self.get_shape_group(datum)
+        shape_group.create_freecad_shape('tool_shape')
+
