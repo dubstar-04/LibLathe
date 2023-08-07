@@ -83,7 +83,7 @@ class Tool:
     def set_rotation(self, rotation):
         """ Set the tools cutting rotation"""
 
-        if (isinstance(rotation, int) or isinstance(rotation, float)) and rotation > 0 and rotation < 360:
+        if (isinstance(rotation, int) or isinstance(rotation, float)) and rotation >= 0 and rotation <= 360:
             self.tool_rotation = rotation
         else:
             raise Warning("Tool rotation must be a number [0 - 360]")
@@ -226,15 +226,11 @@ class Tool:
         """
         Return a segment group for the shape
         """
-
-        rotation = 45
-
-        # print('tool datum', datum.X, datum.X)
-
+        # Based on D shaped tool
         #print('tip angle', self.tip_angle)
         shape_group = SegmentGroup()
         start_point = datum
-        ang = (90 - self.tip_angle / 2) - rotation
+        ang = (90 - self.tip_angle / 2) - self.tool_rotation
         #print('ang', ang)
         pt2 = start_point.project(ang, self.edge_length)
 
