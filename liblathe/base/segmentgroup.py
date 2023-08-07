@@ -479,10 +479,58 @@ class SegmentGroup:
             intersect, pts = seg.intersect(segments[index])
             if intersect:
                 return index, pts[0]
+    def rdp(self, points, tolerance):
+        """Reduce point set using Ramer–Douglas–Peucker algorithm"""
+        tolerance = tolerance * tolerance
 
-            index += 1
-        # No solution :(
-        return False, stock_pt
+        length = len(points)
+        markers = [0] * length
+
+        first = 0
+        last = length - 1
+
+        first_stack = []
+        last_stack = []
+
+        new_points = []
+
+        markers[first] = 1
+        markers[last] = 1
+
+        while last:
+            max_sqdist = 0
+
+            for i in range(first, last):
+                sqdist = Segment(points[first], points[last]).distance_to_point(points[i])
+
+                if sqdist > max_sqdist:
+                    index = i
+                    max_sqdist = sqdist
+
+            if max_sqdist > tolerance:
+                markers[index] = 1
+
+                first_stack.append(first)
+                last_stack.append(index)
+
+                first_stack.append(index)
+                last_stack.append(last)
+
+            if len(first_stack) == 0:
+                first = None
+            else:
+                first = first_stack.pop()
+
+            if len(last_stack) == 0:
+                last = None
+            else:
+                last = last_stack.pop()
+
+        for i in range(length):
+            if markers[i]:
+                new_points.append(points[i])
+
+        return new_points
 
     def validate(self):
         """validate the segment group"""
