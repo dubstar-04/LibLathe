@@ -1,3 +1,6 @@
+from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.base.point import Point
+from liblathe.base.segment import Segment
 from enum import Enum
 
 
@@ -99,7 +102,7 @@ class Tool:
         """
 
         clearance = 2
-        max_cutting_angle = 180 - self.tool_rotation + self.tip_angle / 2 + clearance
+        max_cutting_angle = 180 + self.tool_rotation + self.tip_angle / 2 + clearance
 
         return max_cutting_angle
 

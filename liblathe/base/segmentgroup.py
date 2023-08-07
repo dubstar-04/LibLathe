@@ -1,10 +1,10 @@
 import math
+import time
 
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.command import Command
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-
 
 class SegmentGroup:
     """Container Group for segments"""
@@ -329,157 +329,66 @@ class SegmentGroup:
 
     def defeature(self, stock, tool, allow_grooving=False):
         """Defeature the segment group. Remove features that cannot be turned. e.g. undercuts / grooves"""
-        segments = self.get_segments()
-        segs_out = SegmentGroup()
-        index = 0
 
-        while index < len(segments):
-            seg = segments[index]
-            next_index = False
-            pt1 = seg.start
-            pt2 = seg.end
-            pt = None
+        x_min = 0
+        x_max = self.boundbox().x_max + 1
+        z_min = stock.z_min
+        z_max = stock.z_max
+        resolution = 0.01
+        points = []
+        # get elapsed time reference
+        start = time.time()
 
-            # TODO: Tidy this mess
+        z_pos = z_max
+        while z_pos > z_min:
+            # test for intersection at z with a single segment
+            test_segment = Segment(Point(x_max, 0, z_pos), Point(x_min, 0, z_pos))
 
-            if seg.bulge > 0:
-                segAng = round(math.degrees(seg.get_angle()), 5)
-                # get angle tangent to the start point
-                startPtAng = round(pt1.angle_to(seg.get_centre_point()) - 90, 5)
-                if startPtAng >= tool.get_tool_cutting_angle():
-                    if startPtAng + segAng <= 270:
-                        segs_out.add_segment(seg)
-                else:
-                    ang = tool.get_tool_cutting_angle()
-                    # calculate the length required to project the point to the centreline
-                    length = abs(pt1.X / math.cos(math.radians(ang - 90)))
-                    proj_pt = pt1.project(ang, length)
-                    projseg = Segment(pt1, proj_pt)
-                    intersect, pts = projseg.intersect(segments[index])
-                    if intersect and allow_grooving:
-                        # add the intersecting line to the segment_group
-                        new_seg = Segment(pt1, pts[0])
-                        segs_out.add_segment(new_seg)
-                        # add the remainder of the arc to the segment_group
-                        remaining_seg = Segment(pts[0], pt2)
-                        angle = seg.angle_from_points(remaining_seg.start, remaining_seg.end)
-                        #remaining_seg.derive_bulge(seg)
-                        remaining_seg.set_bulge(angle)
-                        segs_out.add_segment(remaining_seg)
-                    else:
-                        if seg.start.angle_to(seg.end) <= 180:
-                            seg = Segment(pt1, pt2)
-                            segs_out.add_segment(seg)
-                        else:
-                            pt = seg.start
-                            next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving, pt)
-
-            if seg.bulge < 0:
-                # Limit the arc movement to the X extents or the tangent at the max tool angle if allow_grooving
-                angle_limit = 270 if allow_grooving is False else tool.get_tool_cutting_angle() + 90
-                if seg.get_centre_point().angle_to(pt2) >= angle_limit:
-                    segs_out.add_segment(seg)
-                else:
-                    rad = seg.get_radius()
-                    if not allow_grooving:
-                        # define a point vertically down on the x axis.
-                        x = seg.get_centre_point().X - rad
-                        y = seg.get_centre_point().Y
-                        z = seg.get_centre_point().Z
-                        pt = Point(x, y, z)
-                    else:
-                        # project a point from the centre of the arc along the angle limit to the radius
-                        pt = seg.get_centre_point().project(angle_limit, rad)
-
-                    nseg = Segment(pt1, pt)
-                    #nseg.derive_bulge(seg, rad)
-                    angle = seg.angle_from_points(nseg.start, nseg.end)
-                    nseg.set_bulge(angle)
-                    segs_out.add_segment(nseg)
-
-                    pt1 = pt
-                    next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving, pt)
-
-            elif seg.bulge == 0:
-                if pt1.angle_to(pt2) < tool.get_tool_cutting_angle():
-                    next_index, pt = self.find_next_good_edge(index, stock_z_min, tool, allow_grooving)
-                else:
-                    segs_out.add_segment(seg)
-            
-            if next_index is False and pt is not None:
-                seg = Segment(pt1, pt)
-                segs_out.add_segment(seg)
-                break
-            if next_index is not False and next_index != index:
-                seg = Segment(pt1, pt)
-                segs_out.add_segment(seg)
-
-                next_pt1 = pt
-                next_pt2 = segments[next_index].end
-                seg = Segment(next_pt1, next_pt2)
-                
-                #seg.derive_bulge(segments[next_index])
-                if segments[next_index].bulge != 0:
-                    n_angle = segments[next_index].angle_from_points(seg.start, seg.end)
-                    seg.set_bulge(n_angle)
-                segs_out.add_segment(seg)
-
-                next_index += 1
-                index = next_index
-                continue
-
-            index += 1
-        segs_out.merge_segments()
-        # create an inset version of the part_segmentgroup
-        # check if the defeatured segmentgroup intersects the part
-        # TODO: This is a bit hacky. Is there a better way?
-        if self.offset_path(-0.0001).intersects_group(segs_out):
-            # segs_out.create_freecad_shape("defeatured_part_segment_group")
-            raise ValueError("Part defeaturing failed")
-
-        return segs_out
-
-    def find_next_good_edge(self, current_index, stock_z_min, tool, allow_grooving, pt=None):
-        segments = self.get_segments()
-        index = current_index
-        if pt is None:
-            pt1 = segments[index].start
-        else:
-            pt1 = pt
-
-        index += 1
-        while index < len(segments):
-
-            if allow_grooving:
-                # create a new point at the max angle from pt1
-                ang = tool.get_tool_cutting_angle()
-                # calculate the length required to project the point to the centreline
-                length = abs(pt1.X / math.cos(math.radians(ang - 90)))
-                pt2 = pt1.project(ang, length)
-            else:
-                pt2 = Point(pt1.X, pt1.Y, stock_z_min)
-
-            # create a new projected segment
-            seg = Segment(pt1, pt2)
-
-            # loop through the remaining segments and see if the projected segments
-            idx = index
-            while idx < len(segments):
-                intersect, pts = seg.intersect(segments[idx])
+            for seg in self.segments:
+                intersect, point = test_segment.intersect(seg)
                 if intersect:
-                    return idx, pts[0]
-                idx += 1
-            index += 1
+                    x_pos = point[0].X - resolution
+                    while x_pos < (point[0].X + resolution):
+                        iteration_position = Point(x_pos, 0, z_pos)
+                        tool_shape = tool.get_shape_group(iteration_position)
+                        if self.intersects_group(tool_shape) is False:
+                            # tool.draw_shape(iteration_position)
+                            points.append(iteration_position)
+                            break
+                        x_pos += resolution * 0.5
+                    break
 
-        stock_pt = Point(pt1.X, pt1.Y, stock_z_min)
-        seg = Segment(pt1, stock_pt)
-        index = current_index
-        index += 1
+            z_pos -= resolution
 
-        while index < len(segments):
-            intersect, pts = seg.intersect(segments[index])
-            if intersect:
-                return index, pts[0]
+        defeature_split = time.time()
+        print('defeature elaspsed:', defeature_split - start)
+
+        if len(points):
+            seg_group = SegmentGroup()
+            for idx, point in enumerate(points):
+                if idx >= 1:
+                    seg = Segment(points[idx-1], points[idx])
+                    seg_group.add_segment(seg)
+
+            seg_group.create_freecad_shape('paff')
+
+            # attempt simplification
+            sim_rdp_points = self.rdp(points, resolution)
+
+            simplify_split = time.time()
+            print('simplify elaspsed:', simplify_split - defeature_split)
+
+            if len(sim_rdp_points):
+                sim_seg_group = SegmentGroup()
+                for idx, point in enumerate(sim_rdp_points):
+                    if idx >= 1:
+                        sim_seg = Segment(sim_rdp_points[idx-1], sim_rdp_points[idx])
+                        sim_seg_group.add_segment(sim_seg)
+
+                sim_seg_group.create_freecad_shape('sim_paff')
+
+        return sim_seg_group
+
     def rdp(self, points, tolerance):
         """Reduce point set using Ramer–Douglas–Peucker algorithm"""
         tolerance = tolerance * tolerance
