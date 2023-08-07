@@ -169,7 +169,7 @@ class Segment:
 
         if self.bulge != 0:
 
-            if self.bulge > 0:
+            if self.bulge < 0:
 
                 # can't offset because the distance is bigger than the radius
                 if self.get_radius() < distance:
@@ -195,7 +195,7 @@ class Segment:
                 seg.set_bulge(angle)
 
         else:
-            normal = self.start.normalise_to(self.end).rotate(-90)
+            normal = self.start.normalise_to(self.end).rotate(90)
             pt = normal.multiply(distance)
             seg = Segment(pt.add(self.start), pt.add(self.end))
 
