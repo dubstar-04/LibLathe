@@ -127,7 +127,7 @@ class SegmentGroup:
         min_retract_x = max(x_values, key=abs)
         return min_retract_x
 
-    def to_commands(self, part_segment_group, stock, step_over, finish_passes, hSpeed, vSpeed, invert_x=True):
+    def to_commands(self, part_segment_group, stock, step_over, finish_passes, hSpeed, vSpeed):
         """converts segmentgroup to gcode commands"""
 
         def get_pos(pnt):
@@ -135,16 +135,13 @@ class SegmentGroup:
             y = pnt.Y
             z = pnt.Z
 
-            if invert_x:
-                x = 0 - x
-
             return Point(x, y, z)
 
         def get_arc_type(bulge):
             if bulge > 0:
-                arcType = 'G2' if invert_x else 'G3'
+                arcType = 'G3'
             else:
-                arcType = 'G3' if invert_x else 'G2'
+                arcType = 'G2'
 
             return arcType
 
@@ -159,9 +156,6 @@ class SegmentGroup:
             min_x_retract = self.get_min_retract_x(seg, part_segment_group)
             x_retract = min_x_retract - step_over * finish_passes
             z_retract = segments[0].start.Z
-
-            if invert_x:
-                x_retract = 0 - x_retract
 
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
