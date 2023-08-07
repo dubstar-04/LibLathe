@@ -71,6 +71,7 @@ class SegmentGroup:
                 intersect, point = segment.intersect(seg)
                 if intersect:
                     return True
+        return False
 
     def z_at_x(self, x):
         """get the z value at the first intersection at the given x position"""
