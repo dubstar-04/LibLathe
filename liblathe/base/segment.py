@@ -414,3 +414,26 @@ class Segment:
                     #print('sa > ea - negative bulge')
                     if pnt_ang <= sa and pnt_ang >= ea:
                         return True
+
+    def distance_to_point(self, point):
+        """ get the distance from point to segment """
+        x = self.start.X
+        z = self.start.Z
+
+        dx = self.end.X - x
+        dz = self.end.Z - z
+
+        if dx != 0 or dz != 0:
+            t = ((point.X - x) * dx + (point.Z - z) * dz) / (dx * dx + dz * dz)
+
+            if t > 1:
+                x = self.end.X
+                z = self.end.Z
+            elif t > 0:
+                x += dx * t
+                z += dz * t
+
+        dx = point.X - x
+        dz = point.Z - z
+
+        return dx * dx + dz * dz
