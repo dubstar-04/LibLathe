@@ -233,7 +233,9 @@ class SegmentGroup:
         # TODO: create arcs at the intersections between segments, radius needs to be matched to the selected tool
 
         segmentgroup.join_segments()
-        segmentgroup.validate()
+        # TODO: can't validate all offsets because of defeaturing
+        # i.e. if the tool can't cut the start of the part then we can't extend the start to the centerline
+        # segmentgroup.validate()
         return segmentgroup
 
     def join_segments(self):
