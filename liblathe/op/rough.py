@@ -14,7 +14,7 @@ class RoughOP(liblathe.op.base.BaseOP):
 
     def generate_path(self):
         """Generate the path for the Rough operation"""
-        roughing_segment_group = self.part_segment_group.defeature(self.stock.z_min, self.tool, self.allow_grooving)
+        roughing_segment_group = self.part_segment_group.defeature(self.stock, self.tool, self.allow_grooving)
         # self.part_segment_group.create_freecad_shape('roughing_segment_group')
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset + self.clearance
@@ -23,18 +23,19 @@ class RoughOP(liblathe.op.base.BaseOP):
         # include a minimal offset to ensure the roughing passes don't intersect the part
         offset = 0.01 + self.stock_to_leave
         roughing_boundary = roughing_segment_group.offset_path(offset)
-        # define the x limit for roughing
-        x_min = -abs(math.ceil(self.stock.x_length() + self.extra_dia * 0.5))
+        # define the x limits for roughing
+        x_min = self.min_dia * 0.5
+        x_max = math.ceil(self.stock.x_length() + self.extra_dia * 0.5)
 
         # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
         # TODO: This is a bit hacky, is there a better way?
-        x_pos = -1e-6
+        x_pos = max(1e-6, x_min)
         # work from 0 to x_min creating roughing passes
-        while x_pos > x_min:
+        while x_pos < x_max:
             # check if the roughing pass start is outside the stock
             boundary_z = roughing_boundary.z_at_x(x_pos)
             if boundary_z and round(boundary_z, 5) >= round(self.stock.z_max, 5):
-                x_pos -= self.step_over
+                x_pos += self.step_over
                 continue
 
             pt1 = Point(x_pos, 0, z_max)
@@ -108,10 +109,11 @@ class RoughOP(liblathe.op.base.BaseOP):
                                 path_line = Segment(startPt, endPt)
                                 segmentgroup.add_segment(path_line)
             
-            x_pos -= self.step_over
+            x_pos += self.step_over
 
             if segmentgroup.count():
                 if segmentgroup.intersects_group(self.part_segment_group):
+                    segmentgroup.create_freecad_shape("roughing_segment_group")
                     raise ValueError("Calculated roughing path intersects part")
 
                 self.tool_paths.append(segmentgroup)

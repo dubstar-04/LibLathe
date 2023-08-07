@@ -12,14 +12,15 @@ class PartoffOP(liblathe.op.base.BaseOP):
         self.tool_paths = []
 
         toolWidth = self.tool.get_width()
-        x_min = self.stock.x_min - self.extra_dia * 0.5 - self.clearance
-        x_max = 0 - self.min_dia * 0.5
+        
+        x_min = self.min_dia * 0.5
+        x_max = self.stock.x_max + self.extra_dia * 0.5 + self.clearance
         z_min = self.stock.z_min - toolWidth
 
         # build list of segments
         segmentgroup = SegmentGroup()
-        startPt = Point(x_min, 0, z_min)
-        endPt = Point(x_max, 0, z_min)
+        startPt = Point(x_max, 0, z_min)
+        endPt = Point(x_min, 0, z_min)
         seg = Segment(startPt, endPt)
         segmentgroup.add_segment(seg)
 
