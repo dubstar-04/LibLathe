@@ -414,3 +414,5 @@ class Segment:
                     #print('sa > ea - negative bulge')
                     if pnt_ang <= sa and pnt_ang >= ea:
                         return True
+
+            return False
