@@ -416,3 +416,27 @@ class Segment:
                         return True
 
             return False
+        
+    def sdv(self, point):
+        """return the signed distance value"""
+        APx = point.X - self.start.X
+        APy = point.Z - self.start.Z
+        ABx = self.end.X - self.start.X 
+        ABy = self.end.Z  - self.start.Z
+
+        magAB2 = ABx * ABx + ABy * ABy
+        ABdotAP = ABx * APx + ABy * APy
+        t = ABdotAP / magAB2
+
+        # check if the point is < start or > end
+        if t > 0 and t < 1:
+            x = self.start.X + ABx * t
+            z = self.start.Z + ABy * t
+            pt = Point(x, 0, z)
+            # print('pt', pt.Z, pts.Z)
+            return pt
+        
+        if t < 0:
+            return self.start
+        if t > 1:
+            return self.end
