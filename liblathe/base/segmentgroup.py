@@ -557,3 +557,28 @@ class SegmentGroup:
 
         path_profile = Part.makeCompound(part_edges)
         Part.show(path_profile, name)
+
+    def isInside(self, point):
+        intersections = 0
+        projection_line = Segment(Point(point.X,0,self.boundbox().z_max + 20), point)
+        for seg in self.get_segments():
+
+            # stop checking once past the point of interest
+            if seg.start.Z < point.Z: #and seg.end.Z < point.Z:
+                break
+
+            if round(seg.start.X, 5) <= round(point.X, 5) and round(seg.end.X, 5) <= round(point.X, 5) :
+                # print('X poseseses same')
+                continue
+
+            intersect, pnt = seg.intersect(projection_line)
+
+            if intersect:
+                intersections += len(pnt)
+
+        if intersections % 2 == 0 and intersections > 0 or intersections == 0:
+            # even
+            return False
+        
+        # odd
+        return True
