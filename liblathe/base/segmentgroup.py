@@ -582,3 +582,23 @@ class SegmentGroup:
         
         # odd
         return True
+    
+    def sdv(self, point):
+        """ return the signed distance value to the group"""
+        inside = self.isInside(point)
+        dist_clst_pnt = float('inf')
+
+        for seg in self.get_segments():
+            clst = seg.sdv(point)
+            
+            if clst is not None:
+                clst_dist = clst.distance_to(point)
+                #print('clst_pnt', clst.X, clst.Z, clst_dist)
+                dist_clst_pnt = min(clst_dist, dist_clst_pnt)
+        
+        dist = abs(dist_clst_pnt)
+        #print('dist', dist)
+        if inside:
+            dist = -dist
+
+        return dist
