@@ -26,7 +26,7 @@ std::vector<std::vector<float>> SDF::generate()
     */
 
     //  create a 2D SDF for the part geometry
-    float resolution = 0.1;
+    float resolution = 0.01;
     float x_min = 0.0; //StockBoundingBox.x_min;
     float x_max = 25.0; //StockBoundingBox.x_max;
 
@@ -64,6 +64,12 @@ std::vector<std::vector<float>> SDF::generate()
             }
 
             column.push_back(dist);
+            //if we are more that 2mm away from the part skip the next x_pos
+            //if(abs(dist) > 4.0){
+            //    x_pos += resolution;
+            //    column.push_back();  
+            //}
+
             x_pos += resolution;
         }
 
