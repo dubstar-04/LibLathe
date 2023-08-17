@@ -32,43 +32,36 @@ class Quadtree:
         """Divide each node until the target precision is reached"""
         # get signed value if less than limit, divide and conquer
         # until a the precision limit is reached
-        self.signed_value = self.segment_group.sdv(self.node.center)
-        # print('depth', self.depth, 'node', self.signed_value, 'w', self.node.w, 'h', self.node.h, 'x', self.node.center.X , 'z', self.node.center.Z)
         
-        self.draw()
-
         # turning parameters
         stepover = 0.25
-        passes = 5
-
-        offset = stepover * passes * 1.5
 
         if self.divided:
             return
+
+        self.signed_value = self.segment_group.sdv(self.node.center)
+
+        # self.draw()
         
-        if self.node.w <= 0.2:
+        if self.depth >= 8:
             return
         
-        if self.depth >= 3 and abs(self.signed_value) > offset * 3:
+        if self.signed_value >= stepover and self.signed_value <= stepover + 0.005:
             return
         
-        if self.depth < 6 or self.signed_value > 0 and self.signed_value < offset * 2.5:
+        if self.node_could_contain(stepover):
             self.divide()
 
-        if self.signed_value < 0 and abs(self.signed_value) < offset:
-            self.divide()
 
-        '''
-        if self.depth >= 4 and abs(self.signed_value) > offset * 2:
-            return
+    def node_could_contain(self, offset):
 
-        if self.node.h <= 0.01:
-            return
-
-        modulo = 0.03
-        if self.depth < 4 or (stepover - (self.signed_value)) % stepover < modulo or (self.signed_value) % stepover < modulo:            
-            self.divide()
-        '''
+        if self.signed_value - self.node.h / 2 <= offset and self.signed_value + self.node.h / 2 >= offset:
+            return True
+        
+        if self.signed_value - self.node.w / 2 <= offset and self.signed_value + self.node.w / 2 >= offset:
+            return True
+        
+        return False
 
 
     def draw(self):
@@ -105,7 +98,7 @@ class Quadtree:
         """Find the points in the quadtree that are close to target value"""
 
         dist = round(self.signed_value, 2)
-        if dist >= target and dist <= target + 0.05:
+        if dist >= target - 0.01 and dist <= target + 0.01:
             found_points.append(self.node.center)
 
         if self.divided:

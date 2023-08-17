@@ -21,8 +21,6 @@ from liblathe.base.quadtree import Quadtree, Node
 
 def get_min_pos(values, target):
     d = [(target - x)**2 for x in values]
-    ## print(values)
-    # print('min', referencevalue, min(d))
     return d.index(min(d))
 
 start_time = time.time()
@@ -111,18 +109,18 @@ width = StockBoundingBox.z_length()
 edge_length = max(height, width)
 
 # creating new Image object
-img = Image.new("RGB", (60 + edge_length * 10, edge_length * 10))
+img = Image.new("RGB", (60 + width * 10, height * 10))
 
 # create rectangle image
 img1 = ImageDraw.Draw(img)
 
-# quadtree #
+#####################################
+#           quadtree                #
+#####################################
 
-center = Point( edge_length / 2, 0 ,z_min + edge_length / 2)
+center = Point( height / 2, 0 ,z_min + width / 2)
 
-print('center', center.X, center.Z, edge_length, edge_length)
-
-base_node = Node(center, edge_length, edge_length)
+base_node = Node(center, width, height)
 qt = Quadtree(base_node, part_segments, img1)
 
 qt_time = time.time()
@@ -140,7 +138,9 @@ for pt in points:
 qt_query_time = time.time()
 print("qt query time: ", qt_query_time - start_time) 
 
-# quadtree #
+#####################################
+#           quadtree                #
+#####################################
 
 sdf_time = time.time()
 print("SDF time: ", sdf_time - start_time) 
