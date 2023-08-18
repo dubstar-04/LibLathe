@@ -1,6 +1,7 @@
-#include "quadtree.h"
 #include <iostream>
 #include <limits>
+
+#include "quadtree.h"
 
 Quadtree::Quadtree() 
 {
@@ -50,22 +51,22 @@ void Quadtree::divide(Node &node){
 
     float x = cx - h/2;
     float z = cy + w/2;
-    Point pne = {x, z};
+    Point pne = Point(x, z);
     Node ne = {pne, w, h, depth};
 
     x = cx + h/2;
     z = cy + w/2;
-    Point pse = {x, z};
+    Point pse = Point(x, z);
     Node se = {pse, w, h, depth};
 
     x = cx + h/2;
     z = cy - w/2;
-    Point psw = {x, z};
+    Point psw = Point(x, z);
     Node sw = {psw, w, h, depth};
 
     x = cx - h/2;
     z = cy - w/2;
-    Point pnw = {x, z};
+    Point pnw = Point(x, z);
     Node nw = {pnw, w, h, depth};
 
     node.child_nodes.push_back(ne);
@@ -162,7 +163,7 @@ float Quadtree::sdv(Point point)
     for (int i = 1; i < this->points.size(); i++) {
         Segment seg = {this->points[i-1], this->points[i]};
         Point clst = this->closest(point, seg.start, seg.end);
-        float clst_dist = this->distance_to(point, clst);
+        float clst_dist = point.distance_to(clst);
         dist_clst_pnt = std::min(clst_dist, dist_clst_pnt);
     }
 
@@ -175,16 +176,11 @@ float Quadtree::sdv(Point point)
 }
 
 void Quadtree::add_point(float x, float z){
-    this->points.push_back({x, z});
+    this->points.push_back(Point(x, z));
 }
 
 int Quadtree::point_count(){
     return this->points.size();
-}
-
-float Quadtree::distance_to(Point a, Point b){
-    return sqrt((a.x- b.x) * (a.x- b.x) + (a.z - b.z) * (a.z - b.z));
-
 }
 
 Point Quadtree::closest(Point point, Point start, Point end){
@@ -202,7 +198,7 @@ Point Quadtree::closest(Point point, Point start, Point end){
     if (t > 0.0 && t < 1.0){
         float x = start.x + ABx * t;
         float z = start.z + ABy * t;
-        Point p = {x, z};
+        Point p = Point(x, z);
         return p; 
     }
     
@@ -237,7 +233,7 @@ int Quadtree::intersect(Segment a, Segment b){
     if ((0 <= ua and ua <= 1) && (0 <= ub and ub <= 1)){
         float x = a1.x + ua * (a2.x - a1.x);
         float z = a1.z + ua * (a2.z - a1.z);
-        Point pt = {x, z};
+        Point pt = Point(x, z);
         pts.push_back(pt);
     }
 
@@ -251,7 +247,7 @@ bool Quadtree::isInside(Point point){
     // generate a ray to perform the crossing
     float x = point.x;
     float z = point.z + 150;
-    Point plstart = {x, z};
+    Point plstart = Point(x, z);
     Segment projection_line = {plstart, point};
     
     for (int i = 1; i < this->points.size(); i++) {

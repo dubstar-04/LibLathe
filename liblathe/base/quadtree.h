@@ -1,18 +1,10 @@
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
 #include <vector>
+#include <math.h>
 
+#include "point.h"
 
 #ifndef Quadtree_H
 #define Quadtree_H
-
-struct Point {
-    Point(float &x, float &z) : x(x), z(z){ }
-    float x;
-    float z;
-    Point(){}
-};
 
 struct Segment {
     Point start;
@@ -20,7 +12,7 @@ struct Segment {
 };
 
 struct Node {
-    Point center;
+    Point center = Point(0,0);
     float width;
     float height;
     int depth;
@@ -48,7 +40,6 @@ class Quadtree
         std::vector<Point> points;
         bool isInside(Point);
         int intersect(Segment, Segment);
-        float distance_to(Point, Point);
         Point closest(Point, Point, Point);
         Node basenode;
 
@@ -60,36 +51,5 @@ class Quadtree
         bool node_could_contain(float offset, Node& node);
         
 };
-
-
-
-namespace py = pybind11;
-
-PYBIND11_MODULE(quadtree, m) {
-    // optional module docstring
-    m.doc() = "Signed Distance Field";
-
-    // bindings to Quadtree class
-    py::class_<Quadtree>(m, "Quadtree")
-        .def(py::init<>())
-        .def("add_point", &Quadtree::add_point)
-        .def("point_count", &Quadtree::point_count)
-        .def("add_base_node", &Quadtree::add_base_node)
-        .def("get_offset", &Quadtree::get_offset)
-        .def("get_nodes", &Quadtree::get_nodes);
-
-    // binding to the point struct
-    py::class_<Point>(m, "Point")
-        .def(py::init<float&, float&>())
-        .def_readwrite("x", &Point::x)
-        .def_readwrite("z", &Point::z);
-
-    py::class_<Node>(m, "Node")
-        .def(py::init<>())
-        .def_readwrite("center", &Node::center)
-        .def_readwrite("width", &Node::width)
-        .def_readwrite("height", &Node::height)
-        .def_readwrite("sdv", &Node::sdv);
-}
 
 #endif
