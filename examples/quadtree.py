@@ -8,7 +8,8 @@ thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
-from liblathe.base.quadtree import Quadtree, Point, Node
+from liblathe.base.quadtree import Quadtree
+from liblathe.base.point import Point
 
 start_time = time.time()
 
