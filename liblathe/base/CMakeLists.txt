@@ -1,4 +1,7 @@
-cmake_minimum_required(VERSION 2.8.12)
-pybind11_add_module(sdf sdf.cpp)
-pybind11_add_module(quadtree quadtree.cpp)
-pybind11_add_module(point point.cpp)
+cmake_minimum_required(VERSION 3.5)
+# pybind11_add_module(sdf sdf.cpp)
+
+pybind11_add_module(quadtree quadtree_py.cpp quadtree.cpp point.cpp)
+pybind11_add_module(point point_py.cpp point.cpp)
+
+
