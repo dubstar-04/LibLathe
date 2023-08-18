@@ -1,6 +1,6 @@
 #include "quadtree.h"
 #include <iostream>
-#include<limits>
+#include <limits>
 
 Quadtree::Quadtree() 
 {
