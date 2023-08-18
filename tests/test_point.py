@@ -1,61 +1,64 @@
 import os
 import sys
 import unittest
+import math
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
+
 from liblathe.base.point import Point
 
 
 class test_point(unittest.TestCase):
     """Test for point.py"""
     def setUp(self):
-        self.pt1 = Point(0, 0, 0)
-        self.pt2 = Point(100, 100, 100)
-        self.pt3 = Point(150, 130, 200)
-        self.pt4 = Point(200, 200, 200)
-        self.pt5 = Point(-100, 0, 100)
-        self.pt6 = Point(0, 100, 200)
-        self.pt7 = Point(-200, -200, -200)
-        self.pt8 = Point(-400, -400, -400)
-        self.pt9 = Point(-200, -200, -200)
-        self.pt10 = Point(200, 200, 200)
+        self.pt1 = Point(0, 0)
+        self.pt2 = Point(100, 100)
+        self.pt3 = Point(150, 200)
+        self.pt4 = Point(200, 200)
+        self.pt5 = Point(-100, 100)
+        self.pt6 = Point(0, 200)
+        self.pt7 = Point(-200, -200)
+        self.pt8 = Point(-400, -400)
+        self.pt9 = Point(-200, -200)
+        self.pt10 = Point(200, 200)
 
     def test_distance_to(self):
         distance = self.pt1.distance_to(self.pt2)
-        self.assertEqual(distance, 173.20508075688772)
+        self.assertAlmostEqual(distance, 141.421356, 5)
 
     def test_angle_to(self):
 
-        angle = self.pt1.angle_to(Point(0, 0, 100))
+        angle = self.pt1.angle_to(Point(0, 100))
         self.assertEqual(angle, 0)
 
-        angle = self.pt1.angle_to(Point(100, 0, 100))
-        self.assertEqual(angle, 45)
+        angle = self.pt1.angle_to(Point(100, 100))
+        self.assertAlmostEqual(angle, math.radians(45), 5)
 
-        angle = self.pt1.angle_to(Point(100, 0, 0))
-        self.assertEqual(angle, 90)
+        angle = self.pt1.angle_to(Point(100, 0))
+        self.assertAlmostEqual(angle, math.radians(90), 5)
 
-        angle = self.pt1.angle_to(Point(100, 0, -100))
-        self.assertEqual(angle, 135)
+        angle = self.pt1.angle_to(Point(100, -100))
+        self.assertAlmostEqual(angle, math.radians(135), 5)
 
-        angle = self.pt1.angle_to(Point(0, 0, -100))
-        self.assertEqual(angle, 180)
+        angle = self.pt1.angle_to(Point(0, -100))
+        self.assertAlmostEqual(angle, math.radians(180), 5)
 
-        angle = self.pt1.angle_to(Point(-100, 0, -100))
-        self.assertEqual(angle, 225)
+        angle = self.pt1.angle_to(Point(-100, -100))
+        self.assertAlmostEqual(angle, math.radians(225), 5)
 
-        angle = self.pt1.angle_to(Point(-100, 0, 0))
-        self.assertEqual(angle, 270)
+        angle = self.pt1.angle_to(Point(-100, 0))
+        self.assertAlmostEqual(angle, math.radians(270), 5)
 
-        angle = self.pt1.angle_to(Point(-100, 0, 100))
-        self.assertEqual(angle, 315)
+        angle = self.pt1.angle_to(Point(-100, 100))
+        self.assertAlmostEqual(angle, math.radians(315), 5)
 
     def test_nearest(self):
         pts = [self.pt2, self.pt3]
         nearest = self.pt1.nearest(pts)
-        self.assertEqual(nearest, self.pt2)
+        self.assertEqual(nearest.x, self.pt2.x)
+        self.assertEqual(nearest.z, self.pt2.z)
 
     def test_is_same_return_false(self):
         same = self.pt1.is_same(self.pt2)
@@ -67,101 +70,112 @@ class test_point(unittest.TestCase):
 
     def test_sub(self):
         sub = self.pt4.sub(self.pt2)
-        self.assertEqual(sub.X, self.pt2.X)
-        self.assertEqual(sub.Y, self.pt2.Y)
-        self.assertEqual(sub.Z, self.pt2.Z)
+        self.assertEqual(sub.x, self.pt2.x)
+        #self.assertEqual(sub.Y, self.pt2.Y)
+        self.assertEqual(sub.z, self.pt2.z)
 
         subNegative = self.pt7.add(self.pt7)
-        self.assertEqual(subNegative.X, self.pt8.X)
-        self.assertEqual(subNegative.Y, self.pt8.Y)
-        self.assertEqual(subNegative.Z, self.pt8.Z)
+        self.assertEqual(subNegative.x, self.pt8.x)
+        #self.assertEqual(subNegative.Y, self.pt8.Y)
+        self.assertEqual(subNegative.z, self.pt8.z)
 
     def test_add(self):
         add = self.pt2.add(self.pt2)
-        self.assertEqual(add.X, self.pt4.X)
-        self.assertEqual(add.Y, self.pt4.Y)
-        self.assertEqual(add.Z, self.pt4.Z)
+        self.assertEqual(add.x, self.pt4.x)
+        #self.assertEqual(add.Y, self.pt4.Y)
+        self.assertEqual(add.z, self.pt4.z)
 
         addNegative = self.pt5.add(self.pt2)
-        self.assertEqual(addNegative.X, self.pt6.X)
-        self.assertEqual(addNegative.Y, self.pt6.Y)
-        self.assertEqual(addNegative.Z, self.pt6.Z)
+        self.assertEqual(addNegative.x, self.pt6.x)
+        #self.assertEqual(addNegative.Y, self.pt6.Y)
+        self.assertEqual(addNegative.z, self.pt6.z)
 
     def test_multiply(self):
         multiply = self.pt2.multiply(0)
-        self.assertEqual(multiply.X, self.pt1.X)
-        self.assertEqual(multiply.Y, self.pt1.Y)
-        self.assertEqual(multiply.Z, self.pt1.Z)
+        self.assertEqual(multiply.x, self.pt1.x)
+        #self.assertEqual(multiply.Y, self.pt1.Y)
+        self.assertEqual(multiply.z, self.pt1.z)
 
         multiplyNegative = self.pt7.multiply(1)
-        self.assertEqual(multiplyNegative.X, self.pt7.X)
-        self.assertEqual(multiplyNegative.Y, self.pt7.Y)
-        self.assertEqual(multiplyNegative.Z, self.pt7.Z)
+        self.assertEqual(multiplyNegative.x, self.pt7.x)
+        #self.assertEqual(multiplyNegative.Y, self.pt7.Y)
+        self.assertEqual(multiplyNegative.z, self.pt7.z)
 
     def test_lerp(self):
         lerp = self.pt1.lerp(self.pt2, 0.5)
-        self.assertEqual(lerp.X, 50)
-        self.assertEqual(lerp.Y, 50)
-        self.assertEqual(lerp.Z, 50)
+        self.assertEqual(lerp.x, 50)
+        #self.assertEqual(lerp.Y, 50)
+        self.assertEqual(lerp.z, 50)
 
     def test_normalise_to(self):
-        normal = self.pt1.normalise_to(Point(100, 0, 100))
-        self.assertEqual(normal.X, 0.7071067811865475)
-        self.assertEqual(normal.Y, 0)
-        self.assertEqual(normal.Z, 0.7071067811865475)
+        normal = self.pt1.normalise_to(Point(100, 100))
+        self.assertAlmostEqual(normal.x, 0.7071067811865475, 5)
+        #self.assertEqual(normal.Y, 0)
+        self.assertAlmostEqual(normal.z, 0.7071067811865475, 5)
 
         normal = self.pt1.normalise_to(self.pt1)
-        self.assertEqual(normal.X, 0)
-        self.assertEqual(normal.Y, 0)
-        self.assertEqual(normal.Z, 0)
+        self.assertEqual(normal.x, 0)
+        #self.assertEqual(normal.Y, 0)
+        self.assertEqual(normal.z, 0)
 
     def test_rotate(self):
-        rotate = self.pt2.rotate(90)
-        self.assertEqual(rotate.X, -100)
-        self.assertEqual(rotate.Y, 100)
-        self.assertEqual(rotate.Z, 100)
+        rotate = self.pt6.rotate(Point(), math.radians(45))
+        self.assertAlmostEqual(rotate.x, -141.421356, 4)
+        self.assertAlmostEqual(rotate.z, 141.421356, 4)
+    
+        rotate = self.pt6.rotate(Point(), math.radians(90))
+        self.assertAlmostEqual(rotate.x, -200, 4)
+        self.assertAlmostEqual(rotate.z, 0, 4)
+
+        rotate = self.pt6.rotate(Point(), math.radians(180))
+        self.assertAlmostEqual(rotate.x, 0, 4)
+        self.assertAlmostEqual(rotate.z, -200, 4)
+
+        rotate = self.pt6.rotate(Point(), math.radians(270))
+        self.assertAlmostEqual(rotate.x, 200, 4)
+        self.assertAlmostEqual(rotate.z, 0, 4)
+
+        rotate = self.pt2.rotate(Point(), math.radians(90))
+        self.assertAlmostEqual(rotate.x, -100, 4)
+        self.assertAlmostEqual(rotate.z, 100, 4)
+
+        rotate = self.pt4.rotate(self.pt2, math.radians(-90))
+        self.assertAlmostEqual(rotate.x, 200, 4)
+        self.assertAlmostEqual(rotate.z, 0, 4)
 
     def test_mid(self):
         mid = self.pt2.mid(self.pt4)
-        self.assertEqual(mid.X, 150)
-        self.assertEqual(mid.Y, 150)
-        self.assertEqual(mid.Z, 150)
+        self.assertEqual(mid.x, 150)
+        self.assertEqual(mid.z, 150)
 
     def test_project(self):
         projected = self.pt1.project(0, 5)
-        self.assertEqual(projected.X, 0)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, 5)
+        self.assertEqual(projected.x, 0)
+        self.assertEqual(projected.z, 5)
 
-        projected = self.pt1.project(45, 5)
-        self.assertEqual(projected.X, 3.53553)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, 3.53553)
+        projected = self.pt1.project(math.radians(45), 5)
+        self.assertAlmostEqual(projected.x, 3.53553, 5)
+        self.assertAlmostEqual(projected.z, 3.53553, 5)
 
-        projected = self.pt1.project(90, 5)
-        self.assertEqual(projected.X, 5)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, 0)
+        projected = self.pt1.project(math.radians(90), 5)
+        self.assertAlmostEqual(projected.x, 5, 5)
+        self.assertAlmostEqual(projected.z, 0, 5)
 
-        projected = self.pt1.project(135, 5)
-        self.assertEqual(projected.X, 3.53553)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, -3.53553)
+        projected = self.pt1.project(math.radians(135), 5)
+        self.assertAlmostEqual(projected.x, 3.53553, 5)
+        self.assertAlmostEqual(projected.z, -3.53553, 5)
 
-        projected = self.pt1.project(180, 5)
-        self.assertEqual(projected.X, 0)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, -5)
+        projected = self.pt1.project(math.radians(180), 5)
+        self.assertAlmostEqual(projected.x, 0, 5)
+        self.assertAlmostEqual(projected.z, -5, 5)
 
-        projected = self.pt1.project(225, 5)
-        self.assertEqual(projected.X, -3.53553)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, -3.53553)
+        projected = self.pt1.project(math.radians(225), 5)
+        self.assertAlmostEqual(projected.x, -3.53553, 5)
+        self.assertAlmostEqual(projected.z, -3.53553, 5)
 
-        projected = self.pt1.project(270, 5)
-        self.assertEqual(projected.X, -5)
-        self.assertEqual(projected.Y, 0)
-        self.assertEqual(projected.Z, 0)
+        projected = self.pt1.project(math.radians(270), 5)
+        self.assertAlmostEqual(projected.x, -5, 5)
+        self.assertAlmostEqual(projected.z, 0, 5)
 
 
 if __name__ == '__main__':
