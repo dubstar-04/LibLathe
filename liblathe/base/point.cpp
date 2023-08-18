@@ -3,7 +3,7 @@
 #include "point.h"
 #include "utils.h"
 
-Point::Point(float x = 0, float z = 0): x(x), z(z)
+Point::Point(float x, float z): x(x), z(z)
 {
 
 }
