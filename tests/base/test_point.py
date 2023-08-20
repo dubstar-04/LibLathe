@@ -4,7 +4,8 @@ import unittest
 import math
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(thisFolder)
+baseFolder = os.path.dirname(thisFolder)
+parentFolder = os.path.dirname(baseFolder)
 sys.path.append(parentFolder)
 
 from liblathe.base.point import Point

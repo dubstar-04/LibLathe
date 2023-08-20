@@ -3,10 +3,11 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(thisFolder)
+opFolder = os.path.dirname(thisFolder)
+parentFolder = os.path.dirname(opFolder)
 sys.path.append(parentFolder)
 
-from liblathe.op.face import FaceOP
+from liblathe.op.partoff import PartoffOP
 from liblathe.base.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
@@ -14,8 +15,8 @@ from liblathe.base.segment import Segment
 from liblathe.base.tool import Tool
 
 
-class test_FaceOP(unittest.TestCase):
-    """Test for face_op.py"""
+class test_PartoffOP(unittest.TestCase):
+    """Test for partoff_op.py"""
 
     def setUp(self):
 
@@ -60,7 +61,7 @@ class test_FaceOP(unittest.TestCase):
         params['hfeed'] = self.hfeed
         params['vfeed'] = 10
 
-        self.op = FaceOP()
+        self.op = PartoffOP()
         self.op.set_params(params)
         self.op.add_stock(stock_boundbox)
         self.op.add_part_edges(part_segments)
