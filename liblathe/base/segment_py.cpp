@@ -35,7 +35,5 @@ PYBIND11_MODULE(segment, m) {
         .def("is_same", &Segment::is_same)
         .def("intersect", &Segment::intersect, "", py::arg(), py::arg("extend")=false)
         .def("point_on_segment", &Segment::point_on_segment);
-        
-
 
 }
