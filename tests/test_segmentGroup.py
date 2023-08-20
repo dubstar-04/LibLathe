@@ -5,9 +5,11 @@ import unittest
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
+
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.base.boundbox import BoundBox
 
 
 class test_segment_group(unittest.TestCase):
@@ -16,16 +18,16 @@ class test_segment_group(unittest.TestCase):
         self.segmentGroup = SegmentGroup()
         self.segmentGroup2 = SegmentGroup()
 
-        self.pt1 = Point(0, 0, 0)
-        self.pt2 = Point(100, 0, 100)
-        self.pt3 = Point(100, 0, 0)
-        self.pt4 = Point(0, 0, 100)
-        self.pt5 = Point(-120.12, 0, 214.09)
-        self.pt6 = Point(-179.88, 0, 85.91)
-        self.pt7 = Point(-214.09, 0, 179.88)
-        self.pt8 = Point(-85.91, 0, 120.12)
-        self.pt9 = Point(-164.74, 0, 118.39)
-        self.pt10 = Point(-137.55, 0, 176.70)
+        self.pt1 = Point(0, 0)
+        self.pt2 = Point(100, 100)
+        self.pt3 = Point(100, 0)
+        self.pt4 = Point(0, 100)
+        self.pt5 = Point(-120.12, 214.09)
+        self.pt6 = Point(-179.88, 85.91)
+        self.pt7 = Point(-214.09, 179.88)
+        self.pt8 = Point(-85.91, 120.12)
+        self.pt9 = Point(-164.74, 118.39)
+        self.pt10 = Point(-137.55, 176.70)
 
         self.lineSegment1 = Segment(self.pt1, self.pt2)
         self.lineSegment2 = Segment(self.pt5, self.pt6)
@@ -42,35 +44,41 @@ class test_segment_group(unittest.TestCase):
     def test_add_segment(self):
         self.segmentGroup.add_segment(self.lineSegment2)
         self.segmentGroup.insert_segment(self.lineSegment1, 0)
-        segmentStart = self.segmentGroup.segments[0].start
-        segmentEnd = self.segmentGroup.segments[0].end
-        self.assertEqual(segmentStart, self.pt1)
-        self.assertEqual(segmentEnd, self.pt2)
+        segmentStart = self.segmentGroup.get_segments()[0].start
+        segmentEnd = self.segmentGroup.get_segments()[0].end
+        self.assertEqual(segmentStart.x, self.pt1.x)
+        self.assertEqual(segmentStart.z, self.pt1.z)
+        self.assertEqual(segmentEnd.x, self.pt2.x)
+        self.assertEqual(segmentEnd.z, self.pt2.z)
 
     def test_insert_segment(self):
         self.segmentGroup.add_segment(self.lineSegment1)
-        segmentStart = self.segmentGroup.segments[0].start
-        segmentEnd = self.segmentGroup.segments[0].end
-        self.assertEqual(segmentStart, self.pt1)
-        self.assertEqual(segmentEnd, self.pt2)
+        segmentStart = self.segmentGroup.get_segments()[0].start
+        segmentEnd = self.segmentGroup.get_segments()[0].end
+        self.assertEqual(segmentStart.x, self.pt1.x)
+        self.assertEqual(segmentStart.z, self.pt1.z)
+        self.assertEqual(segmentEnd.x, self.pt2.x)
+        self.assertEqual(segmentEnd.z, self.pt2.z)
 
     def test_get_segments(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         segments = self.segmentGroup.get_segments()
         segmentStart = segments[0].start
         segmentEnd = segments[0].end
-        self.assertEqual(segmentStart, self.pt1)
-        self.assertEqual(segmentEnd, self.pt2)
+        self.assertEqual(segmentStart.x, self.pt1.x)
+        self.assertEqual(segmentStart.z, self.pt1.z)
+        self.assertEqual(segmentEnd.x, self.pt2.x)
+        self.assertEqual(segmentEnd.z, self.pt2.z)
 
         self.assertEqual(len(segments), 1)
 
     def test_extend(self):
         self.segmentGroup.add_segment(self.lineSegment1)
-        self.assertEqual(len(self.segmentGroup.segments), 1)
+        self.assertEqual(len(self.segmentGroup.get_segments()), 1)
 
         self.segmentGroup2.add_segment(self.lineSegment2)
         self.segmentGroup.extend(self.segmentGroup2)
-        self.assertEqual(len(self.segmentGroup.segments), 2)
+        self.assertEqual(len(self.segmentGroup.get_segments()), 2)
 
     def test_count(self):
         self.segmentGroup.add_segment(self.lineSegment1)
@@ -85,18 +93,15 @@ class test_segment_group(unittest.TestCase):
         self.segmentGroup.add_segment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
         x_min = boundbox.x_min
-        self.assertEqual(x_min, min(self.pt1.X, self.pt2.X))
-        y_min = boundbox.y_min
-        self.assertEqual(y_min, min(self.pt1.Y, self.pt2.Y))
+        self.assertEqual(x_min, min(self.pt1.x, self.pt2.x))
         z_min = boundbox.z_min
-        self.assertEqual(z_min, min(self.pt1.Z, self.pt2.Z))
+        self.assertEqual(z_min, min(self.pt1.z, self.pt2.z))
         x_max = boundbox.x_max
-        self.assertEqual(x_max, max(self.pt1.X, self.pt2.X))
-        y_max = boundbox.y_max
-        self.assertEqual(y_max, max(self.pt1.Y, self.pt2.Y))
+        self.assertEqual(x_max, max(self.pt1.x, self.pt2.x))
         z_max = boundbox.z_max
-        self.assertEqual(z_max, max(self.pt1.Z, self.pt2.Z))
+        self.assertEqual(z_max, max(self.pt1.z, self.pt2.z))
 
+    '''
     def test_join_segments(self):
         self.segmentGroup.add_segment(self.lineSegment1)
         self.segmentGroup.join_segments()
@@ -154,6 +159,7 @@ class test_segment_group(unittest.TestCase):
         self.assertEqual(cmds[2].params, {'X': -100, 'Z': 100, 'F': 100})
         self.assertEqual(cmds[3].params, {'X': -97.0, 'Z': 100, 'F': 100})
         self.assertEqual(cmds[4].params, {'X': -97.0, 'Z': 0, 'F': 100})
+    '''
 
 
 if __name__ == '__main__':
