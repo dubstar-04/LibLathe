@@ -34,25 +34,29 @@ class test_point(unittest.TestCase):
         self.assertEqual(angle, 0)
 
         angle = self.pt1.angle_to(Point(100, 100))
-        self.assertAlmostEqual(angle, math.radians(45), 5)
+        self.assertAlmostEqual(angle, math.radians(315), 5)
 
         angle = self.pt1.angle_to(Point(100, 0))
-        self.assertAlmostEqual(angle, math.radians(90), 5)
+        self.assertAlmostEqual(angle, math.radians(270), 5)
 
         angle = self.pt1.angle_to(Point(100, -100))
-        self.assertAlmostEqual(angle, math.radians(135), 5)
+        self.assertAlmostEqual(angle, math.radians(225), 5)
 
         angle = self.pt1.angle_to(Point(0, -100))
         self.assertAlmostEqual(angle, math.radians(180), 5)
 
         angle = self.pt1.angle_to(Point(-100, -100))
-        self.assertAlmostEqual(angle, math.radians(225), 5)
+        self.assertAlmostEqual(angle, math.radians(135), 5)
 
         angle = self.pt1.angle_to(Point(-100, 0))
-        self.assertAlmostEqual(angle, math.radians(270), 5)
+        self.assertAlmostEqual(angle, math.radians(90), 5)
 
         angle = self.pt1.angle_to(Point(-100, 100))
-        self.assertAlmostEqual(angle, math.radians(315), 5)
+        self.assertAlmostEqual(angle, math.radians(45), 5)
+
+        angle = self.pt1.angle_to(Point(-100, -100))
+        self.assertAlmostEqual(angle, math.radians(135), 5)
+
 
     def test_nearest(self):
         pts = [self.pt2, self.pt3]
@@ -154,15 +158,15 @@ class test_point(unittest.TestCase):
         self.assertEqual(projected.z, 5)
 
         projected = self.pt1.project(math.radians(45), 5)
-        self.assertAlmostEqual(projected.x, 3.53553, 5)
+        self.assertAlmostEqual(projected.x, -3.53553, 5)
         self.assertAlmostEqual(projected.z, 3.53553, 5)
 
         projected = self.pt1.project(math.radians(90), 5)
-        self.assertAlmostEqual(projected.x, 5, 5)
+        self.assertAlmostEqual(projected.x, -5, 5)
         self.assertAlmostEqual(projected.z, 0, 5)
 
         projected = self.pt1.project(math.radians(135), 5)
-        self.assertAlmostEqual(projected.x, 3.53553, 5)
+        self.assertAlmostEqual(projected.x, -3.53553, 5)
         self.assertAlmostEqual(projected.z, -3.53553, 5)
 
         projected = self.pt1.project(math.radians(180), 5)
@@ -170,11 +174,11 @@ class test_point(unittest.TestCase):
         self.assertAlmostEqual(projected.z, -5, 5)
 
         projected = self.pt1.project(math.radians(225), 5)
-        self.assertAlmostEqual(projected.x, -3.53553, 5)
+        self.assertAlmostEqual(projected.x, 3.53553, 5)
         self.assertAlmostEqual(projected.z, -3.53553, 5)
 
         projected = self.pt1.project(math.radians(270), 5)
-        self.assertAlmostEqual(projected.x, -5, 5)
+        self.assertAlmostEqual(projected.x, 5, 5)
         self.assertAlmostEqual(projected.z, 0, 5)
 
 

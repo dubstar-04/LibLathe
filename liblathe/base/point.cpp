@@ -19,7 +19,7 @@ float Point::angle_to(Point pt){
     // Returns the angle between two points in radians // 
     float dX = this->x - pt.x;
     float dZ = this->z - pt.z;
-    float angle = fmod(atan2(dX, dZ) + M_PIf, M_PIf * 2);
+    float angle = fmod(atan2(-dX, dZ) + M_PIf, M_PIf * 2);
     return angle;
 }
 
@@ -101,7 +101,7 @@ Point Point::mid(Point pt){
 
 Point Point::project(float angle, float distance){
     // Project the point at angle in radians by distance// 
-    float x = Utils::roundoff(this->x + sin(angle) * distance, 5);
+    float x = Utils::roundoff(this->x - sin(angle) * distance, 5);
     float z = Utils::roundoff(this->z + cos(angle) * distance, 5);
     return Point(x, z);
 }
