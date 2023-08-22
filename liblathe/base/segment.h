@@ -1,3 +1,6 @@
+#ifndef Segment_H
+#define Segment_H
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -5,8 +8,7 @@
 #include "point.h"
 #include "utils.h"
 
-#ifndef Segment_H
-#define Segment_H
+
 
 class Segment
 {
@@ -37,11 +39,14 @@ class Segment
         bool is_same(Segment seg);
         std::vector<Point> intersect(Segment seg, bool extend);
         bool point_on_segment(Point point);
+        float distance_to_point(Point point);
+        
 
         private:
             std::vector<Point> intersect_line_line(Segment seg, bool extend);
             std::vector<Point> intersect_circle_line(Segment seg, bool extend);
             std::vector<Point> intersect_circle_circle(Segment seg, bool extend);
+
 
 };
 

@@ -34,6 +34,7 @@ PYBIND11_MODULE(segment, m) {
         .def("get_phi", &Segment::get_phi)
         .def("is_same", &Segment::is_same)
         .def("intersect", &Segment::intersect, "", py::arg(), py::arg("extend")=false)
-        .def("point_on_segment", &Segment::point_on_segment);
+        .def("point_on_segment", &Segment::point_on_segment)
+        .def("distance_to_point", &Segment::distance_to_point);
 
 }

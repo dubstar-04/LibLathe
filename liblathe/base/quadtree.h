@@ -1,15 +1,14 @@
+#ifndef Quadtree_H
+#define Quadtree_H
+
 #include <vector>
 #include <math.h>
 
 #include "point.h"
+#include "segment.h"
+#include "segmentgroup.h"
 
-#ifndef Quadtree_H
-#define Quadtree_H
 
-struct Segment {
-    Point start;
-    Point end;
-};
 
 struct Node {
     Point center = Point(0,0);
@@ -23,6 +22,8 @@ struct Node {
     Node(){}
 };
 
+// forward declaration for segment group
+class SegmentGroup;
 
 class Quadtree
 {
@@ -30,25 +31,30 @@ class Quadtree
         Quadtree();
         ~Quadtree();
 
-        void add_point(float, float);
-        int point_count();
-        void add_base_node(Point center, float width, float height);
-        std::vector<Point> get_offset(float target);
+        // void add_segments(std::vector<Segment> &segments);
+        void initialise(SegmentGroup *segmentgroup, Point center, float width, float height);
+        //void add_base_node(Point center, float width, float height);
+        std::vector<Point> get_offset(float offset_value);
         std::vector<Node> get_nodes();
         
     private:
-        std::vector<Point> points;
-        bool isInside(Point);
-        int intersect(Segment, Segment);
-        Point closest(Point, Point, Point);
+        float offset;
+
+        SegmentGroup *segment_group;
+
+        //std::vector<Segment> segments;
+
+        //bool isInside(Point);
         Node basenode;
 
         void divide(Node&);
         void conquer(Node&);
-        float sdv(Point);
-        std::vector<Point> query(Node& node, float target, std::vector<Point>& found_points);
+        //float sdv(Point);
+        std::vector<Point> query(Node& node, std::vector<Point>& found_points);
         std::vector<Node> query_nodes(Node& node, std::vector<Node>& nodes);
         bool node_could_contain(float offset, Node& node);
+
+        std::vector<Point> sort_points(Point datum, std::vector<Point> &points);
         
 };
 

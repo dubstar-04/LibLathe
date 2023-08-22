@@ -22,5 +22,9 @@ PYBIND11_MODULE(segmentgroup, m) {
         .def("intersects_group", &SegmentGroup::intersects_group)
         .def("offset", &SegmentGroup::offset)
         .def("defeature", &SegmentGroup::defeature)
-        .def("validate", &SegmentGroup::validate);
+        .def("validate", &SegmentGroup::validate)
+        .def("from_points", &SegmentGroup::from_points)
+        .def("get_rdp", &SegmentGroup::get_rdp)
+        .def("sdv", &SegmentGroup::sdv)
+        .def("isInside", &SegmentGroup::isInside);
 }

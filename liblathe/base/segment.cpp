@@ -88,9 +88,7 @@ BoundBox Segment::get_boundbox()
     {
         topLeft = this->start;
         bottomRight = this->end;
-    }
-    else
-    {
+    } else {
         float startAngle = this->get_centre_point().angle_to(this->start);
         float endAngle = this->get_centre_point().angle_to(this->end);
 
@@ -99,7 +97,7 @@ BoundBox Segment::get_boundbox()
         bool cross180 = this->crossesAxis(startAngle, endAngle, M_PIf);
         bool cross270 = this->crossesAxis(startAngle, endAngle, M_PIf * 1.5);
 
-        //  if (the arc crosses the axis the min || max is where the arc intersects the axis
+        //  if (the arc crosses the axis the min or max is where the arc intersects the axis
         //  otherwise max/min is the arc endpoint
         float zmax = cross0 ? this->get_centre_point().z + this->get_radius() : std::max(this->start.z, this->end.z);
         float xmin = cross90 ? this->get_centre_point().x - this->get_radius() : std::min(this->start.x, this->end.x);
@@ -237,7 +235,6 @@ std::vector<Point> Segment::intersect_line_line(Segment seg, bool extend = false
     Point a2 = this->end;
     Point b1 = seg.start;
     Point b2 = seg.end;
-    // intersect = false
     std::vector<Point> pts;
 
     float ua_t = (b2.x - b1.x) * (a1.z - b1.z) - (b2.z - b1.z) * (a1.x - b1.x);
@@ -251,7 +248,7 @@ std::vector<Point> Segment::intersect_line_line(Segment seg, bool extend = false
 
     if (((0 <= ua && ua <= 1) && (0 <= ub && ub <= 1)) || extend)
     {
-        // intersect = true
+        // intersect true
         Point pt = Point(a1.x + ua * (a2.x - a1.x), a1.z + ua * (a2.z - a1.z));
         pts.push_back(pt);
     }
@@ -289,10 +286,6 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
     float r = circle.get_radius();
     Point a1 = line.start;
     Point a2 = line.end;
-    // intersect = false
-    //  pt = Point()
-    // pts = []
-    // ptsout = []
 
     if (line.get_length() == 0)
     {
@@ -331,18 +324,13 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
 
 std::vector<Point> Segment::intersect_circle_circle(Segment seg, bool extend = false)
 {
-    // Determine intersections between self && seg when both are arc segments//
-    //  ref http://paulbourke.net/geometry/circlesphere/
+    // Determine intersections between self and seg when both are arc segments//
 
     std::vector<Point> pts;
-
     Point c1 = this->get_centre_point();
     float r1 = this->get_radius();
     Point c2 = seg.get_centre_point();
     float r2 = seg.get_radius();
-    // intersect = false
-    // pts = []
-    // ptsout = []
 
     //  Determine actual distance between circle centres
     float c_dist = c1.distance_to(c2);
@@ -368,7 +356,7 @@ std::vector<Point> Segment::intersect_circle_circle(Segment seg, bool extend = f
     //  get the chord distance
     float a = (pow(r1, 2) - pow(r2, 2) + pow(c_dist, 2)) / (2 * c_dist);
 
-    //  A**2 + B**2 = C**2 h**2 + a**2 = r1**2 theref||e:
+    //  A**2 + B**2 = C**2 h**2 + a**2 = r1**2 therefore:
     float h = sqrt(pow(r1, 2) - pow(a, 2));
     Point p = c1.lerp(c2, a / c_dist);
     float b = h / c_dist;
@@ -421,12 +409,6 @@ bool Segment::point_on_segment(Point point)
             return false;
         }
 
-        //  print('point_on_segment', pnt_ang, 'X:', point.x, 'Y:', point.Y, 'Z:', point.z)
-        //  print('point_on_segment arc:, sa:',sa, 'ea:', ea)
-        //  print("centre point", c.x, c.z)
-
-        //  TODO: There must be a slicker way to Determine if (the point is on the arc. Current method good for debug.
-
         if (this->bulge > 0)
         {
             if (sa < ea)
@@ -470,4 +452,32 @@ bool Segment::point_on_segment(Point point)
     }
 
     return false;
+}
+
+float Segment::distance_to_point(Point point){
+
+    float APx = point.x - start.x;
+    float APy = point.z - start.z;
+    float ABx = end.x - start.x;
+    float ABy = end.z  - start.z;
+
+    float magAB2 = ABx * ABx + ABy * ABy;
+    float ABdotAP = ABx * APx + ABy * APy;
+    float t = ABdotAP / magAB2;
+
+    // check if the point is < start or > end
+    if (t > 0.0 && t < 1.0){
+        float x = start.x + ABx * t;
+        float z = start.z + ABy * t;
+        Point p = Point(x, z);
+        return p.distance_to(point); 
+    }
+    
+    if (t < 0){
+        return start.distance_to(point); 
+    }
+
+    return end.distance_to(point); 
+
+    //TODO: Support arcs
 }

@@ -1,10 +1,9 @@
+#ifndef Point_H
+#define Point_H
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <vector>
-
-#ifndef Point_H
-#define Point_H
 
 class Point
 {

@@ -9,39 +9,48 @@ Quadtree::Quadtree()
 
 Quadtree::~Quadtree() {}
 
-void Quadtree::add_base_node(Point center, float width, float height) 
-{
+void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width, float height){
+    // Initialise the quadtree //
+    // depth is the current node depth
+    // basenode the the primary tree node
+
+    this->segment_group = segmentgroup;
     int depth = 0;
     Node bn = {center, width, height, depth};
     this->basenode = bn;
+}
+
+std::vector<Point> Quadtree::get_offset(float offset_value){
+    // return the points that represent the calculated offset //
+    this->offset = offset_value;
     this->conquer(this->basenode);
+    std::vector<Point> found_points;
+    //std::cout << "get offset: " << target << "\n";
+    std::vector<Point> point = this->query(this->basenode, found_points);
+    return this->sort_points(segment_group->get_segments()[0].start, found_points);
 }
 
 void Quadtree::conquer(Node &node){
     // Divide each node until the target precision is reached
     
-    node.sdv = this->sdv(node.center);
+    node.sdv = this->segment_group->sdv(node.center);
+    // std::cout << "sdv: " << node.sdv << "\n";
 
     if (node.depth >= 11){
         return;
     }
 
-    float stepover = 0.25;
-
-    if(node.sdv >= stepover && node.sdv <= stepover + 0.005){
+    if(node.sdv >= this->offset && node.sdv <= this->offset + 0.005){
         return;
     }
 
-    if (node.depth < 5  || this->node_could_contain(stepover, node)){
+    if (node.depth < 5  || this->node_could_contain(this->offset, node)){
         this->divide(node);
     }
 }
 
-
 void Quadtree::divide(Node &node){
-    // Divide (branch) this node by spawning four children nodes 
-
-    // std::cout << "Divide:" << node.depth << "\n";
+    // Divide this node by creating four child nodes //
 
     float cx = node.center.x;
     float cy = node.center.z;
@@ -76,9 +85,6 @@ void Quadtree::divide(Node &node){
 
     node.divided = true;
 
-    // std::cout << "Divided" << node.divided << "\n";
-    // std::cout << "Children:" << node.child_nodes.size() << "\n";
-
     for (auto &child : node.child_nodes)
     {  
         this->conquer(child);
@@ -86,7 +92,7 @@ void Quadtree::divide(Node &node){
 }
 
 bool Quadtree::node_could_contain(float offset, Node &node){
-
+    // check if the node could contain an a point at offset distance from the segments //
     if(node.sdv - node.height / 2 <= offset && node.sdv + node.height / 2 >= offset){
         return true;
     }
@@ -96,22 +102,54 @@ bool Quadtree::node_could_contain(float offset, Node &node){
     }
 
     return false;
-
 }
 
+std::vector<Point> Quadtree::sort_points(Point datum, std::vector<Point> &points){
+    // sort the point set into a ordered set of points starting from datum //
+    std::vector<Point> sorted_points;
+    int point_count = points.size();
+    Point target = datum;
+    int closest_index;
 
-std::vector<Point> Quadtree::get_offset(float target){
-    std::vector<Point> found_points;
-    return this->query(this->basenode, target, found_points);
+    int input_point_count = points.size();
+
+    while (points.size() != 0){
+        float dist = std::numeric_limits<float>::infinity();
+        int index = 0;
+        
+        for(index; index < points.size(); index++){
+            // find closest point
+            float target_to_point = target.distance_to(points[index]);
+
+            // std::cout << "point sorting: dist: " << dist << " index: " << index << std::endl;
+
+            if (target_to_point < dist){
+                closest_index = index;
+                dist = target_to_point;
+            }
+        }
+
+        // add closest point to sorted points
+        sorted_points.push_back(Point(points[closest_index].x, points[closest_index].z));
+        // remove point from points array
+        points.erase(points.begin() + closest_index);
+        // set target to last found point
+        target = sorted_points.back();
+    }
+
+    if( input_point_count != sorted_points.size()){
+        throw std::runtime_error("Quadtree error when ordering offset points");
+    }
+    return sorted_points;
 }
 
-std::vector<Point> Quadtree::query(Node &node, float target, std::vector<Point> &found_points){
-    // Find the points in the quadtree that are close to target value 
+std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &found_points){
+    // Find the points in the quadtree that are close to target value //
 
     float dist = node.sdv;
-    //std::cout << "query" << dist << "\n";
-    if (dist >= target && dist <= target + 0.0075){
-        // std::cout << "Point match" << dist << "\n";
+    // std::cout << "query: " << dist << "\n";
+    if (dist >= this->offset && dist <= this->offset + 0.0075){
+        //std::cout << "Point match" << dist << "\n";
         found_points.push_back(node.center);
     }
 
@@ -119,7 +157,7 @@ std::vector<Point> Quadtree::query(Node &node, float target, std::vector<Point> 
     if(node.divided){
         for (auto &child : node.child_nodes)
             {  
-                this->query(child, target, found_points);
+                this->query(child, found_points);
             }
     }
 
@@ -127,12 +165,13 @@ std::vector<Point> Quadtree::query(Node &node, float target, std::vector<Point> 
 }
 
 std::vector<Node> Quadtree::get_nodes(){
+    // return list of nodes //
     std::vector<Node> nodes;
     return this->query_nodes(this->basenode, nodes);
 }
 
 std::vector<Node> Quadtree::query_nodes(Node &node, std::vector<Node> &nodes){
-
+    // build list of nodes //
     nodes.push_back(node);
 
     if(node.divided){
@@ -143,138 +182,4 @@ std::vector<Node> Quadtree::query_nodes(Node &node, std::vector<Node> &nodes){
     }
 
     return nodes;
-}
-
-float Quadtree::sdv(Point point)
-{   
-    float x_min = 0.0; //StockBoundingBox.x_min;
-    float x_max = 25.0; //StockBoundingBox.x_max;
-
-    float z_min = -60.0; //StockBoundingBox.z_min;
-    float z_max = 25.0; //StockBoundingBox.z_max;
-
-    //std::vector<std::vector<float>> sdf;
-    float sdv;
-
-    bool inside = this->isInside(point);
-    float dist_clst_pnt = std::numeric_limits<float>::infinity(); 
-
-    // find closest point on the segment
-    for (int i = 1; i < this->points.size(); i++) {
-        Segment seg = {this->points[i-1], this->points[i]};
-        Point clst = this->closest(point, seg.start, seg.end);
-        float clst_dist = point.distance_to(clst);
-        dist_clst_pnt = std::min(clst_dist, dist_clst_pnt);
-    }
-
-    sdv = abs(dist_clst_pnt);
-    if (inside){
-        sdv = -sdv;
-    }
-
-    return sdv;
-}
-
-void Quadtree::add_point(float x, float z){
-    this->points.push_back(Point(x, z));
-}
-
-int Quadtree::point_count(){
-    return this->points.size();
-}
-
-Point Quadtree::closest(Point point, Point start, Point end){
-
-    float APx = point.x - start.x;
-    float APy = point.z - start.z;
-    float ABx = end.x - start.x;
-    float ABy = end.z  - start.z;
-
-    float magAB2 = ABx * ABx + ABy * ABy;
-    float ABdotAP = ABx * APx + ABy * APy;
-    float t = ABdotAP / magAB2;
-
-    // check if the point is < start or > end
-    if (t > 0.0 && t < 1.0){
-        float x = start.x + ABx * t;
-        float z = start.z + ABy * t;
-        Point p = Point(x, z);
-        return p; 
-    }
-    
-    if (t < 0){
-        return start;
-    }
-    //if (t > 1){
-        return end;
-    //}
-}
-
-int Quadtree::intersect(Segment a, Segment b){
-
-    Point a1 = a.start;
-    Point a2 = a.end;
-    Point b1 = b.start;
-    Point b2 = b.end;
-    bool intersect = false;
-    std::vector<Point> pts;
-
-    float ua_t = (b2.x - b1.x) * (a1.z - b1.z) - (b2.z - b1.z) * (a1.x - b1.x);
-    float ub_t = (a2.x - a1.x) * (a1.z - b1.z) - (a2.z - a1.z) * (a1.x - b1.x);
-    float u_b = (b2.z - b1.z) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.z - a1.z);
-
-    if (u_b == 0){
-        return 0;
-    }
-
-    float ua = ua_t / u_b;
-    float ub = ub_t / u_b;
-
-    if ((0 <= ua and ua <= 1) && (0 <= ub and ub <= 1)){
-        float x = a1.x + ua * (a2.x - a1.x);
-        float z = a1.z + ua * (a2.z - a1.z);
-        Point pt = Point(x, z);
-        pts.push_back(pt);
-    }
-
-    return pts.size();
-
-}
-
-bool Quadtree::isInside(Point point){
-    int intersections = 0;
-
-    // generate a ray to perform the crossing
-    float x = point.x;
-    float z = point.z + 150;
-    Point plstart = Point(x, z);
-    Segment projection_line = {plstart, point};
-    
-    for (int i = 1; i < this->points.size(); i++) {
-        
-        //// std::cout << "Intersect point" << i << "\n";
-        
-        Segment seg = {this->points[i-1], this->points[i]};
-        
-        // stop checking once past the point of interest
-        if (seg.start.z < point.z)
-        {
-            break;
-        }
-
-        //if (round(seg.start.x, 5) <= round(point.x, 5) and round(seg.end.x, 5) <= round(point.x, 5)){
-        //    continue;
-        //}
-            
-        int intersect_pnts = this->intersect(projection_line, seg);
-        intersections += intersect_pnts;
-    }
-
-    if (intersections % 2 == 0 && intersections > 0 || intersections == 0){
-        //even
-        return false;
-    }
-
-    //odd
-    return true;
 }
