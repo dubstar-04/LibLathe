@@ -162,6 +162,108 @@ class test_segment_group(unittest.TestCase):
         self.assertEqual(cmds[4].params, {'X': -97.0, 'Z': 0, 'F': 100})
     '''
 
+    def test_defeature(self):
+
+        # define tool shape
+        tool_point_1 = Point(0, 0)
+        tool_point_2 = Point(0, 5)
+        tool_point_3 = Point(5, 5)
+        tool_point_4 = Point(5, 0)
+
+        tool = SegmentGroup()
+        tool.add_segment(Segment(tool_point_1, tool_point_2))
+        tool.add_segment(Segment(tool_point_2, tool_point_3))
+        tool.add_segment(Segment(tool_point_3, tool_point_4))
+        tool.add_segment(Segment(tool_point_4, tool_point_1))
+
+        Pt1 = Point(0, 10)
+        Pt2 = Point(4.85643, -8.74157)
+        Pt3 = Point(9.5, -15.85)
+        Pt4 = Point(5.4, -22)
+        Pt5 = Point(5.4, -30)
+        Pt7 = Point(5.4, -40)
+        Pt8 = Point(13, -45)
+        Pt9 = Point(13, -48)
+        Pt10 = Point(0, -48)
+
+        sg = SegmentGroup()
+
+        sg.add_segment(Segment(Pt1, Pt2, 0.7739018038161916))
+        sg.add_segment(Segment(Pt2, Pt3))
+        sg.add_segment(Segment(Pt3, Pt4))
+        sg.add_segment(Segment(Pt4, Pt5, -0.7543428437659994))
+        sg.add_segment(Segment(Pt5, Pt7))
+        sg.add_segment(Segment(Pt7, Pt8))
+        sg.add_segment(Segment(Pt8, Pt9))
+        sg.add_segment(Segment(Pt9, Pt10))
+
+        part_boundbox = sg.boundbox()
+        stock_min = Point(part_boundbox.x_min, part_boundbox.z_min - 5)
+        stock_max = Point(part_boundbox.x_max + 5, part_boundbox.z_max + 5)
+        stock = BoundBox(stock_min, stock_max)
+
+        defeatured_group = sg.defeature(stock, tool, False)
+
+        self.assertTrue(defeatured_group.count() > 0)
+
+    def test_from_points(self):
+        points = [Point(100, 100), Point(0, 0), Point(100, -100)]
+        sg = SegmentGroup().from_points(points)
+        segs = sg.get_segments()
+        self.assertEqual(len(segs), 2)
+        self.assertEqual(segs[0].start.x, 100)
+        self.assertEqual(segs[0].start.z, 100)
+        self.assertEqual(segs[0].end.x, 0)
+        self.assertEqual(segs[0].end.z, 0)
+
+    def test_get_rdp(self):
+        points = [Point(100, 100), Point(30, 30), Point(31, 31), Point(0, 0), Point(10, 10), Point(15, 15), Point(100, -100)]
+        points_out = SegmentGroup().get_rdp(points, 0.1)
+        self.assertTrue(len(points_out) < len(points))
+
+    def test_sdv(self):
+        PartPt1 = Point(0, 0)
+        PartPt2 = Point(15, -5)
+        PartPt3 = Point(15, -15)
+        PartPt4 = Point(0, -20)
+
+        sg = SegmentGroup()
+
+        sg.add_segment(Segment(PartPt1, PartPt2))
+        sg.add_segment(Segment(PartPt2, PartPt3))
+        sg.add_segment(Segment(PartPt3, PartPt4))
+
+        self.assertEqual(sg.sdv(Point(0, 10)), 10)
+        self.assertEqual(sg.sdv(Point(10, -10)), -5)
+        self.assertEqual(sg.sdv(Point(20, -10)), 5)
+
+    def test_isInside(self):
+        PartPt1 = Point(0, 0)
+        PartPt2 = Point(15, -5)
+        PartPt3 = Point(15, -15)
+        PartPt4 = Point(0, -20)
+
+        sg = SegmentGroup()
+
+        sg.add_segment(Segment(PartPt1, PartPt2))
+        sg.add_segment(Segment(PartPt2, PartPt3))
+        sg.add_segment(Segment(PartPt3, PartPt4))
+
+        # inside
+        self.assertTrue(sg.isInside(Point(0, -1)))
+        self.assertTrue(sg.isInside(Point(10, -10)))
+        self.assertTrue(sg.isInside(Point(0, -19)))
+
+        # on the boundary
+        self.assertTrue(sg.isInside(Point(15, -10)))
+
+        # outside
+        self.assertFalse(sg.isInside(Point(0, 10)))
+        self.assertFalse(sg.isInside(Point(10, 10)))
+        self.assertFalse(sg.isInside(Point(16, -10)))
+        self.assertFalse(sg.isInside(Point(10, -30)))
+        
+
 
 if __name__ == '__main__':
     unittest.main()
