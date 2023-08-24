@@ -69,7 +69,7 @@ class test_segment(unittest.TestCase):
         self.arcSegment1Intersect = Segment(Point(5, 0), Point(12, 0))
         # interects arc segment 2
         self.arcSegment2Intersect = Segment(Point(4.40000, -22.00000), Point(4.40000, -30.00000))
-   
+
     def test_get_angle(self):
         angle = self.lineSegment1.get_angle()
         self.assertAlmostEqual(angle, math.pi, 5)
@@ -305,6 +305,15 @@ class test_segment(unittest.TestCase):
         # end point
         point = self.Pt2
         on_seg = self.arcSegment1.point_on_segment(point)
+        self.assertTrue(on_seg)
+
+        # Arc segment 2
+        point = Point(4.4, -29.5658)
+        on_seg = self.arcSegment2.point_on_segment(point)
+        self.assertTrue(on_seg)
+
+        point = Point(4.4, -22.4342)
+        on_seg = self.arcSegment2.point_on_segment(point)
         self.assertTrue(on_seg)
 
     def test_distance_to_point(self):
