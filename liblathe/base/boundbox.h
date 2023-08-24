@@ -1,7 +1,7 @@
-#include "point.h"
-
 #ifndef BoundBox_H
 #define BoundBox_H
+
+#include "point.h"
 
 class BoundBox
 {
