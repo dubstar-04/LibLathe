@@ -113,6 +113,9 @@ BoundBox Segment::get_boundbox()
 
 bool Segment::crossesAxis(float startAngle, float endAngle, float axisAngle)
 {
+    // check of the axis angle is between the start and end angles
+    // i.e. the arc crosses the axis
+
     float circle = M_PIf * 2;
     float referenceStartAngle = fmod((startAngle - axisAngle + circle), circle);
     float referenceEndAngle = fmod((endAngle - axisAngle + circle), circle);
@@ -261,6 +264,7 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
     // Determine intersections between self && seg when one is a line segment && one is an arc segment//
 
     std::vector<Point> pts;
+    // TODO: initialise segment using Segment() without the points and bulge
     Segment line = Segment(Point(), Point(), 0);
     Segment circle = Segment(Point(), Point(), 0);
 
@@ -308,15 +312,16 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
     float u1 = (-b + e) / (2 * a);
     float u2 = (-b - e) / (2 * a);
 
-    //  intersection
-    if (0 <= u1 && u1 <= 1 || extend)
-    {
-        pts.push_back(a1.lerp(a2, u1));
+    
+
+    Point point = a1.lerp(a2, u1);
+    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend){
+        pts.push_back(point);
     }
 
-    if (0 <= u2 && u2 <= 1 || extend)
-    {
-        pts.push_back(a1.lerp(a2, u2));
+    point = a1.lerp(a2, u2);
+    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend){
+        pts.push_back(point);
     }
 
     return pts;
@@ -404,54 +409,20 @@ bool Segment::point_on_segment(Point point)
         float pnt_ang = c.angle_to(point);
 
         //  if (the point isn't on the segment radius it's not a true intersection
-        if (Utils::roundoff(c.distance_to(point), 5) != Utils::roundoff(radius, 5))
+        if (Utils::roundoff(c.distance_to(point), 2) != Utils::roundoff(radius, 2))
         {
             return false;
         }
 
-        if (this->bulge > 0)
+        // if the point angle matches the start or end angles the point is on the arc
+        if(sa == pnt_ang || pnt_ang == ea)
         {
-            if (sa < ea)
-            {
-                // print('sa < ea - positive bulge')
-                if (pnt_ang >= sa && pnt_ang <= ea)
-                {
-                    return true;
-                }
-            }
-
-            if (sa > ea)
-            {
-                // print('sa > ea - positive bulge')
-                if (pnt_ang >= sa || pnt_ang <= ea)
-                {
-                    return true;
-                }
-            }
+            return true;
         }
-        else if (this->bulge < 0)
-        {
-            if (sa < ea)
-            {
-                // print('sa > ea - negative bulge')
-                if (pnt_ang <= sa || pnt_ang >= ea)
-                {
-                    return true;
-                }
-            }
 
-            if (sa > ea)
-            {
-                // print('sa > ea - negative bulge')
-                if (pnt_ang <= sa && pnt_ang >= ea)
-                {
-                    return true;
-                }
-            }
-        }
+        // check if the pnt_ang falls between the start and end angles
+        return this->crossesAxis(sa, ea, pnt_ang);
     }
-
-    return false;
 }
 
 float Segment::distance_to_point(Point point){
