@@ -296,13 +296,11 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
         return pts;
     }
 
-    //  print('r', r, 'c', c.x, c.z, 'a1', a1.x, a1.z, 'a2', a2.x, a2.z)
     float a = (a2.x - a1.x) * (a2.x - a1.x) + (a2.z - a1.z) * (a2.z - a1.z);
     float b = 2 * ((a2.x - a1.x) * (a1.x - c.x) + (a2.z - a1.z) * (a1.z - c.z));
     float cc = pow(c.x, 2) + pow(c.z, 2) + pow(a1.x, 2) + pow(a1.z, 2) - 2 * (c.x * a1.x + c.z * a1.z) - pow(r, 2);
 
     float deter = pow(b, 2) - 4 * a * cc;
-    //  print('deter', deter, a, b, cc, r)
     if (deter < 0)
     {
         return pts;

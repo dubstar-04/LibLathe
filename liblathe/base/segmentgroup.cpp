@@ -87,15 +87,12 @@
 
         BoundBox bb = this->boundbox();
         float height = bb.x_length() + 10;
-        float width = bb.z_length() + 10;
+        float width = bb.z_length(); //+ 10;
 
         Point center = Point( height / 2, bb.z_min + width / 2);
 
-        //std::cout << "quadtree: " << width << " " << height << " " << center.x << " " << center.z << std::endl;
         Quadtree qt = Quadtree();
-        //qt.add_segments(this->segments);
         qt.initialise(this, center, width, height);
-        //qt.add_base_node(center, width, height);
         std::vector<Point> offset = qt.get_offset(step_over);
 
         // attempt simplification
@@ -134,19 +131,18 @@
 
         points.push_back(start);
 
-            
+        float z_pos = start.z;
+        while (z_pos > z_min){
             // test for intersection at z with a single segment
             Segment test_segment = Segment(Point(x_max, z_pos), Point(x_min, z_pos));
-
             for(auto seg : this->segments){
                 //TODO: remove the bool false from the segment call
                 std::vector<Point> pts = test_segment.intersect(seg, false);
                 if (pts.size() > 0){
                     float x_pos = pts[0].x - resolution;
-                    // std::cout << " defeature " << x_pos << " " << z_pos << std::endl;
                     while (x_pos < (pts[0].x + resolution)){
                         Point iteration_position = Point(x_pos, z_pos);
-                        SegmentGroup tool_shape = tool.add(iteration_position); // = tool.get_shape_group(iteration_position);
+                        SegmentGroup tool_shape = tool.add(iteration_position);
                         if (!intersects_group(tool_shape)){
                             
                             // if allow_grooving is false
@@ -163,7 +159,7 @@
                         x_pos += resolution * 0.5;
                     }
                     break;
-                }
+                } 
             }
 
             z_pos -= resolution;
@@ -177,11 +173,10 @@
 
 SegmentGroup SegmentGroup::add(Point point){
     // add point to each segment of the segment group //
-
+    // TODO: this could be done in segment using the add method of the point class
     SegmentGroup out;
 
     for(auto seg : this->segments){
-
         Point start = Point(seg.start.x + point.x, seg.start.z + point.z);
         Point end = Point(seg.end.x + point.x, seg.end.z + point.z);
         Segment new_seg = Segment(start, end);
@@ -225,7 +220,7 @@ void SegmentGroup::rdp(std::vector<Point> &points, float tolerance, std::vector<
 	size_t end = points.size()-1;
 	for(size_t i = 1; i < end; i++)
 	{
-		double d = Segment(points[0], points[end]).distance_to_point(points[i]); //PerpendicularDistance(points[i], points[0], points[end]);
+		double d = Segment(points[0], points[end]).distance_to_point(points[i]);
 		if (d > dmax)
 		{
 			index = i;
@@ -292,7 +287,7 @@ float SegmentGroup::sdv(Point point)
 }
 
 bool SegmentGroup::isInside(Point point){
-    // determin in point is inside the segments //
+    // determine if point is inside the segmentgroup //
     int intersections = 0;
 
     // generate a ray to perform the crossing

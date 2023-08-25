@@ -25,7 +25,6 @@ std::vector<Point> Quadtree::get_offset(float offset_value){
     this->offset = offset_value;
     this->conquer(this->basenode);
     std::vector<Point> found_points;
-    //std::cout << "get offset: " << target << "\n";
     std::vector<Point> point = this->query(this->basenode, found_points);
     return this->sort_points(segment_group->get_segments()[0].start, found_points);
 }
@@ -34,7 +33,6 @@ void Quadtree::conquer(Node &node){
     // Divide each node until the target precision is reached
     
     node.sdv = this->segment_group->sdv(node.center);
-    // std::cout << "sdv: " << node.sdv << "\n";
 
     if (node.depth >= 11){
         return;
@@ -121,8 +119,6 @@ std::vector<Point> Quadtree::sort_points(Point datum, std::vector<Point> &points
             // find closest point
             float target_to_point = target.distance_to(points[index]);
 
-            // std::cout << "point sorting: dist: " << dist << " index: " << index << std::endl;
-
             if (target_to_point < dist){
                 closest_index = index;
                 dist = target_to_point;
@@ -147,13 +143,10 @@ std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &found_points)
     // Find the points in the quadtree that are close to target value //
 
     float dist = node.sdv;
-    // std::cout << "query: " << dist << "\n";
     if (dist >= this->offset && dist <= this->offset + 0.0075){
-        //std::cout << "Point match" << dist << "\n";
         found_points.push_back(node.center);
     }
 
-    //std::cout << "query divided: " << node.divided << "\n";
     if(node.divided){
         for (auto &child : node.child_nodes)
             {  
