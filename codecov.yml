@@ -4,6 +4,8 @@ codecov:
 
 ignore:
   - "tests"
+  - "extern"
+  - "examples"
   - "setup.py" 
   - "publish.py" 
 
