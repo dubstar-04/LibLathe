@@ -2,7 +2,6 @@
 import os
 import sys
 import time
-from PIL import Image, ImageDraw, ImageFont
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
@@ -17,7 +16,7 @@ from liblathe.debug.debug import Debug
 
 start_time = time.time()
 
-def quadtree_test():
+def quadtree_example():
 
     # add shape points
     Pt1 = Point(0, 10)
@@ -114,4 +113,5 @@ def quadtree_test():
 
     Debug().draw(segment_groups)
 
-quadtree_test()
+
+quadtree_example()
