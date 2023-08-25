@@ -8,9 +8,17 @@ class Utils
         Utils();
         ~Utils();
 
-        static float roundoff(float value, int prec){
+        static float roundoff(float value, int prec)
+        {
+            // round value to precision
             float pow_10 = pow(10, prec);
             return round(value * pow_10) / pow_10;
+        }
+
+        static bool compare_floats(float A, float B, float prec = 0.1)
+        {
+            // check if A and B are the same within precision
+            return (fabs(A - B) < prec);
         }
 
 };
