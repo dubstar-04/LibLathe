@@ -8,11 +8,11 @@ parentFolder = os.path.dirname(opFolder)
 sys.path.append(parentFolder)
 
 from liblathe.op.face import FaceOP
-from liblathe.base.command import Command
+from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.base.tool import Tool
+from liblathe.tool.tool import Tool
 
 
 class test_FaceOP(unittest.TestCase):
@@ -23,14 +23,14 @@ class test_FaceOP(unittest.TestCase):
         # Define Part Geometry
         part_segments = []
 
-        PartPt1 = Point(0, 0, 10)
-        PartPt2 = Point(-5, 0, -9)
-        PartPt3 = Point(-9.5, 0, -15.85)
-        PartPt4 = Point(-5.4, 0, -22)
-        PartPt5 = Point(-5.4, 0, -40)
-        PartPt6 = Point(-13, 0, -45)
-        PartPt7 = Point(-13, 0, -48)
-        PartPt8 = Point(0, 0, -48)
+        PartPt1 = Point(0, 10)
+        PartPt2 = Point(5, -9)
+        PartPt3 = Point(9.5, -15.85)
+        PartPt4 = Point(5.4, -22)
+        PartPt5 = Point(5.4, -40)
+        PartPt6 = Point(13, -45)
+        PartPt7 = Point(13, -48)
+        PartPt8 = Point(0, -48)
 
         part_segments.append(Segment(PartPt1, PartPt2, -0.75))
         part_segments.append(Segment(PartPt2, PartPt3))
@@ -41,8 +41,8 @@ class test_FaceOP(unittest.TestCase):
         part_segments.append(Segment(PartPt7, PartPt8))
 
         # Define stock bounds
-        stockPt1 = Point(0, 0, 15)
-        stockPt2 = Point(-25, 0, -55)
+        stockPt1 = Point(0, 15)
+        stockPt2 = Point(-25, -55)
         stock_boundbox = BoundBox(stockPt1, stockPt2)
 
         # set feed rate to test

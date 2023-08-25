@@ -8,11 +8,11 @@ parentFolder = os.path.dirname(opFolder)
 sys.path.append(parentFolder)
 
 from liblathe.op.profile import ProfileOP
-from liblathe.base.command import Command
+from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.base.tool import Tool
+from liblathe.tool.tool import Tool
 
 
 class test_ProfileOP(unittest.TestCase):
@@ -23,21 +23,21 @@ class test_ProfileOP(unittest.TestCase):
         # Define Part Geometry
         part_segments = []
 
-        PartPt1 = Point(0, 0, 10)
-        PartPt2 = Point(-5, 0, -9)
-        PartPt3 = Point(-9.5, 0, -15.85)
-        PartPt4 = Point(-5.4, 0, -22)
-        PartPt5 = Point(-5.4, 0, -30)
-        PartPt6 = Point(-5.4, 0, -35)
-        PartPt7 = Point(-5.4, 0, -40)
-        PartPt8 = Point(-13, 0, -45)
-        PartPt9 = Point(-13, 0, -48)
-        PartPt10 = Point(0, 0, -48)
+        PartPt1 = Point(0, 10)
+        PartPt2 = Point(5, -9)
+        PartPt3 = Point(9.5, -15.85)
+        PartPt4 = Point(5.4, -22)
+        PartPt5 = Point(5.4, -30)
+        PartPt6 = Point(5.4, -35)
+        PartPt7 = Point(5.4, -40)
+        PartPt8 = Point(13, -45)
+        PartPt9 = Point(13, -48)
+        PartPt10 = Point(0, -48)
 
-        part_segments.append(Segment(PartPt1, PartPt2, -0.75))
+        part_segments.append(Segment(PartPt1, PartPt2, 0.75))
         part_segments.append(Segment(PartPt2, PartPt3))
         part_segments.append(Segment(PartPt3, PartPt4))
-        part_segments.append(Segment(PartPt4, PartPt5, 0.25))
+        part_segments.append(Segment(PartPt4, PartPt5, -0.25))
         part_segments.append(Segment(PartPt5, PartPt6))
         part_segments.append(Segment(PartPt6, PartPt7))
         part_segments.append(Segment(PartPt7, PartPt8))
@@ -45,8 +45,8 @@ class test_ProfileOP(unittest.TestCase):
         part_segments.append(Segment(PartPt9, PartPt10))
 
         # Define stock bounds
-        stockPt1 = Point(0, 0, 15)
-        stockPt2 = Point(-25, 0, -55)
+        stockPt1 = Point(0, 15)
+        stockPt2 = Point(25, -55)
         stock_boundbox = BoundBox(stockPt1, stockPt2)
 
         # set feed rate to test
@@ -71,7 +71,7 @@ class test_ProfileOP(unittest.TestCase):
         self.op.add_part_edges(part_segments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
-        tool.set_rotation(45)
+        #tool.set_rotation(45)
         self.op.add_tool(tool)
 
     def test_get_gcode(self):
