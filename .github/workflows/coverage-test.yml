@@ -21,8 +21,7 @@ jobs:
           pip install pytest
           pip install pytest-cov
           pip install Pillow
-          pip install pybind11_tests
-          pytest --cov=./ --cov-report=xml --ignore=extern/pybind11
+          pytest --cov=./ --cov-report=xml --ignore=extern
           
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
