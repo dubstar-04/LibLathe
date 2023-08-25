@@ -14,6 +14,7 @@ from liblathe.tool.tool import Tool
 
 from liblathe.debug.debug import Debug
 
+
 def defeature_test():
     sg = SegmentGroup()
     sg.add_segment(Segment(Point(0.000000, 0.000000), Point(14.000000, 0.000000), 0.000000))
@@ -41,7 +42,7 @@ def defeature_test():
 
     defeatured_group = sg.defeature(stock, tool.get_shape_group(), True)
 
-    Debug().draw([sg, defeatured_group]) #, tool.get_shape_group()])
+    Debug().draw([sg, defeatured_group])
 
 
 defeature_test()

@@ -34,8 +34,6 @@ class Debug:
 
         width = int(z_len + 10) * scale
         height = int(x_len + 10) * scale
-
-        print('size', width, height)
         
         # creating new Image object
         img = Image.new("RGB", (width, height))

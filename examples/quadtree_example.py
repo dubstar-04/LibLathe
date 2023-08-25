@@ -13,6 +13,8 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.boundbox import BoundBox
 
+from liblathe.debug.debug import Debug
+
 start_time = time.time()
 
 def quadtree_test():
@@ -100,43 +102,16 @@ def quadtree_test():
 
     print('defeatured group size', defeatured_group.count())
 
-    ## offset_group = defeatured_group.offset(1)
-    # print('offset group size: ', offset_group.count())
-
     offset_time = time.time()
     print("Offset time: ", offset_time - init_time)
 
-    show = True
-    if show:
-        scale = 20
-        width = int(part_boundbox.z_length() + 10) * scale
-        height = int(part_boundbox.x_length() + 10) * scale
+    segment_groups = []
+    segment_groups.append(sg)
+    segment_groups.append(defeatured_group)
 
-        print('size', width, height)
-        
-        # creating new Image object
-        img = Image.new("RGB", (width, height))
+    for i in range(1, 5, 1):
+        segment_groups.append(defeatured_group.offset(i))
 
-        # create rectangle image
-        img1 = ImageDraw.Draw(img)
-
-        image_offset = 50
-
-        for seg in sg.get_segments():
-            # print('start', seg.start.x, seg.start.z, " end ", seg.end.x, seg.end.z)
-            img1.line([(seg.start.z + image_offset) * scale, seg.start.x* scale, (seg.end.z + image_offset) * scale, seg.end.x* scale], fill="#fce303", width=1)
-
-        for seg in defeatured_group.get_segments():
-            # print('start', seg.start.x, seg.start.z, " end ", seg.end.x, seg.end.z)
-            img1.line([(seg.start.z + image_offset) * scale, seg.start.x* scale, (seg.end.z + image_offset) * scale, seg.end.x* scale], fill="#fc0303", width=2)
-
-        for i in range(1, 5, 1):
-            offset_group = defeatured_group.offset(i)
-            print('offset group size: ', offset_group.count())
-            for seg in offset_group.get_segments():
-                # print('start', seg.start.x, seg.start.z, " end ", seg.end.x, seg.end.z)
-                img1.line([(seg.start.z + image_offset) * scale, seg.start.x* scale, (seg.end.z + image_offset) * scale, seg.end.x* scale], fill="#03fc5e", width=2)
-
-        img.show()
+    Debug().draw(segment_groups)
 
 quadtree_test()
