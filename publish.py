@@ -51,7 +51,7 @@ else:
 
 # create the python package
 setup_file = os.path.join(__dir__, "setup.py")
-os.system("python %s sdist" % setup_file)
+os.system("python3 %s sdist" % setup_file)
 
 # install twine
 os.system("pip3 install twine")
@@ -60,10 +60,10 @@ if mode == "0" or mode == "1":
     # upload the file to the selected index
     if testing:
         print('publish to https://test.pypi.org/')
-        os.system("python -m twine upload --repository testpypi dist/*")
+        os.system("python3 -m twine upload --repository testpypi dist/*")
     else:
         print('publish to https://pypi.org/')
-        os.system("python -m twine upload --repository pypi dist/*")
+        os.system("python3 -m twine upload --repository pypi dist/*")
 
 
 dist = os.path.join(__dir__, "dist")

@@ -1,9 +1,20 @@
+
+
+
 #ifndef Point_H
 #define Point_H
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <vector>
+
+#ifndef M_PIf
+#define M_PIf (3.14159265358979323846)
+#endif
+
+#ifndef M_PI_2f
+#define M_PI_2f (3.14159265358979323846 * 0.5)
+#endif
 
 class Point
 {
