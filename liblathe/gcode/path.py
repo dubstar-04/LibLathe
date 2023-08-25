@@ -1,14 +1,12 @@
-from liblathe.base.boundbox import BoundBox
 from liblathe.gcode.command import Command
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.base.segmentgroup import SegmentGroup
+
 
 class Path:
     """Container Group for gcode path commands"""
 
     def __init__(self):
-        #self.op = None
         self.commands = []
 
         cmd = Command('G18')  # xz plane
@@ -89,7 +87,7 @@ class Path:
         segments = segment_group.get_segments()
 
         for seg in segments:
-            min_x_retract = segment_group.boundbox().x_max #self.get_min_retract_x(seg, segment_group)
+            min_x_retract = segment_group.boundbox().x_max  # self.get_min_retract_x(seg, segment_group)
             x_retract = min_x_retract + operation.step_over * operation.finish_passes
             z_retract = segments[0].start.z
 
@@ -102,8 +100,6 @@ class Path:
 
             # handle line segments
             if seg.bulge == 0:
-
-                
                 # handle unconnected segments
                 if not self.previous_segment_connected(segments, seg) and segments.index(seg) != 0:
                     pt = get_pos(seg.start)
@@ -141,7 +137,7 @@ class Path:
             # handle the lead out at the end of the segmentgroup
             if segments.index(seg) == len(segments) - 1:
                 pt = get_pos(seg.end)
-                #TODO: Remove the F parameter from rapid moves
+                # TODO: Remove the F parameter from rapid moves
                 params = {'X': x_retract, 'Z': pt.z, 'F': operation.hfeed}
                 rapid = Command('G0', params)
                 self.commands.append(rapid)

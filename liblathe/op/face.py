@@ -1,5 +1,3 @@
-import math
-
 import liblathe.op.base
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -13,7 +11,7 @@ class FaceOP(liblathe.op.base.BaseOP):
     def generate_path(self):
         """Generate the path for the profile operation"""
         part_boundbox = self.part_segment_group.boundbox()
-        
+
         x_min = self.min_dia * 0.5
         x_max = self.stock.x_max + self.extra_dia * 0.5 + self.clearance
         z_min = part_boundbox.z_max + self.stock_to_leave

@@ -1,9 +1,8 @@
 # Add LibLathe is in the Python Path
 import os
 import sys
-import time
 import math
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 
 import random
@@ -12,10 +11,8 @@ thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
-from liblathe.base.segmentgroup import SegmentGroup
+
 from liblathe.base.point import Point
-from liblathe.base.segment import Segment
-from liblathe.base.boundbox import BoundBox
 
 
 class Debug:
@@ -122,7 +119,7 @@ class Debug:
         path_profile = Part.makeCompound(part_edges)
         try:
             FreeCAD.ActiveDocument.removeObject(name)
-        except:
+        except ImportError:
             pass
         finally:
             Part.show(path_profile, name)
@@ -132,8 +129,4 @@ class Debug:
         print('sg = SegmentGroup()')
         for segment in segmentgroup.get_segments():
             print('sg.add_segment(Segment(Point({:f}, {:f}), Point({:f}, {:f}), {:f}))'
-                  .format(  segment.start.x,
-                            segment.start.z,
-                            segment.end.x,
-                            segment.end.z,
-                            segment.bulge))
+                  .format(segment.start.x, segment.start.z, segment.end.x, segment.end.z, segment.bulge))

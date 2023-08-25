@@ -7,7 +7,6 @@ from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
 from liblathe.gcode.path import Path
-from liblathe.debug.debug import Debug
 
 # create a namedtuple to hold intersection data
 Intersection = namedtuple('Intersection', 'point, seg')
@@ -32,7 +31,7 @@ class RoughOP(liblathe.op.base.BaseOP):
         x_min = self.min_dia * 0.5
         x_max = math.ceil(self.stock.x_length() + self.extra_dia * 0.5)
 
-        # The roughing boundary may have a small x delta from 0 due to being offset. consider it when calculating the x_min pos. 
+        # The roughing boundary may have a small x delta from 0 due to being offset. consider it when calculating the x_min pos.
         roughing_boundary_x = roughing_boundary.get_segments()[0].start.x
         # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
         # TODO: This is a bit hacky, is there a better way?
@@ -40,8 +39,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         # work from 0 to x_min creating roughing passes
         while x_pos < x_max:
             # check if the roughing pass start is outside the stock
-            #boundary_z = self.stock.z_max + 5  #roughing_boundary.z_at_x(x_pos)
-            #if boundary_z and round(boundary_z, 5) >= round(self.stock.z_max, 5):
+            # boundary_z = self.stock.z_max + 5  #roughing_boundary.z_at_x(x_pos)
+            # if boundary_z and round(boundary_z, 5) >= round(self.stock.z_max, 5):
             #    x_pos += self.step_over
             #    continue
 

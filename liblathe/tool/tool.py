@@ -5,8 +5,6 @@ from liblathe.base.point import Point
 from liblathe.base.segmentgroup import SegmentGroup
 from liblathe.base.segment import Segment
 
-from liblathe.debug.debug import Debug
-
 
 class ToolOri(Enum):
     X = 0
@@ -179,7 +177,7 @@ class Tool:
                 edge_length = shapeSize[shape][edge_length]
                 # print("shape Size: ", edgeedge_length)
                 return edge_length
-            except(KeyError):
+            except (KeyError):
                 raise Warning("Tool length code not valid")
         else:
             raise Warning("Tool shape not valid")
@@ -208,7 +206,7 @@ class Tool:
             radius = noseRadius[radius]
             # print("nose radius: ", radius)
             return radius
-        except(KeyError):
+        except (KeyError):
             raise Warning("Tool radius not valid")
 
     def get_cutting_direction(self):
@@ -225,27 +223,26 @@ class Tool:
         Return the tool rotation for this tool
         """
         return self.tool_rotation
-    
-    
+
     def get_shape_group(self):
         """
         Return a segment group for the shape
         """
         # Based on D shaped tool
-        #print('tip angle', self.tip_angle)
-        #print('rotation', self.tool_rotation)
+        # print('tip angle', self.tip_angle)
+        # print('rotation', self.tool_rotation)
         shape_group = SegmentGroup()
-        ang = (270 - self.tip_angle / 2) # - self.tool_rotation
-        #print('ang', ang)
+        ang = (270 - self.tip_angle / 2)  # - self.tool_rotation
+        # print('ang', ang)
         start_point = Point()
         pt2 = start_point.project(math.radians(ang), self.edge_length)
 
         ang += self.tip_angle
-        #print('ang', ang)
+        # print('ang', ang)
         pt3 = pt2.project(math.radians(ang), self.edge_length)
 
         ang += 180 - self.tip_angle
-        #print('ang', ang)
+        # print('ang', ang)
         pt4 = pt3.project(math.radians(ang), self.edge_length)
 
         seg1 = Segment(start_point, pt2)

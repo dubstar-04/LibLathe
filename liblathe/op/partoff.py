@@ -14,7 +14,7 @@ class PartoffOP(liblathe.op.base.BaseOP):
         self.tool_paths = []
 
         toolWidth = self.tool.get_width()
-        
+
         x_min = self.min_dia * 0.5
         x_max = self.stock.x_max + self.extra_dia * 0.5 + self.clearance
         z_min = self.stock.z_min - toolWidth

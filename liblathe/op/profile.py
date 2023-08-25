@@ -4,7 +4,6 @@ from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
 from liblathe.gcode.path import Path
-from liblathe.debug.debug import Debug
 
 
 class ProfileOP(liblathe.op.base.BaseOP):
@@ -29,7 +28,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
             if segmentgroup.intersects_group(internal_offset):
                 #Debug().draw([internal_offset, segmentgroup])
                 raise ValueError("Calculated profile path intersects part")
-            
+
             # add the segment group to the tool paths
             self.tool_paths.append(segmentgroup)
             # increment f_pass to the next pass
@@ -38,7 +37,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
     def add_leadin(self, segmentgroup):
         # get the first segment of the segment group
         segment = segmentgroup.get_segments()[0]
-        #TODO: handle leadin when profiling a mid portion of a part
+        # TODO: handle leadin when profiling a mid portion of a part
         # calculate the new z_pos with lead in
         if (segment.start.z < self.stock.z_max):
             z_pos = self.stock.z_max

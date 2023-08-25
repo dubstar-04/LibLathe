@@ -41,7 +41,7 @@ class BaseOP:
         """Return operations parameters"""
         return {'min_dia': self.min_dia, 'extra_dia': self.extra_dia, 'start_offset': self.start_offset,
                 'end_offset': self.end_offset, 'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
-                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed, 
+                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
                 'vfeed': self.vfeed, 'clearance': self.clearance}
 
     def get_gcode(self):
