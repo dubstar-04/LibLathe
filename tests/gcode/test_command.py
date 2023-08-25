@@ -3,9 +3,11 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(thisFolder)
+gcodeFolder = os.path.dirname(thisFolder)
+parentFolder = os.path.dirname(gcodeFolder)
 sys.path.append(parentFolder)
-from liblathe.base.command import Command
+
+from liblathe.gcode.command import Command
 
 
 class test_command(unittest.TestCase):
