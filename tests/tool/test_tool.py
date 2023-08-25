@@ -7,8 +7,8 @@ toolFolder = os.path.dirname(thisFolder)
 parentFolder = os.path.dirname(toolFolder)
 sys.path.append(parentFolder)
 
-from liblathe.tools.tool import Tool
-from liblathe.tools.tool import ToolOri
+from liblathe.tool.tool import Tool
+from liblathe.tool.tool import ToolOri
 
 
 class test_tool(unittest.TestCase):
