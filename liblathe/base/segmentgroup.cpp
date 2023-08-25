@@ -118,8 +118,21 @@
 
         std::vector<Point> points;
 
-        float z_pos = z_max;
-        while (z_pos > z_min){
+        // get start position
+        Point start = Point(0, this->boundbox().z_max); //segments[0].start;
+        SegmentGroup tool_shape = tool.add(start);
+
+        if(start.x > 0){
+            throw std::runtime_error("segment groups first segment must be at x = 0");
+        }
+
+        while (intersects_group(tool_shape)){
+            // move the tool along the z axis until it no longer intersects the part. 
+            start = start.add(Point(0, resolution));
+            tool_shape = tool.add(start);
+        }
+
+        points.push_back(start);
 
             
             // test for intersection at z with a single segment
