@@ -1,4 +1,11 @@
 from enum import Enum
+import math
+
+from liblathe.base.point import Point
+from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.base.segment import Segment
+
+from liblathe.debug.debug import Debug
 
 
 class ToolOri(Enum):
@@ -51,7 +58,7 @@ class Tool:
         if (isinstance(angle, int) or isinstance(angle, float)) and angle > 0 and angle < 90:
             self.tip_angle = angle
         else:
-            raise Warning("Tool rotation must be a number [0 - 90]")
+            raise Warning("Tool tip angle must be a number [0 - 90]")
 
     def set_edge_length(self, edge_length):
         """Set the tools edge edge_length"""
@@ -218,3 +225,39 @@ class Tool:
         Return the tool rotation for this tool
         """
         return self.tool_rotation
+    
+    
+    def get_shape_group(self):
+        """
+        Return a segment group for the shape
+        """
+        # Based on D shaped tool
+        #print('tip angle', self.tip_angle)
+        #print('rotation', self.tool_rotation)
+        shape_group = SegmentGroup()
+        ang = (270 - self.tip_angle / 2) # - self.tool_rotation
+        #print('ang', ang)
+        start_point = Point()
+        pt2 = start_point.project(math.radians(ang), self.edge_length)
+
+        ang += self.tip_angle
+        #print('ang', ang)
+        pt3 = pt2.project(math.radians(ang), self.edge_length)
+
+        ang += 180 - self.tip_angle
+        #print('ang', ang)
+        pt4 = pt3.project(math.radians(ang), self.edge_length)
+
+        seg1 = Segment(start_point, pt2)
+        seg2 = Segment(pt2, pt3)
+        seg3 = Segment(pt3, pt4)
+        seg4 = Segment(pt4, start_point)
+
+        shape_group.add_segment(seg1)
+        shape_group.add_segment(seg2)
+        shape_group.add_segment(seg3)
+        shape_group.add_segment(seg4)
+
+        # Debug().draw([shape_group])
+
+        return shape_group
