@@ -3,6 +3,8 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
+from liblathe.gcode.path import Path
+
 
 class PartoffOP(liblathe.op.base.BaseOP):
 
@@ -19,8 +21,8 @@ class PartoffOP(liblathe.op.base.BaseOP):
 
         # build list of segments
         segmentgroup = SegmentGroup()
-        startPt = Point(x_max, 0, z_min)
-        endPt = Point(x_min, 0, z_min)
+        startPt = Point(x_max, z_min)
+        endPt = Point(x_min, z_min)
         seg = Segment(startPt, endPt)
         segmentgroup.add_segment(seg)
 
@@ -29,8 +31,9 @@ class PartoffOP(liblathe.op.base.BaseOP):
     def generate_gcode(self):
         """Generate Gcode for the op segments"""
 
-        path = []
+        path = Path()
+
         for segmentgroup in self.tool_paths:
-            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            path.extend(finish)
-        return path
+            path.from_segment_group(self, segmentgroup)
+
+        return path.commands

@@ -1,4 +1,5 @@
 from liblathe.base.segmentgroup import SegmentGroup
+import math
 
 
 class BaseOP:
@@ -24,9 +25,8 @@ class BaseOP:
         self.vfeed = 50
         self.clearance = 3
 
-        self.leadin_angle = 270
-        self.leadout_angle = 315
-        # TODO: implement invert_x to pass to segment_group().to_commands()
+        self.leadin_angle = math.pi * 1.5
+        self.leadout_angle = math.pi * 1.75
 
     def set_params(self, params):
         """Set operations parameters"""
