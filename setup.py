@@ -1,7 +1,6 @@
 import re
 from pybind11.setup_helpers import Pybind11Extension, build_ext
-from distutils.core import setup #, Extension
-# from setuptools import setup, Extension
+from distutils.core import setup
 import warnings
 import sys
 import os
@@ -77,5 +76,6 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ],
 )
