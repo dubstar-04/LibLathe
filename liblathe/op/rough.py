@@ -60,7 +60,9 @@ class RoughOP(liblathe.op.base.BaseOP):
 
             if not intersections:
                 seg = path_line
-                segmentgroup.add_segment(seg)
+                # add passes with no intersections only if they're outside the part radius
+                if x_pos >= roughing_boundary.boundbox().x_max:
+                    segmentgroup.add_segment(seg)
 
             if len(intersections) == 1:
                 # Only one intersection, trim line to intersection.
