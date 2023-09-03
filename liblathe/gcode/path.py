@@ -11,21 +11,23 @@ class Path:
 
         cmd = Command('G18')  # xz plane
         self.commands.append(cmd)
+
+    def get_min_retract_x(self, segment, pass_segments, operation):
         """ returns the minimum x retract based on the current segments and the part_segments """
 
-        part_segments = part_segment_group.get_segments()
-        currentIdx = part_segments.index(segment)
+        # part_segments = part_segment_group.get_segments()
+        currentIdx = pass_segments.index(segment)
         x_values = []
 
         # get the x_max from the current pass segments
-        for idx, seg in enumerate(self.segments):
+        for idx, seg in enumerate(pass_segments):
             x_values.extend([seg.get_boundbox().x_min, seg.get_boundbox().x_max])
             if idx == currentIdx:
                 break
 
         # get the x_max from the part segments up to the z position of the current segment
         seg_z_max = segment.get_boundbox().z_max
-        for part_seg in part_segments:
+        for part_seg in operation.part_segment_group.get_segments():
 
             part_seg_z_max = part_seg.get_boundbox().z_max
             x_values.extend([part_seg.get_boundbox().x_min, part_seg.get_boundbox().x_max])
@@ -71,7 +73,7 @@ class Path:
         segments = segment_group.get_segments()
 
         for seg in segments:
-            min_x_retract = segment_group.boundbox().x_max  # self.get_min_retract_x(seg, segment_group)
+            min_x_retract = self.get_min_retract_x(seg, segments, operation)
             x_retract = min_x_retract + operation.step_over * operation.finish_passes
             z_retract = segments[0].start.z
 
