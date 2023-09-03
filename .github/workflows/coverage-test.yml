@@ -15,13 +15,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@master
         with:
-          python-version: 3.8
+          python-version: 3.10
       - name: Generate coverage report
         run: |
           pip install pytest
           pip install pytest-cov
           pip install Pillow
-          pytest --cov=./ --cov-report=xml
+          pytest --cov=./ --cov-report=xml --ignore=extern
           
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1

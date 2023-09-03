@@ -3,8 +3,10 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(thisFolder)
+opFolder = os.path.dirname(thisFolder)
+parentFolder = os.path.dirname(opFolder)
 sys.path.append(parentFolder)
+
 from liblathe.op.base import BaseOP
 
 

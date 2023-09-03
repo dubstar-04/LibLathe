@@ -3,10 +3,12 @@ import sys
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
-parentFolder = os.path.dirname(thisFolder)
+toolFolder = os.path.dirname(thisFolder)
+parentFolder = os.path.dirname(toolFolder)
 sys.path.append(parentFolder)
-from liblathe.base.tool import Tool
-from liblathe.base.tool import ToolOri
+
+from liblathe.tool.tool import Tool
+from liblathe.tool.tool import ToolOri
 
 
 class test_tool(unittest.TestCase):

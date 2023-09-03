@@ -106,3 +106,8 @@ venv.bak/
 #ide
 .vscode
 *.FCStd1
+*.cmake
+CMakeCache.txt
+*.check_cache
+CMakeFiles
+Makefile

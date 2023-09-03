@@ -1,4 +1,5 @@
 from liblathe.base.segmentgroup import SegmentGroup
+import math
 
 
 class BaseOP:
@@ -24,9 +25,8 @@ class BaseOP:
         self.vfeed = 50
         self.clearance = 3
 
-        self.leadin_angle = 270
-        self.leadout_angle = 315
-        # TODO: implement invert_x to pass to segment_group().to_commands()
+        self.leadin_angle = math.pi * 1.5
+        self.leadout_angle = math.pi * 1.75
 
     def set_params(self, params):
         """Set operations parameters"""
@@ -41,7 +41,7 @@ class BaseOP:
         """Return operations parameters"""
         return {'min_dia': self.min_dia, 'extra_dia': self.extra_dia, 'start_offset': self.start_offset,
                 'end_offset': self.end_offset, 'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
-                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed, 
+                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
                 'vfeed': self.vfeed, 'clearance': self.clearance}
 
     def get_gcode(self):
