@@ -11,22 +11,6 @@ class Path:
 
         cmd = Command('G18')  # xz plane
         self.commands.append(cmd)
-    
-    def z_at_x(self, x):
-        """get the z value at the first intersection at the given x position"""
-        boundbox = self.boundbox()
-        offset = boundbox.z_length()
-        start_pt = Point(x, 0, boundbox.z_max + offset)
-        end_pt = Point(x, 0, boundbox.z_min - offset)
-
-        line_segment = Segment(start_pt, end_pt)
-        for segment in self.get_segments():
-            intersect, pts = segment.intersect(line_segment)
-            if intersect:
-                return pts[0].z
-        return None
-
-    def get_min_retract_x(self, segment, part_segment_group):
         """ returns the minimum x retract based on the current segments and the part_segments """
 
         part_segments = part_segment_group.get_segments()
