@@ -19,8 +19,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         roughing_segment_group = self.part_segment_group.defeature(self.stock, self.tool.get_shape_group(), self.allow_grooving)
 
         self.clearing_paths = []
-        z_max = self.stock.z_max + self.start_offset + self.clearance
-        z_min = z_max - self.stock.z_length() - self.start_offset - self.clearance
+        z_max = self.stock.z_max + self.start_offset
+        z_min = self.stock.z_min + self.end_offset
 
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
