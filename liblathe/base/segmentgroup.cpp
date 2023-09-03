@@ -123,13 +123,15 @@
             throw std::runtime_error("segment groups first segment must be at x = 0");
         }
 
-        while (intersects_group(tool_shape)){
-            // move the tool along the z axis until it no longer intersects the part. 
-            start = start.add(Point(0, resolution));
-            tool_shape = tool.add(start);
-        }
+        if (this->boundbox().z_max < stock.z_max){
+            while (intersects_group(tool_shape)){
+                // move the tool along the z axis until it no longer intersects the part. 
+                start = start.add(Point(0, resolution));
+                tool_shape = tool.add(start);
+            }
 
-        points.push_back(start);
+            points.push_back(start);
+        }
 
         float z_pos = start.z;
         while (z_pos > z_min){
