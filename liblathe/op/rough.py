@@ -76,11 +76,13 @@ class RoughOP(liblathe.op.base.BaseOP):
             if len(intersections) > 1:
                 # more than one intersection
                 # add the end points of the pass to generate new segments
-                intersection = Intersection(pt1, None)
-                intersections.insert(0, intersection)
-
-                intersection2 = Intersection(pt2, None)
-                intersections.append(intersection2)
+                if not roughing_boundary.isInside(pt1):
+                    intersection = Intersection(pt1, None)
+                    intersections.insert(0, intersection)
+          
+                if not roughing_boundary.isInside(pt2):
+                    intersection2 = Intersection(pt2, None)
+                    intersections.append(intersection2)
 
                 #  sort the a list of intersections by their z position
                 intersections = sorted(intersections, key=lambda p: p.point.z, reverse=True)
