@@ -15,25 +15,23 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.op.profile import ProfileOP
 from liblathe.base.segment import Segment
-from liblathe.base.plot import Plot
-from liblathe.base.tool import Tool
+from liblathe.debug.plot import Plot
+from liblathe.debug.debug import Debug
+from liblathe.tool.tool import Tool
+
 
 # Define Part Geometry
 part_segments = []
 
-PartPt1 = Point(0, 0)
-PartPt2 = Point(15, -5)
-PartPt3 = Point(15, -15)
-PartPt4 = Point(0, -20)
-
-part_segments.append(Segment(PartPt1, PartPt2))
-part_segments.append(Segment(PartPt2, PartPt3))
-part_segments.append(Segment(PartPt3, PartPt4))
-# part_segments.append(Segment(PartPt4, PartPt1))
+part_segments.append(Segment(Point(0.0, -100.0) ,Point(27.55372983370893, -100.0), 0.000000))
+part_segments.append(Segment(Point(27.55372983370893, -100.0) ,Point(27.55372983370893, -84.9468), 0.000000))
+part_segments.append(Segment(Point(27.55372983370893, -84.9468) ,Point(13.921180633708929, -76.288292), 0.000000))
+part_segments.append(Segment(Point(13.921180633708929, -76.288292) ,Point(13.921180633708929, -16.2313868), 0.000000))
+part_segments.append(Segment(Point(13.921180633708929, -16.2313868) ,Point(3.346250032354795e-13, 1.3652822516974084e-07), -0.3))
 
 # Define stock bounds
-stockPt1 = Point(0, 5)
-stockPt2 = Point(-20, -20)
+stockPt1 = Point(0, -150)
+stockPt2 = Point(50, 20)
 StockBoundingBox = BoundBox(stockPt1, stockPt2)
 
 # Define Operations Properties
@@ -61,6 +59,8 @@ profileOP.add_tool(tool)
 gcode = profileOP.get_gcode()
 plot = Plot()
 plot.backplot(gcode)
+
+Debug().draw([profileOP.part_segment_group])
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")
