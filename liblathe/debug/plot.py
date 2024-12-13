@@ -4,7 +4,7 @@ import os
 from PIL import Image, ImageDraw, ImageOps
 
 from liblathe.base.point import Point
-from liblathe.base.command import Command
+from liblathe.gcode.command import Command
 
 
 class Plot:
@@ -89,12 +89,12 @@ class Plot:
             segments = segment_group.get_segments()
 
             for seg in segments:
-                start = self._translate_point(Point(seg.start.Z, seg.start.X))
-                end = self._translate_point(Point(seg.end.Z, seg.end.X))
+                start = self._translate_point(Point(seg.start.z, seg.start.x))
+                end = self._translate_point(Point(seg.end.z, seg.end.x))
 
                 if seg.bulge != 0:
                     center_point = seg.get_centre_point()
-                    centre = self._translate_point(Point(center_point.Z, center_point.X))
+                    centre = self._translate_point(Point(center_point.z, center_point.x))
                     orientation = "CW"
 
                     if seg.bulge > 0:
@@ -143,16 +143,16 @@ class Plot:
 
     def drawline(self, start, end, colour):
         """ Add a line element to the drawing """
-        self.draw.line([(start.X, start.Y), (end.X, end.Y)], fill=colour, width=self.line_thickness)
+        self.draw.line([(start.x, start.z), (end.x, end.z)], fill=colour, width=self.line_thickness)
 
     def drawarc(self, start, end, centre, colour, orientation):
         """ Add an arc element to the drawing """
 
-        distance = self._get_distance(centre.X, centre.Y, start.X, start.Y)
+        distance = self._get_distance(centre.x, centre.z, start.x, start.z)
 
-        start_angle = self._get_angle(centre.X, centre.Y, start.X, start.Y)
-        end_angle = self._get_angle(centre.X, centre.Y, end.X, end.Y)
-        boundbox = [(centre.X - distance, centre.Y - distance), (centre.X + distance, centre.Y + distance)]
+        start_angle = self._get_angle(centre.x, centre.z, start.x, start.z)
+        end_angle = self._get_angle(centre.x, centre.z, end.x, end.z)
+        boundbox = [(centre.x - distance, centre.z - distance), (centre.x + distance, centre.z + distance)]
 
         if orientation == "CW":
             self.draw.arc(boundbox, end_angle, start_angle, fill=colour, width=self.line_thickness)
@@ -162,8 +162,8 @@ class Plot:
 
     def _translate_point(self, point):
         """ convert the supplied point to local coordinates"""
-        x = (point.X - self._max_x) * self.scale + self.x_offset
-        y = point.Y * self.scale + self.y_offset
+        x = (point.x - self._max_x) * self.scale + self.x_offset
+        y = point.z * self.scale + self.z_offset
 
         return Point(x, y)
 
@@ -207,7 +207,7 @@ class Plot:
         self.scale = self._image_size()
         # define the x and y offset required to translate input geometry to local coordinates - Centre in image for both x and y
         self.x_offset = math.floor(self.image_size[0] - ((self.image_size[0] - (abs(self._max_x - self._min_x) * self.scale)) / 2))
-        self.y_offset = math.floor((self.image_size[1] * 0.5))
+        self.z_offset = math.floor((self.image_size[1] * 0.5))
 
         if self.transparency:
             img = Image.new('RGBA', self.image_size, (255, 0, 0, 0))
