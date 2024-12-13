@@ -51,5 +51,5 @@ jobs:
       run: pip install .    
     - name: Test with pytest
       run: |
-        #pytest  --ignore=extern
-        python -m pytest --ignore=extern
+        pytest  --ignore=extern
+        #python -m pytest --ignore=extern
