@@ -111,3 +111,4 @@ CMakeCache.txt
 *.check_cache
 CMakeFiles
 Makefile
+*.gcode
