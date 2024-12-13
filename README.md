@@ -5,11 +5,18 @@ LibLathe is an opensource standalone python library for generating turning paths
 | :warning: WARNING: LibLathe is currently experimental / Proof of concept and only suitable for testing. |
 
 ## Build
-Liblathe is a python library with a C++ core. Liblathe core can be compiled using the following steps:
+Liblathe is a python library with a C++ core. Liblathe core can be compiled and tested inplace using the following steps:
 
-* cd liblathe
+* cd Liblathe
 * cmake .
 * make 
+
+### Local testing
+* python3 ./examples/defeature_example.py 
+
+## Instalation
+* python3 setup.py bdist_wheel
+* pip3 install <dist/*liblathe.whl>
 
 ## Examples 
 ### Facing:
