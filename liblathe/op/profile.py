@@ -12,6 +12,8 @@ class ProfileOP(liblathe.op.base.BaseOP):
         """Generate the path for the profile operation"""
         # get the defeature part profile
         profile_segment_group = self.part_segment_group.defeature(self.stock, self.tool.get_shape_group(), self.allow_grooving)
+        # internal segment group to check if intersects the part. use a small offset to reduce false positives
+        internal_offset = profile_segment_group.offset(-0.1)
         # define the base segment group using the stock to leave as a datum
         base_segment_group = profile_segment_group.offset(self.stock_to_leave)
         # add lead in to the profile path
@@ -22,9 +24,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
             segmentgroup = SegmentGroup()
             # generate the offset profile path
             segmentgroup.extend(base_segment_group.offset(self.step_over * f_pass))
-
-            # check if the generated pass intersects the part. use a small offset to reduce false positives
-            internal_offset = profile_segment_group.offset(-0.1)
+            # check if segement group intersect the part (internal offset)
             if segmentgroup.intersects_group(internal_offset):
                 #Debug().draw([internal_offset, segmentgroup])
                 raise ValueError("Calculated profile path intersects part")
