@@ -5,6 +5,7 @@ from PIL import Image, ImageDraw, ImageOps
 
 from liblathe.base.point import Point
 from liblathe.gcode.command import Command
+from liblathe.base.boundbox import BoundBox
 
 
 class Plot:
