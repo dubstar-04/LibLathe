@@ -3,17 +3,13 @@ import os
 import sys
 import math
 from PIL import Image, ImageDraw
-
-
 import random
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
 parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
-
 from liblathe.base.point import Point
-
 
 class Debug:
 
@@ -23,6 +19,8 @@ class Debug:
         z_len = 0
         x_len = 0
         z_min = 0
+
+        lineWidth = 3
 
         for segmentgroup in segmentgroups:
             z_len = max(z_len, segmentgroup.boundbox().z_length())
@@ -66,18 +64,20 @@ class Debug:
                     dz = end_point.z - center_point.z
                     end_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
                     if seg.bulge > 0:
-                        img1.arc(shape, start=start_angle, end=end_angle, fill=colour)
+                        img1.arc(shape, start=start_angle, end=end_angle, fill=colour, width=lineWidth)
                     if seg.bulge < 0:
-                        img1.arc(shape, start=end_angle, end=start_angle, fill=colour)
+                        img1.arc(shape, start=end_angle, end=start_angle, fill=colour, width=lineWidth)
                 else:
-                    img1.line([(seg.start.z + image_offset) * scale, seg.start.x * scale, (seg.end.z + image_offset) * scale, seg.end.x * scale], fill=colour, width=2)
+                    img1.line([(seg.start.z + image_offset) * scale, seg.start.x * scale, (seg.end.z + image_offset) * scale, seg.end.x * scale], fill=colour, width=lineWidth)
 
         img.show()
 
     def get_random_colour(self):
         """ return a random colour string"""
         r = random.randint(50, 255)
-        colour = '#{:02x}{:02x}{:02x}'.format(r, r, r)
+        g = random.randint(50, 255)
+        b = random.randint(50, 255)
+        colour = '#{:02x}{:02x}{:02x}'.format(r, g, b)
         return colour
     
     def create_freecad_shape(self, segmentgroup, name):
