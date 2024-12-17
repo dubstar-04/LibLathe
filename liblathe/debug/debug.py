@@ -70,7 +70,37 @@ class Debug:
                 else:
                     img1.line([(seg.start.z + image_offset) * scale, seg.start.x * scale, (seg.end.z + image_offset) * scale, seg.end.x * scale], fill=colour, width=lineWidth)
 
-        img.show()
+        
+    def drawQuadtree(self, nodes, segmentGroup):
+
+        bb = segmentGroup.boundbox()
+        height = bb.x_length() + 10
+        width = bb.z_length() + 10
+
+        scale = 50
+
+        # creating new Image object
+        img = Image.new("RGB", (int(width*scale), int(height*scale)))
+
+        # create rectangle image
+        img1 = ImageDraw.Draw(img)
+
+        image_offset = abs(bb.z_min)
+
+        self.drawSegmentGroup(img1, segmentGroup, image_offset, scale)
+    
+        for idx, node in enumerate(nodes):
+            x = int((node.center.z - node.width / 2 + image_offset) * scale)
+            x1 = int((node.center.z + node.width / 2 +  image_offset) * scale)
+            y = int((node.center.x - node.height / 2) * scale)
+            y1 = int((node.center.x + node.height / 2) * scale)
+            
+
+            shape = (x, y, x1, y1) 
+            color = "red" if node.sdv < 0 else "green" 
+            img1.rectangle(shape, fill=None, outline=color) 
+        
+        img.show() 
 
     def get_random_colour(self):
         """ return a random colour string"""
