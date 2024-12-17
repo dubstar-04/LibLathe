@@ -317,9 +317,14 @@ class test_segment(unittest.TestCase):
         self.assertTrue(on_seg)
 
     def test_distance_to_point(self):
+
         point = Point(10.73243, -9.97400)
         dist = self.lineSegment1.distance_to_point(point)
         self.assertAlmostEqual(dist, 4.24536, 4)
+
+        # TODO: remove this test when the arc support is removed from segement
+        dist = self.arcSegment1.distance_to_point(point)
+        self.assertAlmostEqual(dist, 4.65147, 4)
 
 
 if __name__ == '__main__':
