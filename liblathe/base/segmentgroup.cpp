@@ -311,7 +311,31 @@ bool SegmentGroup::isInside(Point point){
     // ensure that the ray starts outside the segments boundbox
     float z = this->boundbox().z_max + 10;
     Segment ray = Segment(Point(x, z), point);
-    
+
+    // TODO: consider is there is a better way to ensure the start and end are at X0
+    //  get a copy of the segment group
+    SegmentGroup segmentGroupCopy = this->copy();
+
+    // check the group starts at X0
+    if (segmentGroupCopy.get_segments().front().start.x != 0)
+    {
+        // add a new segment to fill between the group start and x = 0 //
+        Point end_point = segmentGroupCopy.get_segments().front().start;
+        Point start_point = Point(0, end_point.z);
+        Segment start_filler_segment = Segment(start_point, end_point);
+        segmentGroupCopy.insert_segment(start_filler_segment, 0);
+    }
+
+    // check the group end at X0
+    if (segmentGroupCopy.get_segments().back().end.x != 0)
+    {
+        // add a new segment to fill between the group end and x = 0 //
+        Point start_point = segmentGroupCopy.get_segments().back().end;
+        Point end_point = Point(0, start_point.z);
+        Segment end_filler_segment = Segment(start_point, end_point);
+        segmentGroupCopy.add_segment(end_filler_segment);
+    }
+
     // collect the number of times ray intersects the segments
    for( auto &segment : this->segments){
         std::vector<Point> pnts = ray.intersect(segment, false);
