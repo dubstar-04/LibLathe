@@ -10,6 +10,7 @@ parentFolder = os.path.dirname(thisFolder)
 sys.path.append(parentFolder)
 
 from liblathe.base.point import Point
+from liblathe.base.boundbox import BoundBox
 
 class Debug:
 
@@ -19,8 +20,6 @@ class Debug:
         z_len = 0
         x_len = 0
         z_min = 0
-
-        lineWidth = 3
 
         for segmentgroup in segmentgroups:
             z_len = max(z_len, segmentgroup.boundbox().z_length())
@@ -37,16 +36,24 @@ class Debug:
         img1 = ImageDraw.Draw(img)
 
         image_offset = abs(z_min) + 5
-
         for segmentgroup in segmentgroups:
+            self.drawSegmentGroup(img1, segmentgroup, image_offset, scale)
+        
+        img.show()
+
+
+    def drawSegmentGroup(self, img, segmentgroup, offset, scale):
+        
             colour = self.get_random_colour()
+            lineWidth = 3
+
             for seg in segmentgroup.get_segments():
                 if seg.bulge != 0:
                     radius = seg.get_radius()
                     center = seg.get_centre_point()
 
-                    z = (center.z - radius + image_offset) * scale
-                    z1 = (center.z + radius + image_offset) * scale
+                    z = (center.z - radius + offset) * scale
+                    z1 = (center.z + radius + offset) * scale
                     x = (center.x - radius) * scale
                     x1 = (center.x + radius) * scale
 
@@ -64,11 +71,11 @@ class Debug:
                     dz = end_point.z - center_point.z
                     end_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
                     if seg.bulge > 0:
-                        img1.arc(shape, start=start_angle, end=end_angle, fill=colour, width=lineWidth)
+                        img.arc(shape, start=start_angle, end=end_angle, fill=colour, width=lineWidth)
                     if seg.bulge < 0:
-                        img1.arc(shape, start=end_angle, end=start_angle, fill=colour, width=lineWidth)
+                        img.arc(shape, start=end_angle, end=start_angle, fill=colour, width=lineWidth)
                 else:
-                    img1.line([(seg.start.z + image_offset) * scale, seg.start.x * scale, (seg.end.z + image_offset) * scale, seg.end.x * scale], fill=colour, width=lineWidth)
+                    img.line([(seg.start.z + offset) * scale, seg.start.x * scale, (seg.end.z + offset) * scale, seg.end.x * scale], fill=colour, width=lineWidth)
 
         
     def drawQuadtree(self, nodes, segmentGroup):
