@@ -88,6 +88,7 @@ BoundBox Segment::get_boundbox()
     {
         topLeft = this->start;
         bottomRight = this->end;
+    }
     else
     {
         float startAngle = this->get_centre_point().angle_to(this->start);
@@ -414,7 +415,6 @@ bool Segment::point_on_segment(Point point)
         }
 
         // if the point angle matches the start or end angles the point is on the arc
-        if(sa == pnt_ang || pnt_ang == ea)
         if (sa == pnt_ang || pnt_ang == ea)
         {
             return true;
@@ -425,30 +425,49 @@ bool Segment::point_on_segment(Point point)
     }
 }
 
-float Segment::distance_to_point(Point point){
+float Segment::distance_to_point(Point point)
+{
+    // get the closest point on segment to point //
 
-    float APx = point.x - start.x;
-    float APy = point.z - start.z;
-    float ABx = end.x - start.x;
-    float ABy = end.z  - start.z;
+    if (this->bulge == 0)
+    {
+        float APx = point.x - start.x;
+        float APy = point.z - start.z;
+        float ABx = end.x - start.x;
+        float ABy = end.z - start.z;
 
-    float magAB2 = ABx * ABx + ABy * ABy;
-    float ABdotAP = ABx * APx + ABy * APy;
-    float t = ABdotAP / magAB2;
+        float magAB2 = ABx * ABx + ABy * ABy;
+        float ABdotAP = ABx * APx + ABy * APy;
+        float t = ABdotAP / magAB2;
 
-    // check if the point is < start or > end
-    if (t > 0.0 && t < 1.0){
-        float x = start.x + ABx * t;
-        float z = start.z + ABy * t;
-        Point p = Point(x, z);
-        return p.distance_to(point); 
+        // check if the point is < start or > end
+        if (t > 0.0 && t < 1.0)
+        {
+            float x = start.x + ABx * t;
+            float z = start.z + ABy * t;
+            Point p = Point(x, z);
+            return p.distance_to(point);
+        }
+
+        if (t < 0)
+        {
+            return start.distance_to(point);
+        }
+
+        return end.distance_to(point);
     }
-    
-    if (t < 0){
-        return start.distance_to(point); 
+    else
+    {
+        // Arcs support has minimal benefit as the defeature function
+        // returns straight segments
+        // TODO: remove this to tidy up
+        float length = point.distance_to(this->get_centre_point());
+        float Cx = this->get_centre_point().x + this->get_radius() * (point.x - this->get_centre_point().x) / length;
+        float Cz = this->get_centre_point().z + this->get_radius() * (point.z - this->get_centre_point().z) / length;
+        Point closestPoint = Point(Cx, Cz);
+
+        float distance = point.distance_to(closestPoint);
+
+        return distance;
     }
-
-    return end.distance_to(point); 
-
-    //TODO: Support arcs
 }
