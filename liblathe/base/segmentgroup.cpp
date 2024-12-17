@@ -205,6 +205,20 @@ SegmentGroup SegmentGroup::from_points(std::vector<Point> points){
 }
 
 std::vector<Point> SegmentGroup::get_rdp(std::vector<Point> &points, float tolerance){
+SegmentGroup SegmentGroup::copy()
+{
+    // create a copy of the segment group //
+    SegmentGroup segment_group = SegmentGroup();
+
+    for (auto &segment : this->segments)
+    {
+        Point start = Point(segment.start.x, segment.start.z);
+        Point end = Point(segment.end.x, segment.end.z);
+        segment_group.add_segment(Segment(start, end, segment.bulge));
+    }
+
+    return segment_group;
+}
     std::vector<Point> out;
     this->rdp(points, tolerance, out);
     return out;
