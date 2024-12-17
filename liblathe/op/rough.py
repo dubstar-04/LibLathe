@@ -18,6 +18,9 @@ class RoughOP(liblathe.op.base.BaseOP):
         """Generate the path for the Rough operation"""
         roughing_segment_group = self.part_segment_group.defeature(self.stock, self.tool.get_shape_group(), self.allow_grooving)
 
+        # internal segment group to check if intersects the part. use a small offset to reduce false positives
+        internal_offset = roughing_segment_group.offset(-0.1)
+
         self.clearing_paths = []
         z_max = self.stock.z_max + self.start_offset
         z_min = self.stock.z_min + self.end_offset
@@ -122,7 +125,7 @@ class RoughOP(liblathe.op.base.BaseOP):
             x_pos += self.step_over
 
             if segmentgroup.count():
-                if segmentgroup.intersects_group(self.part_segment_group):
+                if segmentgroup.intersects_group(internal_offset):
                     # Debug().draw([segmentgroup, self.part_segment_group, roughing_boundary])
                     raise ValueError("Calculated roughing path intersects part")
 
