@@ -232,7 +232,7 @@ class Tool:
         # print('tip angle', self.tip_angle)
         # print('rotation', self.tool_rotation)
         shape_group = SegmentGroup()
-        ang = (270 - self.tip_angle / 2)  # - self.tool_rotation
+        ang = (270 - self.tip_angle / 2)  + self.tool_rotation
         # print('ang', ang)
         start_point = Point()
         pt2 = start_point.project(math.radians(ang), self.edge_length)

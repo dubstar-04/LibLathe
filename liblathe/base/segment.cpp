@@ -88,6 +88,8 @@ BoundBox Segment::get_boundbox()
     {
         topLeft = this->start;
         bottomRight = this->end;
+    else
+    {
         float startAngle = this->get_centre_point().angle_to(this->start);
         float endAngle = this->get_centre_point().angle_to(this->end);
 
@@ -309,15 +311,15 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
     float u1 = (-b + e) / (2 * a);
     float u2 = (-b - e) / (2 * a);
 
-    
-
     Point point = a1.lerp(a2, u1);
-    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend){
+    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend)
+    {
         pts.push_back(point);
     }
 
     point = a1.lerp(a2, u2);
-    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend){
+    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend)
+    {
         pts.push_back(point);
     }
 
