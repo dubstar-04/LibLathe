@@ -5,7 +5,8 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(segmentgroup, m) {
+PYBIND11_MODULE(segmentgroup, m)
+{
 
     // optional module docstring
     m.doc() = "segmentgroup Class";

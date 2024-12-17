@@ -88,7 +88,6 @@ BoundBox Segment::get_boundbox()
     {
         topLeft = this->start;
         bottomRight = this->end;
-    } else {
         float startAngle = this->get_centre_point().angle_to(this->start);
         float endAngle = this->get_centre_point().angle_to(this->end);
 
@@ -414,6 +413,7 @@ bool Segment::point_on_segment(Point point)
 
         // if the point angle matches the start or end angles the point is on the arc
         if(sa == pnt_ang || pnt_ang == ea)
+        if (sa == pnt_ang || pnt_ang == ea)
         {
             return true;
         }

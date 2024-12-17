@@ -7,7 +7,8 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(quadtree, m) {
+PYBIND11_MODULE(quadtree, m)
+{
 
     // optional module docstring
     m.doc() = "Signed Distance Field";
@@ -15,9 +16,10 @@ PYBIND11_MODULE(quadtree, m) {
     // bindings to Quadtree class
     py::class_<Quadtree>(m, "Quadtree")
         .def(py::init<>())
-        .def("add_point", &Quadtree::add_point)
-        .def("point_count", &Quadtree::point_count)
-        .def("add_base_node", &Quadtree::add_base_node)
+        //.def("add_point", &Quadtree::add_point)
+        //.def("point_count", &Quadtree::point_count)
+        //.def("add_base_node", &Quadtree::add_base_node)
+        .def("initialise", &Quadtree::initialise)
         .def("get_offset", &Quadtree::get_offset)
         .def("get_nodes", &Quadtree::get_nodes);
 
@@ -27,5 +29,4 @@ PYBIND11_MODULE(quadtree, m) {
         .def_readwrite("width", &Node::width)
         .def_readwrite("height", &Node::height)
         .def_readwrite("sdv", &Node::sdv);
-
 }
