@@ -96,6 +96,13 @@ SegmentGroup SegmentGroup::offset(float step_over)
 {
     // Create an offset segmentgroup by the distance of step_over //
 
+    // TODO: investigate:
+    // 1. using a square node - will this affect precision / performance
+    // 2. optimise the size only needs to be slightly bigger than the part + the offset
+    // 3. remove unused nodes
+    // 4. store the points as nodes are being evaluated rather than searching the nodes later
+    // 5. effects of scaling the segment group and quadtree
+
     BoundBox bb = this->boundbox();
     float height = bb.x_length() + 10;
     float width = bb.z_length(); //+ 10;
