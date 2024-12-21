@@ -10,6 +10,8 @@ sys.path.append(parentFolder)
 from liblathe.tool.tool import Tool
 from liblathe.tool.tool import ToolOri
 
+from liblathe.base.segmentgroup import SegmentGroup
+
 
 class test_tool(unittest.TestCase):
     """Test for tool.py"""
@@ -17,8 +19,11 @@ class test_tool(unittest.TestCase):
         self.tool = Tool()
         self.tool.set_tool_from_string('DCMT070204R')
 
+        self.TShapeTool = Tool()
+        self.TShapeTool.set_tool_from_string('TCMT160404N')
+
     def test_create_tool(self):
-        shape = "D"
+        shape = self.tool.shape
         length = self.tool.edge_length
         nose_radius = self.tool.nose_radius
         direction = self.tool.direction
@@ -33,17 +38,26 @@ class test_tool(unittest.TestCase):
         with self.assertRaises(ValueError):
             Tool('xyz')
 
-    def test_get_tool_cutting_angle(self):
-        cuttingAngle = self.tool.get_tool_cutting_angle()
-        self.assertEqual(cuttingAngle, 209.5)
+    def test_get_tool_shape(self):
+        shape = self.tool.get_tool_shape()
+        self.assertEqual(shape, "D")
+
+        TriangleShape = self.TShapeTool.get_tool_shape()
+        self.assertEqual(TriangleShape, "T")
 
     def test_getShapeAngle(self):
         shapeAngle = self.tool.get_tip_angle_from_shape("D")
         self.assertEqual(shapeAngle, 55)
 
+        TShapeAngle = self.TShapeTool.get_tip_angle_from_shape("T")
+        self.assertEqual(TShapeAngle, 60)
+
     def test_get_edge_length(self):
         edgeLength = self.tool.get_edge_length("D", "07")
         self.assertEqual(edgeLength, 6.35)
+
+        TriangleEdgeLength = self.TShapeTool.get_edge_length("T", "16")
+        self.assertEqual(TriangleEdgeLength, 9.525)
 
         with self.assertRaises(Warning):
             self.tool.get_edge_length("A", "A")
@@ -55,6 +69,9 @@ class test_tool(unittest.TestCase):
         noseRadius = self.tool.get_nose_radius("04")
         self.assertEqual(noseRadius, 0.4)
 
+        TriangleNoseRadius = self.TShapeTool.get_nose_radius("04")
+        self.assertEqual(TriangleNoseRadius, 0.4)
+
         with self.assertRaises(Warning):
             self.tool.get_nose_radius("A")
 
@@ -62,17 +79,12 @@ class test_tool(unittest.TestCase):
         cuttingDirection = self.tool.get_cutting_direction()
         self.assertEqual(cuttingDirection, "R")
 
+        TriangleToolCuttingDirection = self.TShapeTool.get_cutting_direction()
+        self.assertEqual(TriangleToolCuttingDirection, "N")
+
     def test_get_rotation(self):
         rotation = self.tool.get_rotation()
         self.assertEqual(rotation, 0)
-
-    def test_get_max_doc(self):
-        max_doc = self.tool.get_max_doc()
-        self.assertEqual(max_doc, 1.5875)
-
-        with self.assertRaises(Warning):
-            tool = Tool()
-            max_doc = tool.get_max_doc()
 
     def test_set_tip_angle(self):
         self.tool.set_tip_angle(22.5)
@@ -133,6 +145,15 @@ class test_tool(unittest.TestCase):
 
         with self.assertRaises(Warning):
             self.tool.set_orientation("X")
+
+    def test_get_segmentgroup(self):
+        shape = self.tool.get_segmentgroup()
+        self.assertTrue(isinstance(shape, SegmentGroup))
+        self.assertEqual(4, shape.count())
+
+        triangleShape = self.TShapeTool.get_segmentgroup()
+        self.assertTrue(isinstance(triangleShape, SegmentGroup))
+        self.assertEqual(3, triangleShape.count())
 
 
 if __name__ == '__main__':
