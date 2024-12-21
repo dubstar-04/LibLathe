@@ -36,7 +36,7 @@ center = Point( height / 2, bb.z_min + width / 2)
 # Define a tool
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
-toolShape = tool.get_shape_group()
+toolShape = tool.get_segmentgroup()
 
 # Define stock bounds
 stockPt1 = Point(0, -150)

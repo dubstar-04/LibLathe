@@ -69,7 +69,7 @@ gcode = profileOP.get_gcode()
 plot = Plot()
 plot.backplot(gcode)
 
-segment_groups = [profileOP.part_segment_group, tool.get_shape_group()]
+segment_groups = [profileOP.part_segment_group, tool.get_segmentgroup()]
 
 # Append all tool paths to be drawn
 for segmentgroup in profileOP.tool_paths:
