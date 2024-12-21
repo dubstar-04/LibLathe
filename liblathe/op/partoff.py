@@ -12,8 +12,9 @@ class PartoffOP(liblathe.op.base.BaseOP):
         """Generate the path for the Part operation"""
 
         self.tool_paths = []
-
-        toolWidth = self.tool.get_width()
+        toolShape = self.tool.get_segmentgroup()
+        toolBoundbox = toolShape.boundbox()
+        toolWidth = toolBoundbox.x_length()
 
         x_min = self.min_dia * 0.5
         x_max = self.stock.x_max + self.extra_dia * 0.5 + self.clearance
