@@ -1,3 +1,4 @@
+""" Tool Class """
 from enum import Enum
 import math
 
@@ -7,6 +8,7 @@ from liblathe.base.segment import Segment
 
 
 class ToolOri(Enum):
+    """ Tool Orientation """
     X = 0
     Z = 90
 
@@ -17,38 +19,87 @@ class Tool:
     Tool String Formatting:
     Shape | Clearance Angle | Tolerance | Type | Edge edge_length | Thickness | Nose Radius | Direction
     Example Tool Definition: DCMT070204R
+
+    Tool shape is stored as a SegmentGroup()
     """
     def __init__(self, tool_string=None):
         # tool_string                       # DCMT070204R
-        # shape                             # D
+        self.shape = None                   # D
         # clearance angle                   # C
         # tolerance                         # M
         # type                              # T
         self.tip_angle = None
-        self.edge_length = None                  # 07
+        self.edge_length = None             # 07
         # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
         self.orientation = ToolOri.X        # orientation of the tool X or Z
         self.tool_rotation = 0              # tool rotation about tool tip
+        self.segment_group = SegmentGroup()  # tool shape
 
         if tool_string:
             self.set_tool_from_string(tool_string)
 
     def set_tool_from_string(self, tool_string):
+        """Set the tools shape from a string"""
 
         if not len(tool_string) == 11:
             raise ValueError("Tool Input String Incomplete")
 
         # TODO: Validate the values passed in create a valid tool
-        shape = tool_string[0]
+        self.shape = tool_string[0]
         edge_length = tool_string[4:6]
         radius = tool_string[8:10]
 
-        self.tip_angle = self.get_tip_angle_from_shape(shape)
-        self.edge_length = self.get_edge_length(shape, edge_length)
+        self.tip_angle = self.get_tip_angle_from_shape(self.shape)
+        self.edge_length = self.get_edge_length(self.shape, edge_length)
         self.nose_radius = self.get_nose_radius(radius)
         self.direction = tool_string[-1]
+
+        self.set_segmentgroup_from_string()
+
+    def set_tool_from_segments(self, segments):
+        """Set the tools shape from segments"""
+        for segment in segments:
+            self.segment_group.add_segment(segment)
+
+    def get_segmentgroup(self):
+        """
+        Return a segment group for the shape
+        """
+
+        # if the tool has a rotation apply the rotation to the segment group
+        if self.tool_rotation != 0:
+            return self.rotate_tool_shape()
+
+        # return the segment group
+        return self.segment_group
+
+    def get_tool_shape(self):
+        """
+        Return the tool's shape.
+
+        The tool shape is a string that describes the geometry of the turning tool.
+        It can include details such as the type of tool (e.g., round, square, diamond)
+
+        The shape is represented by a single character such as: C, D, S, V, R, T
+        the shape is the first character in the tool string which can typically be
+        11 characters long and found on the inserts packaging.
+
+        Returns:
+            str: A string representing the shape of the turning tool.
+        """
+        return self.shape
+
+    def set_tool_shape(self, shape):
+        """
+        Set the tools shape
+        """
+
+        if shape in ["C", "D", "S", "V", "R", "T"]:
+            self.shape = shape
+        else:
+            raise Warning("Tool shape not valid")
 
     def set_tip_angle(self, angle):
         """Set the tools tip angle"""
@@ -97,34 +148,6 @@ class Tool:
         else:
             raise Warning("Tool orientation not valid")
 
-    def get_tool_cutting_angle(self):
-        """
-        Return the maximum cutting angle the tool is capable of
-        Note: Angle is on the XZ plane with 0 at 3 o'clock and 90 at 12 o'clock.
-        """
-
-        clearance = 2
-        max_cutting_angle = 180 - self.tool_rotation + self.tip_angle / 2 + clearance
-
-        return max_cutting_angle
-
-    def get_max_doc(self):
-        """
-        Return the maximum depth of cut (stepover) the tool is capable of
-        """
-        # TO DO: calculate proper max DOC
-        if self.edge_length:
-            return self.edge_length / 4
-        else:
-            raise Warning("Tool edge length not set")
-
-    def get_width(self):
-        """
-        Return the width of the cutting tool
-        """
-        # TODO: Calculate the actual width
-        return self.edge_length
-
     def get_tip_angle_from_shape(self, shape_char):
         """
         Return the angle of the tools shape
@@ -158,10 +181,8 @@ class Tool:
     def get_edge_length(self, shape, edge_length):
         """
         Return the edge length for the tool
-        Sizes from: http://www.mitsubishicarbide.com/en/technical_information/tec_turning_tools/tec_turning_insert/tec_turning_guide/tec_turning_identification
         """
         shapeSize = {
-
             "C": {"03": 3.97, "04": 4.76, "05": 5.56, "06": 6.35, "08": 7.94, "09": 9.525, "12": 12.7, "16": 15.875, "19": 19.05, "22": 22.225, "25": 25.4},
             "D": {"04": 3.97, "05": 4.76, "06": 5.56, "07": 6.35, "09": 7.94, "11": 9.525, "15": 12.7, "19": 15.875, "23": 19.05},
             "R": {"06": 6.0, "08": 8.0, "09": 9.525, "10": 10, "12": 12.0, "16": 16, "20": 20, "25": 25},
@@ -169,7 +190,6 @@ class Tool:
             "T": {"08": 4.76, "09": 5.56, "11": 6.35, "13": 7.94, "16": 9.525, "22": 12.7, "27": 15.875, "33": 19.05, "38": 22.225, "44": 25.4},
             "V": {"08": 4.76, "09": 5.56, "11": 6.35, "13": 7.94, "16": 9.525, "22": 12.7},
             "W": {"02": 3.97, "L3": 4.76, "03": 5.56, "04": 6.35, "05": 7.94, "06": 9.525, "08": 12.7, "10": 15.875, "13": 19.05}
-
         }
 
         if shape in shapeSize:
@@ -177,7 +197,7 @@ class Tool:
                 edge_length = shapeSize[shape][edge_length]
                 # print("shape Size: ", edgeedge_length)
                 return edge_length
-            except (KeyError):
+            except KeyError:
                 raise Warning("Tool length code not valid")
         else:
             raise Warning("Tool shape not valid")
@@ -206,7 +226,7 @@ class Tool:
             radius = noseRadius[radius]
             # print("nose radius: ", radius)
             return radius
-        except (KeyError):
+        except KeyError:
             raise Warning("Tool radius not valid")
 
     def get_cutting_direction(self):
@@ -224,25 +244,62 @@ class Tool:
         """
         return self.tool_rotation
 
-    def get_shape_group(self):
+    def rotate_tool_shape(self):
+        """
+        Rotate the tools shape by the defined rotation
+
+        Returns:
+            SegmentGroup: The rotated segment group
+        """
+
+        segment_group = self.get_segmentgroup()
+        rotated_segment_group = SegmentGroup()
+        angle = math.radians(self.get_rotation())
+
+        for segment in segment_group.get_segments():
+            start = segment.start.rotate(Point(), angle)
+            end = segment.end.rotate(Point(), angle)
+            rotated_segment_group.add_segment(Segment(start, end, segment.bulge))
+
+        return rotated_segment_group
+
+
+    def set_segmentgroup_from_string(self):
         """
         Return a segment group for the shape
         """
-        # Based on D shaped tool
-        # print('tip angle', self.tip_angle)
-        # print('rotation', self.tool_rotation)
+
+        # TODO: Support other tool shapes
+
+        # 4 sided shapes
+        if self.shape in ["C", "D", "S", "V"]:
+            self.get_segmentgroup_from_string_rectangle()
+            return
+
+        # curcular shapes
+        if self.shape in ["R"]:
+            self.get_segmentgroup_from_string_round()
+            return
+
+        # triangle shapes
+        if self.shape in ["T"]:
+            self.get_segmentgroup_from_string_triangle()
+            return
+
+        raise ValueError("The defined tool shape is not currently supported")
+
+    def get_segmentgroup_from_string_rectangle(self):
+        """Get a 4 sided tool shape from the tool string"""
         shape_group = SegmentGroup()
-        ang = (270 - self.tip_angle / 2)  + self.tool_rotation
-        # print('ang', ang)
+
+        ang = 270 - self.tip_angle / 2
         start_point = Point()
         pt2 = start_point.project(math.radians(ang), self.edge_length)
 
         ang += self.tip_angle
-        # print('ang', ang)
         pt3 = pt2.project(math.radians(ang), self.edge_length)
 
         ang += 180 - self.tip_angle
-        # print('ang', ang)
         pt4 = pt3.project(math.radians(ang), self.edge_length)
 
         seg1 = Segment(start_point, pt2)
@@ -257,4 +314,42 @@ class Tool:
 
         # Debug().draw([shape_group])
 
-        return shape_group
+        self.segment_group = shape_group
+
+    def get_segmentgroup_from_string_round(self):
+        """Get the parts shape from the tool string"""
+        shape_group = SegmentGroup()
+
+        half_edge_length = self.edge_length * 0.5
+
+        center_point = Point(0, half_edge_length)
+        start_point = Point(center_point.x + half_edge_length, center_point.z)
+        end_point = Point(center_point.x - half_edge_length, center_point.z)
+
+        seg1 = Segment(start_point, end_point, 1)
+        seg2 = Segment(end_point, start_point, 1)
+
+        shape_group.add_segment(seg1)
+        shape_group.add_segment(seg2)
+
+        self.segment_group = shape_group
+
+    def get_segmentgroup_from_string_triangle(self):
+        """Get the parts shape from the tool string"""
+        shape_group = SegmentGroup()
+        ang = 270 - self.tip_angle / 2
+        start_point = Point()
+        pt2 = start_point.project(math.radians(ang), self.edge_length)
+
+        ang += self.tip_angle * 2
+        pt3 = pt2.project(math.radians(ang), self.edge_length)
+
+        seg1 = Segment(start_point, pt2)
+        seg2 = Segment(pt2, pt3)
+        seg3 = Segment(pt3, start_point)
+
+        shape_group.add_segment(seg1)
+        shape_group.add_segment(seg2)
+        shape_group.add_segment(seg3)
+
+        self.segment_group = shape_group
