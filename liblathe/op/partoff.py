@@ -8,7 +8,7 @@ from liblathe.gcode.path import Path
 
 class PartoffOP(liblathe.op.base.BaseOP):
 
-    def generate_path(self):
+    def generatePath(self):
         """Generate the path for the Part operation"""
 
         self.tool_paths = []

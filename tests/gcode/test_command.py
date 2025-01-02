@@ -22,7 +22,7 @@ class test_command(unittest.TestCase):
 
     def test_params(self):
         command = Command('G0', self.params)
-        params = command.get_params()
+        params = command.getParams()
         self.assertEqual(params, self.params)
 
     def test_to_string(self):

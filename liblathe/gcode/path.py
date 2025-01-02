@@ -15,7 +15,7 @@ class Path:
     def get_min_retract_x(self, segment, pass_segments, operation):
         """ returns the minimum x retract based on the current segments and the part_segments """
 
-        # part_segments = part_segment_group.get_segments()
+        # part_segments = partSegmentGroup.get_segments()
         currentIdx = pass_segments.index(segment)
         x_values = []
 
@@ -27,7 +27,7 @@ class Path:
 
         # get the x_max from the part segments up to the z position of the current segment
         seg_z_max = segment.get_boundbox().z_max
-        for part_seg in operation.part_segment_group.get_segments():
+        for part_seg in operation.partSegmentGroup.get_segments():
 
             part_seg_z_max = part_seg.get_boundbox().z_max
             x_values.extend([part_seg.get_boundbox().x_min, part_seg.get_boundbox().x_max])
@@ -37,7 +37,7 @@ class Path:
 
         min_retract_x = max(x_values, key=abs)
         return min_retract_x
-    
+
     def previous_segment_connected(self, segments, segment):
         """returns bool if segment is connect to the previous segment"""
 
@@ -101,7 +101,7 @@ class Path:
                     params = {'X': pt.x, 'Z': pt.z, 'F': operation.hfeed}
                     cmd = Command('G0', params)
                     self.commands.append(cmd)
-                
+
                 # perform the cutting
                 pt = get_pos(seg.end)
                 params = {'X': pt.x, 'Z': pt.z, 'F': operation.hfeed}

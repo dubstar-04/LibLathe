@@ -18,16 +18,16 @@ class test_BaseOP(unittest.TestCase):
         self.setProps = {'allow_grooving': False, 'step_over': 1, 'finish_passes': 1, 'stock_to_leave': 0.25, 'hfeed': 10, 'vfeed': 10, 'clearance': 4}
         self.getProps = {'allow_grooving': False, 'step_over': 1.5, 'finish_passes': 1, 'stock_to_leave': 0, 'hfeed': 100, 'vfeed': 50, 'clearance': 3}
 
-    def test_set_params(self):
-        self.baseop.set_params(self.setProps)
+    def test_setParams(self):
+        self.baseop.setParams(self.setProps)
         self.assertEqual(self.baseop.step_over, 1)
         self.assertEqual(self.baseop.hfeed, 10)
         self.assertEqual(self.baseop.vfeed, 10)
         self.assertFalse(self.baseop.allow_grooving)
 
     @unittest.expectedFailure
-    def test_set_params_error(self):
-        # Test get_gcode() with no tool set
+    def test_setParams_error(self):
+        # Test getGCode() with no tool set
 
         params = {}
         params['wrong_para'] = "error"
@@ -35,20 +35,20 @@ class test_BaseOP(unittest.TestCase):
         self.test_op = BaseOP()
 
         with self.assertWarns(Warning):
-            self.test_op.set_params(params)
+            self.test_op.setParams(params)
 
     @unittest.expectedFailure
-    def test_get_gcode(self):
-        # Test get_gcode() with no tool set
+    def test_getGCode(self):
+        # Test getGCode() with no tool set
         with self.assertWarns(Warning):
-            self.baseop.get_gcode()
+            self.baseop.getGCode()
 
     def test_generate_gcode(self):
         gcode = self.baseop.generateGCode()
         self.assertEqual(gcode, "")
 
-    def test_get_params(self):
-        params = self.baseop.get_params()
+    def test_getParams(self):
+        params = self.baseop.getParams()
         for i in params:
             self.assertEqual(params[i], self.getProps[i])
 

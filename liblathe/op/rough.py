@@ -14,9 +14,9 @@ Intersection = namedtuple('Intersection', 'point, seg')
 
 class RoughOP(liblathe.op.base.BaseOP):
 
-    def generate_path(self):
+    def generatePath(self):
         """Generate the path for the Rough operation"""
-        roughing_segment_group = self.part_segment_group.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
+        roughing_segment_group = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
 
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internal_offset = roughing_segment_group.offset(-0.1)
@@ -127,7 +127,7 @@ class RoughOP(liblathe.op.base.BaseOP):
 
             if segmentgroup.count():
                 if segmentgroup.intersects_group(internal_offset):
-                    # Debug().draw([segmentgroup, self.part_segment_group, roughing_boundary])
+                    # Debug().draw([segmentgroup, self.partSegmentGroup, roughing_boundary])
                     raise ValueError("Calculated roughing path intersects part")
 
                 self.tool_paths.append(segmentgroup)

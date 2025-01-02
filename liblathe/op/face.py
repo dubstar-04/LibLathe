@@ -10,9 +10,9 @@ from liblathe.gcode.path import Path
 
 class FaceOP(liblathe.op.base.BaseOP):
 
-    def generate_path(self):
+    def generatePath(self):
         """Generate the path for the profile operation"""
-        part_boundbox = self.part_segment_group.boundbox()
+        part_boundbox = self.partSegmentGroup.boundbox()
 
         x_min = self.stock.x_min
         x_max = self.stock.x_max + self.clearance

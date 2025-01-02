@@ -43,18 +43,18 @@ params['vfeed'] = 10
 
 # Create Profile Operation
 roughOP = RoughOP()
-roughOP.set_params(params)
+roughOP.setParams(params)
 roughOP.add_stock(StockBoundingBox)
-roughOP.add_part_edges(part_segments)
+roughOP.addPartSegments(part_segments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
 # tool.set_rotation(45)
 roughOP.add_tool(tool)
-gcode = roughOP.get_gcode()
+gcode = roughOP.getGCode()
 plot = Plot()
 plot.backplot(gcode)
 
-segment_groups = [roughOP.part_segment_group]
+segment_groups = [roughOP.partSegmentGroup]
 
 # Append all tool paths to be drawn
 for segmentgroup in roughOP.tool_paths:

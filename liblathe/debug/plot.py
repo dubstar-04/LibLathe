@@ -122,8 +122,8 @@ class Plot:
                 if movement == "G0" and not include_rapids:
                     continue
 
-                params = command.get_params()
-                prev_params = gcode[idx - 1].get_params()
+                params = command.getParams()
+                prev_params = gcode[idx - 1].getParams()
 
                 line_colour = self._get_line_colour(movement)
 
@@ -190,7 +190,7 @@ class Plot:
                     input_geometry.remove(command)
                     continue
 
-                params = command.get_params()
+                params = command.getParams()
 
                 if 'X' in params:
                     self._min_max('y', params['X'])

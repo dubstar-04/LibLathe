@@ -58,17 +58,17 @@ class test_RoughOP(unittest.TestCase):
         params['vfeed'] = 10
 
         self.op = RoughOP()
-        self.op.set_params(params)
+        self.op.setParams(params)
         self.op.add_stock(stock_boundbox)
-        self.op.add_part_edges(part_segments)
+        self.op.addPartSegments(part_segments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
         # tool.set_rotation(45)
         self.op.add_tool(tool)
 
-    def test_get_gcode(self):
+    def test_getGCode(self):
         """run the operation and evaluate the gcode"""
-        gcode = self.op.get_gcode()
+        gcode = self.op.getGCode()
 
         # check there is a return list
         self.assertTrue(len(gcode))
@@ -78,7 +78,7 @@ class test_RoughOP(unittest.TestCase):
 
         for command in gcode:
 
-            #print(command.get_movement(), command.get_params())
+            #print(command.get_movement(), command.getParams())
 
             # check the command is a liblathe.command.Command
             self.assertTrue(isinstance(command, Command))
@@ -88,16 +88,16 @@ class test_RoughOP(unittest.TestCase):
 
             if command.get_movement() in ["G0", "G1", "G2", "G3"]:
                 # check command has feed rate
-                feed_exists = True if "F" in command.get_params() else False
+                feed_exists = True if "F" in command.getParams() else False
                 self.assertTrue(feed_exists)
 
                 # check the feed rate
                 if feed_exists:
-                    self.assertEqual(command.get_params()['F'], self.hfeed)
+                    self.assertEqual(command.getParams()['F'], self.hfeed)
 
                 # capture the min z value
-                if "Z" in command.get_params():
-                    min_z = min(command.get_params()['Z'], min_z)
+                if "Z" in command.getParams():
+                    min_z = min(command.getParams()['Z'], min_z)
 
         # test the z value matches the stock z_min
         self.assertEqual(min_z, self.op.stock.z_min)

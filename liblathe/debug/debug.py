@@ -28,7 +28,7 @@ class Debug:
 
         width = int(z_len + 10) * scale
         height = int(x_len + 10) * scale
-        
+
         # creating new Image object
         img = Image.new("RGB", (width, height))
 
@@ -38,12 +38,12 @@ class Debug:
         image_offset = abs(z_min) + 5
         for segmentgroup in segmentgroups:
             self.drawSegmentGroup(img1, segmentgroup, image_offset, scale)
-        
+
         img.show()
 
 
     def drawSegmentGroup(self, img, segmentgroup, offset, scale):
-        
+
             colour = self.get_random_colour()
             lineWidth = 3
 
@@ -57,13 +57,13 @@ class Debug:
                     x = (center.x - radius) * scale
                     x1 = (center.x + radius) * scale
 
-                    shape = [(z, x), (z1, x1)] 
+                    shape = [(z, x), (z1, x1)]
 
                     start_point = Point(seg.start.z, seg.start.x)
                     end_point = Point(seg.end.z, seg.end.x)
                     center_point = Point(center.z, center.x)
 
-                    dx = start_point.x - center_point.x 
+                    dx = start_point.x - center_point.x
                     dz = start_point.z - center_point.z
                     start_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
 
@@ -77,7 +77,7 @@ class Debug:
                 else:
                     img.line([(seg.start.z + offset) * scale, seg.start.x * scale, (seg.end.z + offset) * scale, seg.end.x * scale], fill=colour, width=lineWidth)
 
-        
+
     def drawQuadtree(self, nodes, segmentGroup):
 
         bb = segmentGroup.boundbox()
@@ -95,19 +95,19 @@ class Debug:
         image_offset = abs(bb.z_min)
 
         self.drawSegmentGroup(img1, segmentGroup, image_offset, scale)
-    
+
         for idx, node in enumerate(nodes):
             x = int((node.center.z - node.width / 2 + image_offset) * scale)
             x1 = int((node.center.z + node.width / 2 +  image_offset) * scale)
             y = int((node.center.x - node.height / 2) * scale)
             y1 = int((node.center.x + node.height / 2) * scale)
-            
 
-            shape = (x, y, x1, y1) 
-            color = "red" if node.sdv < 0 else "green" 
-            img1.rectangle(shape, fill=None, outline=color) 
-        
-        img.show() 
+
+            shape = (x, y, x1, y1)
+            color = "red" if node.sdv < 0 else "green"
+            img1.rectangle(shape, fill=None, outline=color)
+
+        img.show()
 
     def get_random_colour(self):
         """ return a random colour string"""
@@ -116,7 +116,7 @@ class Debug:
         b = random.randint(50, 255)
         colour = '#{:02x}{:02x}{:02x}'.format(r, g, b)
         return colour
-    
+
     def create_freecad_shape(self, segmentgroup, name):
         """ create a FreeCAD shape for debugging"""
 
@@ -130,7 +130,7 @@ class Debug:
         if segmentgroup.count() == 0:
             raise ValueError("Input Segment Group")
 
-        part_edges = []
+        partSegments = []
         for segment in segmentgroup.get_segments():
             start_point = FreeCAD.Vector(segment.start.x, 0, segment.start.z)
             end_point = FreeCAD.Vector(segment.end.x, 0, segment.end.z)
@@ -151,9 +151,9 @@ class Debug:
                                            FreeCAD.Vector(center.x, 0, center.z),
                                            axis, end_angle, start_angle)
 
-            part_edges.append(edge)
+            partSegments.append(edge)
 
-        path_profile = Part.makeCompound(part_edges)
+        path_profile = Part.makeCompound(partSegments)
         try:
             FreeCAD.ActiveDocument.removeObject(name)
         except ImportError:

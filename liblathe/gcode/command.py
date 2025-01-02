@@ -8,7 +8,7 @@ class Command:
 
         return self.movement
 
-    def get_params(self):
+    def getParams(self):
         """Returns the parameters for this command. (eg, X, Y ,Z, I, J, K and feed rate F)"""
 
         return self.params

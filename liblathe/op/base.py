@@ -9,7 +9,7 @@ class BaseOP:
 
         self.stock = None
         self.tool = None
-        self.part_segment_group = SegmentGroup()
+        self.partSegmentGroup = SegmentGroup()
 
         self.tool_paths = []
 
@@ -24,7 +24,7 @@ class BaseOP:
         self.leadin_angle = math.pi * 1.5
         self.leadout_angle = math.pi * 1.75
 
-    def set_params(self, params):
+    def setParams(self, params):
         """Set operations parameters"""
 
         for param in params:
@@ -33,25 +33,24 @@ class BaseOP:
             else:
                 raise Warning("Attempting to set undefined parameter '%s'" % param)
 
-    def get_params(self):
+    def getParams(self):
         """Return operations parameters"""
         return {'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
             'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
             'vfeed': self.vfeed, 'clearance': self.clearance}
 
-    def get_gcode(self):
+    def getGCode(self):
         """Base function for all turning operations"""
 
         if self.tool is None:
             raise Warning("Tool is unset")
 
-        self.generate_path()
+        self.generatePath()
         path = self.generateGCode()
         return path
 
-    def generate_path(self):
+    def generatePath(self):
         """Main processing function for each op"""
-
         pass
 
     def generateGCode(self):
@@ -59,18 +58,18 @@ class BaseOP:
 
         return ""
 
-    def add_part_edges(self, part_edges):
-        """Add edges to define the part geometry part_edges = array of LibLathe segments"""
+    def addPartSegments(self, partSegments):
+        """Add edges to define the part geometry partSegments = array of LibLathe segments"""
 
-        for segment in part_edges:
-            self.part_segment_group.add_segment(segment)
+        for segment in partSegments:
+            self.partSegmentGroup.add_segment(segment)
 
-        self.part_segment_group.validate()
-        # self.part_segment_group.create_freecad_shape('part_segment_group')
+        self.partSegmentGroup.validate()
+        # self.partSegmentGroup.create_freecad_shape('partSegmentGroup')
 
-    def add_stock(self, stock_bb):
-        """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""
-        self.stock = stock_bb
+    def add_stock(self, stockBoundbox):
+        """Define bounding box for the stock material stockBoundbox = LibLathe BoundBox"""
+        self.stock = stockBoundbox
 
     def add_tool(self, tool):
         """Set the tool for the operation"""

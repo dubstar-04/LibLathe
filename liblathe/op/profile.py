@@ -8,10 +8,10 @@ from liblathe.gcode.path import Path
 
 class ProfileOP(liblathe.op.base.BaseOP):
 
-    def generate_path(self):
+    def generatePath(self):
         """Generate the path for the profile operation"""
         # get the defeature part profile
-        profile_segment_group = self.part_segment_group.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
+        profile_segment_group = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internal_offset = profile_segment_group.offset(-0.1)
         # define the base segment group using the stock to leave as a datum
