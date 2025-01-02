@@ -1,3 +1,5 @@
+import math
+
 import liblathe.op.base
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -12,11 +14,10 @@ class FaceOP(liblathe.op.base.BaseOP):
         """Generate the path for the profile operation"""
         part_boundbox = self.part_segment_group.boundbox()
 
-        x_min = self.min_dia * 0.5
-        x_max = self.stock.x_max + self.extra_dia * 0.5 + self.clearance
+        x_min = self.stock.x_min
+        x_max = self.stock.x_max + self.clearance
         z_min = part_boundbox.z_max + self.stock_to_leave
-        z_max = self.stock.z_max + self.start_offset
-
+        z_max = math.ceil(self.stock.z_max) + self.step_over
         self.clearing_paths = []
 
         # TODO: Move the final pass to finishing passes for a slower pass

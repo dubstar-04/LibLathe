@@ -34,10 +34,6 @@ StockBoundingBox = BoundBox(stockPt1, stockPt2)
 
 # Define Operations Properties
 params = {}
-params['min_dia'] = 0
-params['extra_dia'] = 0
-params['start_offset'] = 0
-params['end_offset'] = 0
 params['allow_grooving'] = True
 params['step_over'] = 0.5
 params['finish_passes'] = 0

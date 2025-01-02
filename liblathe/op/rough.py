@@ -22,8 +22,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         internal_offset = roughing_segment_group.offset(-0.1)
 
         self.clearing_paths = []
-        z_max = self.stock.z_max + self.start_offset
-        z_min = self.stock.z_min + self.end_offset
+        z_max = self.stock.z_max
+        z_min = self.stock.z_min
 
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
@@ -31,8 +31,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         roughing_boundary = roughing_segment_group.offset(offset)
 
         # define the x limits for roughing
-        x_min = self.min_dia * 0.5
-        x_max = math.ceil(self.stock.x_length() + self.extra_dia * 0.5)
+        x_min = self.stock.x_min
+        x_max = math.ceil(self.stock.x_max)
 
         # The roughing boundary may have a small x delta from 0 due to being offset. consider it when calculating the x_min pos.
         roughing_boundary_x = roughing_boundary.get_segments()[0].start.x
@@ -40,6 +40,7 @@ class RoughOP(liblathe.op.base.BaseOP):
         # TODO: This is a bit hacky, is there a better way?
         x_pos = max(1e-6, x_min, roughing_boundary_x)
         # work from 0 to x_min creating roughing passes
+        print('x_min:', x_min, 'x_max:', x_max, 'x_pos:', x_pos)
         while x_pos < x_max:
             # check if the roughing pass start is outside the stock
             # boundary_z = self.stock.z_max + 5  #roughing_boundary.z_at_x(x_pos)
@@ -84,7 +85,7 @@ class RoughOP(liblathe.op.base.BaseOP):
                 if not roughing_boundary.isInside(pt1):
                     intersection = Intersection(pt1, None)
                     intersections.insert(0, intersection)
-          
+
                 if not roughing_boundary.isInside(pt2):
                     intersection2 = Intersection(pt2, None)
                     intersections.append(intersection2)

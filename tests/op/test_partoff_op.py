@@ -50,10 +50,6 @@ class test_PartoffOP(unittest.TestCase):
 
         # Define Operations Properties
         params = {}
-        params['min_dia'] = 0
-        params['extra_dia'] = 0
-        params['start_offset'] = 0
-        params['end_offset'] = 0
         params['allow_grooving'] = False
         params['step_over'] = 1
         params['finish_passes'] = 2

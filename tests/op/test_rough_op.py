@@ -50,10 +50,6 @@ class test_RoughOP(unittest.TestCase):
 
         # Define Operations Properties
         params = {}
-        params['min_dia'] = 0
-        params['extra_dia'] = 0
-        params['start_offset'] = 0
-        params['end_offset'] = 0
         params['allow_grooving'] = True
         params['step_over'] = 1
         params['finish_passes'] = 2
@@ -98,7 +94,7 @@ class test_RoughOP(unittest.TestCase):
                 # check the feed rate
                 if feed_exists:
                     self.assertEqual(command.get_params()['F'], self.hfeed)
-                
+
                 # capture the min z value
                 if "Z" in command.get_params():
                     min_z = min(command.get_params()['Z'], min_z)
