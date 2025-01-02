@@ -38,11 +38,11 @@ class test_tool(unittest.TestCase):
         with self.assertRaises(ValueError):
             Tool('xyz')
 
-    def test_get_tool_shape(self):
-        shape = self.tool.get_tool_shape()
+    def test_getToolShape(self):
+        shape = self.tool.getToolShape()
         self.assertEqual(shape, "D")
 
-        TriangleShape = self.TShapeTool.get_tool_shape()
+        TriangleShape = self.TShapeTool.getToolShape()
         self.assertEqual(TriangleShape, "T")
 
     def test_getShapeAngle(self):

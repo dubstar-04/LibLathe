@@ -44,7 +44,7 @@ class test_BaseOP(unittest.TestCase):
             self.baseop.get_gcode()
 
     def test_generate_gcode(self):
-        gcode = self.baseop.generate_gcode()
+        gcode = self.baseop.generateGCode()
         self.assertEqual(gcode, "")
 
     def test_get_params(self):

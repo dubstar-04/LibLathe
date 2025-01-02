@@ -46,7 +46,7 @@ class BaseOP:
             raise Warning("Tool is unset")
 
         self.generate_path()
-        path = self.generate_gcode()
+        path = self.generateGCode()
         return path
 
     def generate_path(self):
@@ -54,7 +54,7 @@ class BaseOP:
 
         pass
 
-    def generate_gcode(self):
+    def generateGCode(self):
         """Generate Gcode for the op segments"""
 
         return ""

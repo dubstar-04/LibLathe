@@ -52,7 +52,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
         # add the leadin segment at the start of segment group
         segmentgroup.insert_segment(leadin, 0)
 
-    def generate_gcode(self):
+    def generateGCode(self):
         """Generate Gcode for the op segments"""
 
         path = Path()

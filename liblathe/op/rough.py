@@ -132,7 +132,7 @@ class RoughOP(liblathe.op.base.BaseOP):
 
                 self.tool_paths.append(segmentgroup)
 
-    def generate_gcode(self):
+    def generateGCode(self):
         """Generate Gcode for the op segments"""
 
         path = Path()

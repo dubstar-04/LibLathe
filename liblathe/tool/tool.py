@@ -75,7 +75,7 @@ class Tool:
         # return the segment group
         return self.segment_group
 
-    def get_tool_shape(self):
+    def getToolShape(self):
         """
         Return the tool's shape.
 

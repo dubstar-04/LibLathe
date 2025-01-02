@@ -36,7 +36,7 @@ class FaceOP(liblathe.op.base.BaseOP):
             z_pos += self.step_over
             self.clearing_paths.append(segmentgroup)
 
-    def generate_gcode(self):
+    def generateGCode(self):
         """Generate Gcode for the op segments"""
 
         path = Path()
