@@ -4,7 +4,6 @@ on:
   push:
     tags:
     - 'v*'
-  workflow_dispatch:
 
 jobs:
   build_wheels:
@@ -19,10 +18,10 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
-          CIBW_ARCHS_MACOS: auto universal2
-          # delete CIBW_ARCHS_LINUX to build for the all platforms
-          CIBW_ARCHS_LINUX: auto
-          CIBW_BUILD: cp310-*
+          #CIBW_ARCHS_MACOS: auto universal2
+          #CIBW_ARCHS_LINUX: auto
+          CIBW_BUILD: cp310-* cp311-*
+          # Don't build python versions 3.6 - 3.9
           CIBW_SKIP: cp36-* cp37-* cp38-* cp39-* pp36-* pp37-* pp38-* pp39-* *-musllinux*
 
       - uses: actions/upload-artifact@v4
@@ -39,32 +38,33 @@ jobs:
       - name: Build sdist
         run: pipx run build --sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
 
-  upload_pypi:
+  upload_to_pypi:
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
-    # Specifying a GitHub environment is optional, but strongly encouraged
     environment:
+      # publish is a github environment
       name: publish
       url: https://pypi.org/p/liblathe
     permissions:
       id-token: write
     steps:
-      - name: Download package distributions
+      - name: Download wheel distributions
         uses: actions/download-artifact@v4
         with:
-          # unpacks default artifact into dist/
-          # if `name: artifact` is omitted, the action will create extra parent dir
-          # name: artifact
             pattern: wheels*
+            path: dist
+            merge-multiple: true
+
+      - name: Download source distributions
+        uses: actions/download-artifact@v4
+        with:
+            pattern: *.tar.gz
             path: dist
             merge-multiple: true
 
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        #with:
-        # use the test PyPI repository
-        #  repository-url: https://test.pypi.org/legacy/
