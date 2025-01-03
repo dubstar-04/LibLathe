@@ -19,10 +19,12 @@ jobs:
         uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_ARCHS_MACOS: auto universal2
+          CIBW_ARCHS_LINUX: auto
           CIBW_SKIP: cp36-* cp37-* cp38-* cp39-* pp36-* pp37-* pp38-* pp39-*
 
       - uses: actions/upload-artifact@v4
         with:
+          name: wheels-${{ matrix.os }}-${{ matrix.cibw_archs }}
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -47,12 +49,14 @@ jobs:
     # IMPORTANT: this permission is mandatory for Trusted Publishing
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           # unpacks default artifact into dist/
           # if `name: artifact` is omitted, the action will create extra parent dir
-          name: artifact
-          path: dist
+          # name: artifact
+          with:
+            path: dist
+            merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
