@@ -4,7 +4,7 @@ LibLathe is an opensource standalone python library for generating turning paths
 
 | :warning: WARNING: LibLathe is currently experimental / Proof of concept and only suitable for testing. |
 
-## Instalation
+## Installation
 ```
 pip install liblathe
 ```
