@@ -8,13 +8,13 @@ class BoundBox
 public:
     BoundBox(Point pt1, Point pt2);
     ~BoundBox() {};
-    float x_length();
-    float z_length();
+    float XLength();
+    float ZLength();
 
-    float x_min;
-    float z_min;
-    float x_max;
-    float z_max;
+    float XMin;
+    float ZMin;
+    float XMax;
+    float ZMax;
 };
 
 #endif

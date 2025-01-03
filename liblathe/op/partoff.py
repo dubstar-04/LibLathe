@@ -14,20 +14,20 @@ class PartoffOP(liblathe.op.base.BaseOP):
         self.tool_paths = []
         toolShape = self.tool.get_segmentgroup()
         toolBoundbox = toolShape.boundbox()
-        toolWidth = toolBoundbox.x_length()
+        toolWidth = toolBoundbox.XLength()
 
-        x_min = self.stock.x_min
-        x_max = self.stock.x_max + self.clearance
-        z_min = self.stock.z_min - toolWidth
+        XMin = self.stock.XMin
+        XMax = self.stock.XMax + self.clearance
+        ZMin = self.stock.ZMin - toolWidth
 
         #TODO: Add a chip break / pecking option
 
         # build list of segments
         segmentgroup = SegmentGroup()
-        startPt = Point(x_max, z_min)
-        endPt = Point(x_min, z_min)
+        startPt = Point(XMax, ZMin)
+        endPt = Point(XMin, ZMin)
         seg = Segment(startPt, endPt)
-        segmentgroup.add_segment(seg)
+        segmentgroup.addSegment(seg)
 
         self.tool_paths.append(segmentgroup)
 

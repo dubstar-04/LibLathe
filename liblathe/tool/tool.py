@@ -61,7 +61,7 @@ class Tool:
     def set_tool_from_segments(self, segments):
         """Set the tools shape from segments"""
         for segment in segments:
-            self.segment_group.add_segment(segment)
+            self.segment_group.addSegment(segment)
 
     def get_segmentgroup(self):
         """
@@ -238,7 +238,7 @@ class Tool:
         """
         return self.direction
 
-    def get_rotation(self):
+    def getRotation(self):
         """
         Return the tool rotation for this tool
         """
@@ -254,12 +254,12 @@ class Tool:
 
         segment_group = self.get_segmentgroup()
         rotated_segment_group = SegmentGroup()
-        angle = math.radians(self.get_rotation())
+        angle = math.radians(self.getRotation())
 
-        for segment in segment_group.get_segments():
+        for segment in segment_group.getSegments():
             start = segment.start.rotate(Point(), angle)
             end = segment.end.rotate(Point(), angle)
-            rotated_segment_group.add_segment(Segment(start, end, segment.bulge))
+            rotated_segment_group.addSegment(Segment(start, end, segment.bulge))
 
         return rotated_segment_group
 
@@ -307,10 +307,10 @@ class Tool:
         seg3 = Segment(pt3, pt4)
         seg4 = Segment(pt4, start_point)
 
-        shape_group.add_segment(seg1)
-        shape_group.add_segment(seg2)
-        shape_group.add_segment(seg3)
-        shape_group.add_segment(seg4)
+        shape_group.addSegment(seg1)
+        shape_group.addSegment(seg2)
+        shape_group.addSegment(seg3)
+        shape_group.addSegment(seg4)
 
         # Debug().draw([shape_group])
 
@@ -323,14 +323,14 @@ class Tool:
         half_edge_length = self.edge_length * 0.5
 
         center_point = Point(0, half_edge_length)
-        start_point = Point(center_point.x + half_edge_length, center_point.z)
-        end_point = Point(center_point.x - half_edge_length, center_point.z)
+        start_point = Point(center_point.X + half_edge_length, center_point.Z)
+        end_point = Point(center_point.X - half_edge_length, center_point.Z)
 
         seg1 = Segment(start_point, end_point, 1)
         seg2 = Segment(end_point, start_point, 1)
 
-        shape_group.add_segment(seg1)
-        shape_group.add_segment(seg2)
+        shape_group.addSegment(seg1)
+        shape_group.addSegment(seg2)
 
         self.segment_group = shape_group
 
@@ -348,8 +348,8 @@ class Tool:
         seg2 = Segment(pt2, pt3)
         seg3 = Segment(pt3, start_point)
 
-        shape_group.add_segment(seg1)
-        shape_group.add_segment(seg2)
-        shape_group.add_segment(seg3)
+        shape_group.addSegment(seg1)
+        shape_group.addSegment(seg2)
+        shape_group.addSegment(seg3)
 
         self.segment_group = shape_group

@@ -62,7 +62,7 @@ class BaseOP:
         """Add edges to define the part geometry partSegments = array of LibLathe segments"""
 
         for segment in partSegments:
-            self.partSegmentGroup.add_segment(segment)
+            self.partSegmentGroup.addSegment(segment)
 
         self.partSegmentGroup.validate()
         # self.partSegmentGroup.create_freecad_shape('partSegmentGroup')

@@ -42,69 +42,69 @@ class test_segment_group(unittest.TestCase):
         self.step_over = 1.5
         self.finish_passes = 2
 
-    def test_add_segment(self):
-        self.segmentGroup.add_segment(self.lineSegment2)
-        self.segmentGroup.insert_segment(self.lineSegment1, 0)
-        segmentStart = self.segmentGroup.get_segments()[0].start
-        segmentEnd = self.segmentGroup.get_segments()[0].end
-        self.assertEqual(segmentStart.x, self.pt1.x)
-        self.assertEqual(segmentStart.z, self.pt1.z)
-        self.assertEqual(segmentEnd.x, self.pt2.x)
-        self.assertEqual(segmentEnd.z, self.pt2.z)
+    def test_addSegment(self):
+        self.segmentGroup.addSegment(self.lineSegment2)
+        self.segmentGroup.insertSegment(self.lineSegment1, 0)
+        segmentStart = self.segmentGroup.getSegments()[0].start
+        segmentEnd = self.segmentGroup.getSegments()[0].end
+        self.assertEqual(segmentStart.X, self.pt1.X)
+        self.assertEqual(segmentStart.Z, self.pt1.Z)
+        self.assertEqual(segmentEnd.X, self.pt2.X)
+        self.assertEqual(segmentEnd.Z, self.pt2.Z)
 
-    def test_insert_segment(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
-        segmentStart = self.segmentGroup.get_segments()[0].start
-        segmentEnd = self.segmentGroup.get_segments()[0].end
-        self.assertEqual(segmentStart.x, self.pt1.x)
-        self.assertEqual(segmentStart.z, self.pt1.z)
-        self.assertEqual(segmentEnd.x, self.pt2.x)
-        self.assertEqual(segmentEnd.z, self.pt2.z)
+    def test_insertSegment(self):
+        self.segmentGroup.addSegment(self.lineSegment1)
+        segmentStart = self.segmentGroup.getSegments()[0].start
+        segmentEnd = self.segmentGroup.getSegments()[0].end
+        self.assertEqual(segmentStart.X, self.pt1.X)
+        self.assertEqual(segmentStart.Z, self.pt1.Z)
+        self.assertEqual(segmentEnd.X, self.pt2.X)
+        self.assertEqual(segmentEnd.Z, self.pt2.Z)
 
-    def test_get_segments(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
-        segments = self.segmentGroup.get_segments()
+    def test_getSegments(self):
+        self.segmentGroup.addSegment(self.lineSegment1)
+        segments = self.segmentGroup.getSegments()
         segmentStart = segments[0].start
         segmentEnd = segments[0].end
-        self.assertEqual(segmentStart.x, self.pt1.x)
-        self.assertEqual(segmentStart.z, self.pt1.z)
-        self.assertEqual(segmentEnd.x, self.pt2.x)
-        self.assertEqual(segmentEnd.z, self.pt2.z)
+        self.assertEqual(segmentStart.X, self.pt1.X)
+        self.assertEqual(segmentStart.Z, self.pt1.Z)
+        self.assertEqual(segmentEnd.X, self.pt2.X)
+        self.assertEqual(segmentEnd.Z, self.pt2.Z)
 
         self.assertEqual(len(segments), 1)
 
     def test_extend(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
-        self.assertEqual(len(self.segmentGroup.get_segments()), 1)
+        self.segmentGroup.addSegment(self.lineSegment1)
+        self.assertEqual(len(self.segmentGroup.getSegments()), 1)
 
-        self.segmentGroup2.add_segment(self.lineSegment2)
+        self.segmentGroup2.addSegment(self.lineSegment2)
         self.segmentGroup.extend(self.segmentGroup2)
-        self.assertEqual(len(self.segmentGroup.get_segments()), 2)
+        self.assertEqual(len(self.segmentGroup.getSegments()), 2)
 
     def test_count(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         count = self.segmentGroup.count()
         self.assertEqual(count, 1)
 
-        self.segmentGroup.add_segment(self.lineSegment2)
+        self.segmentGroup.addSegment(self.lineSegment2)
         count = self.segmentGroup.count()
         self.assertEqual(count, 2)
 
     def test_boundbox(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
-        x_min = boundbox.x_min
-        self.assertEqual(x_min, min(self.pt1.x, self.pt2.x))
-        z_min = boundbox.z_min
-        self.assertEqual(z_min, min(self.pt1.z, self.pt2.z))
-        x_max = boundbox.x_max
-        self.assertEqual(x_max, max(self.pt1.x, self.pt2.x))
-        z_max = boundbox.z_max
-        self.assertEqual(z_max, max(self.pt1.z, self.pt2.z))
+        XMin = boundbox.XMin
+        self.assertEqual(XMin, min(self.pt1.X, self.pt2.X))
+        ZMin = boundbox.ZMin
+        self.assertEqual(ZMin, min(self.pt1.Z, self.pt2.Z))
+        XMax = boundbox.XMax
+        self.assertEqual(XMax, max(self.pt1.X, self.pt2.X))
+        ZMax = boundbox.ZMax
+        self.assertEqual(ZMax, max(self.pt1.Z, self.pt2.Z))
 
     '''
     def test_join_segments(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         self.segmentGroup.join_segments()
         start = self.segmentGroup.segments[0].start
         end = self.segmentGroup.segments[0].end
@@ -112,32 +112,32 @@ class test_segment_group(unittest.TestCase):
         self.assertEqual(end, self.pt2)
 
     def test_previous_segment_connected_false(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
-        self.segmentGroup.add_segment(self.lineSegment2)
+        self.segmentGroup.addSegment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment2)
         self.assertFalse(self.segmentGroup.previous_segment_connected(self.lineSegment2))
 
     def test_previous_segment_connected_true(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
-        self.segmentGroup.add_segment(self.lineSegment4)
+        self.segmentGroup.addSegment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment4)
         self.assertTrue(self.segmentGroup.previous_segment_connected(self.lineSegment4))
 
     def test_get_min_retract_x(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         min_x = self.segmentGroup.get_min_retract_x(self.lineSegment1, self.segmentGroup)
         self.assertEqual(min_x, 100)
 
-        self.segmentGroup.add_segment(self.lineSegment3)
+        self.segmentGroup.addSegment(self.lineSegment3)
         min_x = self.segmentGroup.get_min_retract_x(self.lineSegment3, self.segmentGroup)
         self.assertEqual(min_x, -164.74)
 
     def test_to_commands_size(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
         cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         self.assertEqual(len(cmds), 5)
 
     def test_to_commands_movement(self):
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
         cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
         # Expected return
@@ -151,7 +151,7 @@ class test_segment_group(unittest.TestCase):
 
     def test_to_commands_params(self):
         #TODO: Validate
-        self.segmentGroup.add_segment(self.lineSegment1)
+        self.segmentGroup.addSegment(self.lineSegment1)
         boundbox = self.segmentGroup.boundbox()
         cmds = self.segmentGroup.to_commands(self.segmentGroup, boundbox, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
 
@@ -171,10 +171,10 @@ class test_segment_group(unittest.TestCase):
         tool_point_4 = Point(5, 0)
 
         tool = SegmentGroup()
-        tool.add_segment(Segment(tool_point_1, tool_point_2))
-        tool.add_segment(Segment(tool_point_2, tool_point_3))
-        tool.add_segment(Segment(tool_point_3, tool_point_4))
-        tool.add_segment(Segment(tool_point_4, tool_point_1))
+        tool.addSegment(Segment(tool_point_1, tool_point_2))
+        tool.addSegment(Segment(tool_point_2, tool_point_3))
+        tool.addSegment(Segment(tool_point_3, tool_point_4))
+        tool.addSegment(Segment(tool_point_4, tool_point_1))
 
         Pt1 = Point(0, 10)
         Pt2 = Point(4.85643, -8.74157)
@@ -188,37 +188,37 @@ class test_segment_group(unittest.TestCase):
 
         sg = SegmentGroup()
 
-        sg.add_segment(Segment(Pt1, Pt2, 0.7739018038161916))
-        sg.add_segment(Segment(Pt2, Pt3))
-        sg.add_segment(Segment(Pt3, Pt4))
-        sg.add_segment(Segment(Pt4, Pt5, -0.7543428437659994))
-        sg.add_segment(Segment(Pt5, Pt7))
-        sg.add_segment(Segment(Pt7, Pt8))
-        sg.add_segment(Segment(Pt8, Pt9))
-        sg.add_segment(Segment(Pt9, Pt10))
+        sg.addSegment(Segment(Pt1, Pt2, 0.7739018038161916))
+        sg.addSegment(Segment(Pt2, Pt3))
+        sg.addSegment(Segment(Pt3, Pt4))
+        sg.addSegment(Segment(Pt4, Pt5, -0.7543428437659994))
+        sg.addSegment(Segment(Pt5, Pt7))
+        sg.addSegment(Segment(Pt7, Pt8))
+        sg.addSegment(Segment(Pt8, Pt9))
+        sg.addSegment(Segment(Pt9, Pt10))
 
         part_boundbox = sg.boundbox()
-        stock_min = Point(part_boundbox.x_min, part_boundbox.z_min - 5)
-        stock_max = Point(part_boundbox.x_max + 5, part_boundbox.z_max + 5)
+        stock_min = Point(part_boundbox.XMin, part_boundbox.ZMin - 5)
+        stock_max = Point(part_boundbox.XMax + 5, part_boundbox.ZMax + 5)
         stock = BoundBox(stock_min, stock_max)
 
         defeatured_group = sg.defeature(stock, tool, False)
 
         self.assertTrue(defeatured_group.count() > 0)
 
-    def test_from_points(self):
+    def test_fromPoints(self):
         points = [Point(100, 100), Point(0, 0), Point(100, -100)]
-        sg = SegmentGroup().from_points(points)
-        segs = sg.get_segments()
+        sg = SegmentGroup().fromPoints(points)
+        segs = sg.getSegments()
         self.assertEqual(len(segs), 2)
-        self.assertEqual(segs[0].start.x, 100)
-        self.assertEqual(segs[0].start.z, 100)
-        self.assertEqual(segs[0].end.x, 0)
-        self.assertEqual(segs[0].end.z, 0)
+        self.assertEqual(segs[0].start.X, 100)
+        self.assertEqual(segs[0].start.Z, 100)
+        self.assertEqual(segs[0].end.X, 0)
+        self.assertEqual(segs[0].end.Z, 0)
 
-    def test_get_rdp(self):
+    def test_reduce(self):
         points = [Point(100, 100), Point(30, 30), Point(31, 31), Point(0, 0), Point(10, 10), Point(15, 15), Point(100, -100)]
-        points_out = SegmentGroup().get_rdp(points, 0.1)
+        points_out = SegmentGroup().reduce(points, 0.1)
         self.assertTrue(len(points_out) < len(points))
 
     def test_sdv(self):
@@ -229,9 +229,9 @@ class test_segment_group(unittest.TestCase):
 
         sg = SegmentGroup()
 
-        sg.add_segment(Segment(PartPt1, PartPt2))
-        sg.add_segment(Segment(PartPt2, PartPt3))
-        sg.add_segment(Segment(PartPt3, PartPt4))
+        sg.addSegment(Segment(PartPt1, PartPt2))
+        sg.addSegment(Segment(PartPt2, PartPt3))
+        sg.addSegment(Segment(PartPt3, PartPt4))
 
         self.assertEqual(sg.sdv(Point(0, 10)), 10)
         self.assertEqual(sg.sdv(Point(10, -10)), -5)
@@ -245,9 +245,9 @@ class test_segment_group(unittest.TestCase):
 
         sg = SegmentGroup()
 
-        sg.add_segment(Segment(PartPt1, PartPt2))
-        sg.add_segment(Segment(PartPt2, PartPt3))
-        sg.add_segment(Segment(PartPt3, PartPt4))
+        sg.addSegment(Segment(PartPt1, PartPt2))
+        sg.addSegment(Segment(PartPt2, PartPt3))
+        sg.addSegment(Segment(PartPt3, PartPt4))
 
         # inside
         self.assertTrue(sg.isInside(Point(0, -1)))
@@ -262,7 +262,7 @@ class test_segment_group(unittest.TestCase):
         self.assertFalse(sg.isInside(Point(10, 10)))
         self.assertFalse(sg.isInside(Point(16, -10)))
         self.assertFalse(sg.isInside(Point(10, -30)))
-        
+
 
 
 if __name__ == '__main__':

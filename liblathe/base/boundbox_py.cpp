@@ -14,10 +14,10 @@ PYBIND11_MODULE(boundbox, m)
     // bindings to BoundBox class
     py::class_<BoundBox>(m, "BoundBox")
         .def(py::init<Point &, Point &>())
-        .def("x_length", &BoundBox::x_length)
-        .def("z_length", &BoundBox::z_length)
-        .def_readwrite("x_min", &BoundBox::x_min)
-        .def_readwrite("z_min", &BoundBox::z_min)
-        .def_readwrite("x_max", &BoundBox::x_max)
-        .def_readwrite("z_max", &BoundBox::z_max);
+        .def("XLength", &BoundBox::XLength)
+        .def("ZLength", &BoundBox::ZLength)
+        .def_readwrite("XMin", &BoundBox::XMin)
+        .def_readwrite("ZMin", &BoundBox::ZMin)
+        .def_readwrite("XMax", &BoundBox::XMax)
+        .def_readwrite("ZMax", &BoundBox::ZMax);
 }

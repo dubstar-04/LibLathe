@@ -21,14 +21,14 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     this->basenode = bn;
 }
 
-std::vector<Point> Quadtree::get_offset(float offset_value)
+std::vector<Point> Quadtree::getOffset(float offset_value)
 {
     // return the points that represent the calculated offset //
     this->offset = offset_value;
     this->conquer(this->basenode);
     std::vector<Point> found_points;
     std::vector<Point> point = this->query(this->basenode, found_points);
-    return this->sort_points(segment_group->get_segments()[0].start, found_points);
+    return this->sortPoints(segment_group->getSegments()[0].start, found_points);
 }
 
 void Quadtree::conquer(Node &node)
@@ -47,7 +47,7 @@ void Quadtree::conquer(Node &node)
         return;
     }
 
-    if (node.depth < 5 || this->node_could_contain(this->offset, node))
+    if (node.depth < 5 || this->nodeCouldContain(this->offset, node))
     {
         this->divide(node);
     }
@@ -57,8 +57,8 @@ void Quadtree::divide(Node &node)
 {
     // Divide this node by creating four child nodes //
 
-    float cx = node.center.x;
-    float cy = node.center.z;
+    float cx = node.center.X;
+    float cy = node.center.Z;
     float w = node.width / 2;
     float h = node.height / 2;
     int depth = node.depth + 1;
@@ -96,7 +96,7 @@ void Quadtree::divide(Node &node)
     }
 }
 
-bool Quadtree::node_could_contain(float offset, Node &node)
+bool Quadtree::nodeCouldContain(float offset, Node &node)
 {
     // check if the node could contain an a point at offset distance from the segments //
     if (node.sdv - node.height / 2 <= offset && node.sdv + node.height / 2 >= offset)
@@ -112,7 +112,7 @@ bool Quadtree::node_could_contain(float offset, Node &node)
     return false;
 }
 
-std::vector<Point> Quadtree::sort_points(Point datum, std::vector<Point> &points)
+std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
 {
     // sort the point set into a ordered set of points starting from datum //
     std::vector<Point> sorted_points;
@@ -130,7 +130,7 @@ std::vector<Point> Quadtree::sort_points(Point datum, std::vector<Point> &points
         for (index; index < points.size(); index++)
         {
             // find closest point
-            float target_to_point = target.distance_to(points[index]);
+            float target_to_point = target.distanceTo(points[index]);
 
             if (target_to_point < dist)
             {
@@ -140,7 +140,7 @@ std::vector<Point> Quadtree::sort_points(Point datum, std::vector<Point> &points
         }
 
         // add closest point to sorted points
-        sorted_points.push_back(Point(points[closest_index].x, points[closest_index].z));
+        sorted_points.push_back(Point(points[closest_index].X, points[closest_index].Z));
         // remove point from points array
         points.erase(points.begin() + closest_index);
         // set target to last found point
@@ -175,14 +175,14 @@ std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &found_points)
     return found_points;
 }
 
-std::vector<Node> Quadtree::get_nodes()
+std::vector<Node> Quadtree::getNodes()
 {
     // return list of nodes //
     std::vector<Node> nodes;
-    return this->query_nodes(this->basenode, nodes);
+    return this->queryNodes(this->basenode, nodes);
 }
 
-std::vector<Node> Quadtree::query_nodes(Node &node, std::vector<Node> &nodes)
+std::vector<Node> Quadtree::queryNodes(Node &node, std::vector<Node> &nodes)
 {
     // build list of nodes //
     nodes.push_back(node);
@@ -191,7 +191,7 @@ std::vector<Node> Quadtree::query_nodes(Node &node, std::vector<Node> &nodes)
     {
         for (auto &child : node.child_nodes)
         {
-            this->query_nodes(child, nodes);
+            this->queryNodes(child, nodes);
         }
     }
 

@@ -20,29 +20,29 @@ public:
     Point end = Point();
     float bulge = 0;
 
-    float get_angle();
-    void set_bulge(float angle);
-    Point get_centre_point();
-    float get_radius();
-    float get_rotation();
-    BoundBox get_boundbox();
+    float getAngle();
+    void setBulge(float angle);
+    Point getCentrePoint();
+    float getRadius();
+    float getRotation();
+    BoundBox Boundbox();
     bool crossesAxis(float startAngle, float endAngle, float axisAngle);
-    float get_length();
-    float get_sagitta();
-    float get_apothem();
-    float get_eta();
-    float get_epsilon();
-    float get_phi();
+    float getLength();
+    float getSagitta();
+    float getApothem();
+    float getEta();
+    float getEpsilon();
+    float getPhi();
     float get_gamma();
-    bool is_same(Segment seg);
+    bool isSame(Segment seg);
     std::vector<Point> intersect(Segment seg, bool extend);
-    bool point_on_segment(Point point);
-    float distance_to_point(Point point);
+    bool pointOnSegment(Point point);
+    float distanceToPoint(Point point);
 
 private:
-    std::vector<Point> intersect_line_line(Segment seg, bool extend);
-    std::vector<Point> intersect_circle_line(Segment seg, bool extend);
-    std::vector<Point> intersect_circle_circle(Segment seg, bool extend);
+    std::vector<Point> intersectLineLine(Segment seg, bool extend);
+    std::vector<Point> intersectCircleLine(Segment seg, bool extend);
+    std::vector<Point> intersectCircleCircle(Segment seg, bool extend);
 };
 
 #endif

@@ -21,17 +21,17 @@ from liblathe.tool.tool import Tool
 from liblathe.debug.debug import Debug
 
 sg = SegmentGroup()
-sg.add_segment(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
-sg.add_segment(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
-sg.add_segment(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
-sg.add_segment(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
-sg.add_segment(Segment(Point(14, -15) ,Point(0, 0), -0.3))
-sg.add_segment(Segment(Point(0, 0) ,Point(10, 0), 0))
+sg.addSegment(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
+sg.addSegment(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
+sg.addSegment(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
+sg.addSegment(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
+sg.addSegment(Segment(Point(14, -15) ,Point(0, 0), -0.3))
+sg.addSegment(Segment(Point(0, 0) ,Point(10, 0), 0))
 
 bb = sg.boundbox()
-height = bb.x_length() + 10
-width = bb.z_length() + 10
-center = Point( height / 2, bb.z_min + width / 2)
+height = bb.XLength() + 10
+width = bb.ZLength() + 10
+center = Point( height / 2, bb.ZMin + width / 2)
 
 # Define a tool
 tool = Tool()
@@ -50,7 +50,7 @@ Debug().draw([sg, toolShape, defeatured, offset])
 
 qt = Quadtree()
 qt.initialise(defeatured, center, width, height)
-offset = qt.get_offset(0.5)
+offset = qt.getOffset(0.5)
 
-nodes = qt.get_nodes()
+nodes = qt.getNodes()
 Debug().drawQuadtree(nodes, sg)

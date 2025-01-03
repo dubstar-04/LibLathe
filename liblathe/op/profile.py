@@ -25,7 +25,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
             # generate the offset profile path
             segmentgroup.extend(base_segment_group.offset(self.step_over * f_pass))
             # check if segement group intersect the part (internal offset)
-            if segmentgroup.intersects_group(internal_offset):
+            if segmentgroup.intersectsGroup(internal_offset):
                 #Debug().draw([internal_offset, segmentgroup])
                 raise ValueError("Calculated profile path intersects part")
 
@@ -36,21 +36,21 @@ class ProfileOP(liblathe.op.base.BaseOP):
 
     def add_leadin(self, segmentgroup):
         # get the first segment of the segment group
-        segment = segmentgroup.get_segments()[0]
+        segment = segmentgroup.getSegments()[0]
         # TODO: handle leadin when profiling a mid portion of a part
         # calculate the new z_pos with lead in
-        if (segment.start.z < self.stock.z_max):
-            z_pos = self.stock.z_max
+        if (segment.start.Z < self.stock.ZMax):
+            z_pos = self.stock.ZMax
         else:
-            z_pos = segment.start.z + self.clearance
+            z_pos = segment.start.Z + self.clearance
         # create the new start point
-        start_point = Point(segment.start.x, z_pos)
+        start_point = Point(segment.start.X, z_pos)
         # use the segments start as the leadin end point
         end_point = segment.start
         # create the leadin segment
         leadin = Segment(start_point, end_point)
         # add the leadin segment at the start of segment group
-        segmentgroup.insert_segment(leadin, 0)
+        segmentgroup.insertSegment(leadin, 0)
 
     def generateGCode(self):
         """Generate Gcode for the op segments"""

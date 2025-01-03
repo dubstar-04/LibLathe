@@ -15,24 +15,24 @@ class Path:
     def get_min_retract_x(self, segment, pass_segments, operation):
         """ returns the minimum x retract based on the current segments and the part_segments """
 
-        # part_segments = partSegmentGroup.get_segments()
+        # part_segments = partSegmentGroup.getSegments()
         currentIdx = pass_segments.index(segment)
         x_values = []
 
-        # get the x_max from the current pass segments
+        # get the XMax from the current pass segments
         for idx, seg in enumerate(pass_segments):
-            x_values.extend([seg.get_boundbox().x_min, seg.get_boundbox().x_max])
+            x_values.extend([seg.Boundbox().XMin, seg.Boundbox().XMax])
             if idx == currentIdx:
                 break
 
-        # get the x_max from the part segments up to the z position of the current segment
-        seg_z_max = segment.get_boundbox().z_max
-        for part_seg in operation.partSegmentGroup.get_segments():
+        # get the XMax from the part segments up to the z position of the current segment
+        seg_ZMax = segment.Boundbox().ZMax
+        for part_seg in operation.partSegmentGroup.getSegments():
 
-            part_seg_z_max = part_seg.get_boundbox().z_max
-            x_values.extend([part_seg.get_boundbox().x_min, part_seg.get_boundbox().x_max])
+            part_seg_ZMax = part_seg.Boundbox().ZMax
+            x_values.extend([part_seg.Boundbox().XMin, part_seg.Boundbox().XMax])
 
-            if part_seg_z_max < seg_z_max:
+            if part_seg_ZMax < seg_ZMax:
                 break
 
         min_retract_x = max(x_values, key=abs)
@@ -48,7 +48,7 @@ class Path:
             currentStartPt = segment.start
             previousEndPt = segments[previousIdx].end
 
-            if currentStartPt.is_same(previousEndPt):
+            if currentStartPt.isSame(previousEndPt):
                 return True
 
         return False
@@ -57,8 +57,8 @@ class Path:
         """converts segmentgroup to gcode commands"""
 
         def get_pos(pnt):
-            x = pnt.x
-            z = pnt.z
+            x = pnt.X
+            z = pnt.Z
 
             return Point(x, z)
 
@@ -70,17 +70,17 @@ class Path:
 
             return arcType
 
-        segments = segment_group.get_segments()
+        segments = segment_group.getSegments()
 
         for seg in segments:
             min_x_retract = self.get_min_retract_x(seg, segments, operation)
             x_retract = min_x_retract + operation.step_over * operation.finish_passes
-            z_retract = segments[0].start.z
+            z_retract = segments[0].start.Z
 
             # rapid to the start of the segmentgroup
             if segments.index(seg) == 0:
                 pt = get_pos(seg.start)
-                params = {'X': pt.x, 'Z': pt.z, 'F': operation.hfeed}
+                params = {'X': pt.X, 'Z': pt.Z, 'F': operation.hfeed}
                 rapid = Command('G0', params)
                 self.commands.append(rapid)
 
@@ -89,22 +89,22 @@ class Path:
                 # handle unconnected segments
                 if not self.previous_segment_connected(segments, seg) and segments.index(seg) != 0:
                     pt = get_pos(seg.start)
-                    # rapid to the x_max
+                    # rapid to the XMax
                     params = {'X': x_retract, 'F': operation.hfeed}
                     rapid = Command('G0', params)
                     self.commands.append(rapid)
-                    # rapid at x_max to the start of the segment
-                    params = {'X': x_retract, 'Z': pt.z, 'F': operation.hfeed}
+                    # rapid at XMax to the start of the segment
+                    params = {'X': x_retract, 'Z': pt.Z, 'F': operation.hfeed}
                     rapid = Command('G0', params)
                     self.commands.append(rapid)
                     # rapid to the start of the start of the cutting move
-                    params = {'X': pt.x, 'Z': pt.z, 'F': operation.hfeed}
+                    params = {'X': pt.X, 'Z': pt.Z, 'F': operation.hfeed}
                     cmd = Command('G0', params)
                     self.commands.append(cmd)
 
                 # perform the cutting
                 pt = get_pos(seg.end)
-                params = {'X': pt.x, 'Z': pt.z, 'F': operation.hfeed}
+                params = {'X': pt.X, 'Z': pt.Z, 'F': operation.hfeed}
                 cmd = Command('G1', params)
                 self.commands.append(cmd)
             # handle arc segments
@@ -115,8 +115,8 @@ class Path:
                 arcType = get_arc_type(seg.bulge)
 
                 # set the arc parameters
-                cen = get_pos(seg.get_centre_point()).sub(pt1)
-                params = {'X': pt2.x, 'Z': pt2.z, 'I': cen.x, 'K': cen.z, 'F': operation.hfeed}
+                cen = get_pos(seg.getCentrePoint()).sub(pt1)
+                params = {'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': operation.hfeed}
                 cmd = Command(arcType, params)
                 self.commands.append(cmd)
 
@@ -124,7 +124,7 @@ class Path:
             if segments.index(seg) == len(segments) - 1:
                 pt = get_pos(seg.end)
                 # TODO: Remove the F parameter from rapid moves
-                params = {'X': x_retract, 'Z': pt.z, 'F': operation.hfeed}
+                params = {'X': x_retract, 'Z': pt.Z, 'F': operation.hfeed}
                 rapid = Command('G0', params)
                 self.commands.append(rapid)
 

@@ -9,7 +9,7 @@ Segment::Segment(Point start, Point end, float bulge = 0) : start(start), end(en
 {
 }
 
-float Segment::get_angle()
+float Segment::getAngle()
 {
     // Returns the included angle between the start && end points in radians//
     // TODO: Is this supposed to return 0 to 2 * M_PIf?
@@ -22,7 +22,7 @@ float Segment::get_angle()
     return atan(abs(this->bulge)) * 4;
 }
 
-void Segment::set_bulge(float angle)
+void Segment::setBulge(float angle)
 {
     /*
     Sets the bulge of the arc (tan(angle/4))
@@ -34,7 +34,7 @@ void Segment::set_bulge(float angle)
     this->bulge = tan(angle / 4);
 }
 
-Point Segment::get_centre_point()
+Point Segment::getCentrePoint()
 {
     // Returns the centre point of the arc //
     Point midp = this->start.mid(this->end);
@@ -43,23 +43,23 @@ Point Segment::get_centre_point()
         return midp;
     }
 
-    float a = this->get_apothem();
+    float a = this->getApothem();
     //  check if (the center point is inverted. i.e. at 180 it goes inside the arc
-    if (this->get_angle() > M_PIf)
+    if (this->getAngle() > M_PIf)
     {
         a = -a;
     }
 
-    Point centre_pt = midp.project(this->get_rotation() + M_PI_2f, a);
+    Point centre_pt = midp.project(this->getRotation() + M_PI_2f, a);
     if (this->bulge > 0)
     {
-        centre_pt = midp.project(this->get_rotation() - M_PI_2f, a);
+        centre_pt = midp.project(this->getRotation() - M_PI_2f, a);
     }
 
     return centre_pt;
 }
 
-float Segment::get_radius()
+float Segment::getRadius()
 {
     // Return the radius of the arc //
 
@@ -68,17 +68,17 @@ float Segment::get_radius()
         return 0.0;
     }
 
-    float rad = this->get_length() * (1 + pow(this->bulge, 2)) / (4 * abs(this->bulge));
+    float rad = this->getLength() * (1 + pow(this->bulge, 2)) / (4 * abs(this->bulge));
     return rad;
 }
 
-float Segment::get_rotation()
+float Segment::getRotation()
 {
     // returns the rotation of the segment//
-    return this->start.angle_to(this->end);
+    return this->start.angleTo(this->end);
 }
 
-BoundBox Segment::get_boundbox()
+BoundBox Segment::Boundbox()
 {
     // returns the segments boundingbox //
 
@@ -91,8 +91,8 @@ BoundBox Segment::get_boundbox()
     }
     else
     {
-        float startAngle = this->get_centre_point().angle_to(this->start);
-        float endAngle = this->get_centre_point().angle_to(this->end);
+        float startAngle = this->getCentrePoint().angleTo(this->start);
+        float endAngle = this->getCentrePoint().angleTo(this->end);
 
         bool cross0 = this->crossesAxis(startAngle, endAngle, 0);
         bool cross90 = this->crossesAxis(startAngle, endAngle, M_PI_2f);
@@ -101,10 +101,10 @@ BoundBox Segment::get_boundbox()
 
         //  if (the arc crosses the axis the min or max is where the arc intersects the axis
         //  otherwise max/min is the arc endpoint
-        float zmax = cross0 ? this->get_centre_point().z + this->get_radius() : std::max(this->start.z, this->end.z);
-        float xmin = cross90 ? this->get_centre_point().x - this->get_radius() : std::min(this->start.x, this->end.x);
-        float zmin = cross180 ? this->get_centre_point().z - this->get_radius() : std::min(this->start.z, this->end.z);
-        float xmax = cross270 ? this->get_centre_point().x + this->get_radius() : std::max(this->start.x, this->end.x);
+        float zmax = cross0 ? this->getCentrePoint().Z + this->getRadius() : std::max(this->start.Z, this->end.Z);
+        float xmin = cross90 ? this->getCentrePoint().X - this->getRadius() : std::min(this->start.X, this->end.X);
+        float zmin = cross180 ? this->getCentrePoint().Z - this->getRadius() : std::min(this->start.Z, this->end.Z);
+        float xmax = cross270 ? this->getCentrePoint().X + this->getRadius() : std::max(this->start.X, this->end.X);
 
         topLeft = Point(xmin, zmin);
         bottomRight = Point(xmax, zmax);
@@ -134,32 +134,32 @@ bool Segment::crossesAxis(float startAngle, float endAngle, float axisAngle)
     return crosses;
 }
 
-float Segment::get_length()
+float Segment::getLength()
 {
     // Returns the distance between the start && end points //
     //  TODO: Arc length should be the true length not the distance between the start && endpoints?
-    return this->start.distance_to(this->end);
+    return this->start.distanceTo(this->end);
 }
 
-float Segment::get_sagitta()
+float Segment::getSagitta()
 {
     // Returns the arc height, typically referred to as the sagitta //
-    return this->get_length() / 2 * this->bulge;
+    return this->getLength() / 2 * this->bulge;
 }
 
-float Segment::get_apothem()
+float Segment::getApothem()
 {
     // Returns apothem. distance from arc center to c||d midpoint //
-    return sqrt(pow(this->get_radius(), 2) - pow(this->get_length() / 2, 2));
+    return sqrt(pow(this->getRadius(), 2) - pow(this->getLength() / 2, 2));
 }
 
-float Segment::get_eta()
+float Segment::getEta()
 {
     // Return eta angle (half the included angle) in radians //
-    return this->get_angle() / 2;
+    return this->getAngle() / 2;
 }
 
-float Segment::get_epsilon()
+float Segment::getEpsilon()
 {
     // Returns signless epsilon angle in radians//
     if (this->bulge == 0)
@@ -170,7 +170,7 @@ float Segment::get_epsilon()
     return abs(atan(this->bulge));
 }
 
-float Segment::get_phi()
+float Segment::getPhi()
 {
     // Return signless phi angle in radians //
 
@@ -179,7 +179,7 @@ float Segment::get_phi()
         return 0;
     }
 
-    return abs((M_PIf - abs(this->get_angle()) / 2) / 2);
+    return abs((M_PIf - abs(this->getAngle()) / 2) / 2);
 }
 
 float Segment::get_gamma()
@@ -191,16 +191,16 @@ float Segment::get_gamma()
         return 0;
     }
 
-    return (M_PIf - abs(this->get_angle())) / 2;
+    return (M_PIf - abs(this->getAngle())) / 2;
 }
 
-bool Segment::is_same(Segment seg)
+bool Segment::isSame(Segment seg)
 {
     // Returns true is the segment is the same //
 
-    if (this->start.is_same(seg.start))
+    if (this->start.isSame(seg.start))
     {
-        if (this->end.is_same(seg.end))
+        if (this->end.isSame(seg.end))
         {
             if (this->bulge == seg.bulge)
             {
@@ -218,21 +218,21 @@ std::vector<Point> Segment::intersect(Segment seg, bool extend = false)
     std::vector<Point> pts;
     if (this->bulge == 0 && seg.bulge == 0)
     {
-        pts = this->intersect_line_line(seg, extend);
+        pts = this->intersectLineLine(seg, extend);
     }
     else if (this->bulge != 0 && seg.bulge != 0)
     {
-        pts = this->intersect_circle_circle(seg, extend);
+        pts = this->intersectCircleCircle(seg, extend);
     }
     else if (this->bulge != 0 || seg.bulge != 0 && this->bulge == 0 || seg.bulge == 0)
     {
-        pts = this->intersect_circle_line(seg, extend);
+        pts = this->intersectCircleLine(seg, extend);
     }
 
     return pts;
 }
 
-std::vector<Point> Segment::intersect_line_line(Segment seg, bool extend = false)
+std::vector<Point> Segment::intersectLineLine(Segment seg, bool extend = false)
 {
     // Determine intersections between self && seg when both are line segments//
 
@@ -242,9 +242,9 @@ std::vector<Point> Segment::intersect_line_line(Segment seg, bool extend = false
     Point b2 = seg.end;
     std::vector<Point> pts;
 
-    float ua_t = (b2.x - b1.x) * (a1.z - b1.z) - (b2.z - b1.z) * (a1.x - b1.x);
-    float ub_t = (a2.x - a1.x) * (a1.z - b1.z) - (a2.z - a1.z) * (a1.x - b1.x);
-    float u_b = (b2.z - b1.z) * (a2.x - a1.x) - (b2.x - b1.x) * (a2.z - a1.z);
+    float ua_t = (b2.X - b1.X) * (a1.Z - b1.Z) - (b2.Z - b1.Z) * (a1.X - b1.X);
+    float ub_t = (a2.X - a1.X) * (a1.Z - b1.Z) - (a2.Z - a1.Z) * (a1.X - b1.X);
+    float u_b = (b2.Z - b1.Z) * (a2.X - a1.X) - (b2.X - b1.X) * (a2.Z - a1.Z);
 
     // if ((u_b != 0)){
     float ua = ua_t / u_b;
@@ -254,14 +254,14 @@ std::vector<Point> Segment::intersect_line_line(Segment seg, bool extend = false
     if (((0 <= ua && ua <= 1) && (0 <= ub && ub <= 1)) || extend)
     {
         // intersect true
-        Point pt = Point(a1.x + ua * (a2.x - a1.x), a1.z + ua * (a2.z - a1.z));
+        Point pt = Point(a1.X + ua * (a2.X - a1.X), a1.Z + ua * (a2.Z - a1.Z));
         pts.push_back(pt);
     }
 
     return pts;
 }
 
-std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = false)
+std::vector<Point> Segment::intersectCircleLine(Segment seg, bool extend = false)
 {
     // Determine intersections between self && seg when one is a line segment && one is an arc segment//
 
@@ -288,19 +288,19 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
         circle.bulge = this->bulge;
     }
 
-    Point c = circle.get_centre_point();
-    float r = circle.get_radius();
+    Point c = circle.getCentrePoint();
+    float r = circle.getRadius();
     Point a1 = line.start;
     Point a2 = line.end;
 
-    if (line.get_length() == 0)
+    if (line.getLength() == 0)
     {
         return pts;
     }
 
-    float a = (a2.x - a1.x) * (a2.x - a1.x) + (a2.z - a1.z) * (a2.z - a1.z);
-    float b = 2 * ((a2.x - a1.x) * (a1.x - c.x) + (a2.z - a1.z) * (a1.z - c.z));
-    float cc = pow(c.x, 2) + pow(c.z, 2) + pow(a1.x, 2) + pow(a1.z, 2) - 2 * (c.x * a1.x + c.z * a1.z) - pow(r, 2);
+    float a = (a2.X - a1.X) * (a2.X - a1.X) + (a2.Z - a1.Z) * (a2.Z - a1.Z);
+    float b = 2 * ((a2.X - a1.X) * (a1.X - c.X) + (a2.Z - a1.Z) * (a1.Z - c.Z));
+    float cc = pow(c.X, 2) + pow(c.Z, 2) + pow(a1.X, 2) + pow(a1.Z, 2) - 2 * (c.X * a1.X + c.Z * a1.Z) - pow(r, 2);
 
     float deter = pow(b, 2) - 4 * a * cc;
     if (deter < 0)
@@ -313,13 +313,13 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
     float u2 = (-b - e) / (2 * a);
 
     Point point = a1.lerp(a2, u1);
-    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend)
+    if (circle.pointOnSegment(point) && line.pointOnSegment(point) || extend)
     {
         pts.push_back(point);
     }
 
     point = a1.lerp(a2, u2);
-    if (circle.point_on_segment(point) && line.point_on_segment(point) || extend)
+    if (circle.pointOnSegment(point) && line.pointOnSegment(point) || extend)
     {
         pts.push_back(point);
     }
@@ -327,18 +327,18 @@ std::vector<Point> Segment::intersect_circle_line(Segment seg, bool extend = fal
     return pts;
 }
 
-std::vector<Point> Segment::intersect_circle_circle(Segment seg, bool extend = false)
+std::vector<Point> Segment::intersectCircleCircle(Segment seg, bool extend = false)
 {
     // Determine intersections between self and seg when both are arc segments//
 
     std::vector<Point> pts;
-    Point c1 = this->get_centre_point();
-    float r1 = this->get_radius();
-    Point c2 = seg.get_centre_point();
-    float r2 = seg.get_radius();
+    Point c1 = this->getCentrePoint();
+    float r1 = this->getRadius();
+    Point c2 = seg.getCentrePoint();
+    float r2 = seg.getRadius();
 
     //  Determine actual distance between circle centres
-    float c_dist = c1.distance_to(c2);
+    float c_dist = c1.distanceTo(c2);
 
     if (Utils::roundoff(c_dist, 5) >= Utils::roundoff(r1 + r2, 5))
     {
@@ -352,7 +352,7 @@ std::vector<Point> Segment::intersect_circle_circle(Segment seg, bool extend = f
         return pts;
     }
 
-    if (c1.is_same(c2) || Utils::roundoff(c_dist, 5) == 0)
+    if (c1.isSame(c2) || Utils::roundoff(c_dist, 5) == 0)
     {
         //  concentric
         return pts;
@@ -366,14 +366,14 @@ std::vector<Point> Segment::intersect_circle_circle(Segment seg, bool extend = f
     Point p = c1.lerp(c2, a / c_dist);
     float b = h / c_dist;
 
-    Point pt1 = Point(p.x - b * (c2.z - c1.z), p.z + b * (c2.x - c1.x));
-    if (this->point_on_segment(pt1) && seg.point_on_segment(pt1))
+    Point pt1 = Point(p.X - b * (c2.Z - c1.Z), p.Z + b * (c2.X - c1.X));
+    if (this->pointOnSegment(pt1) && seg.pointOnSegment(pt1))
     {
         pts.push_back(pt1);
     }
 
-    Point pt2 = Point(p.x + b * (c2.z - c1.z), p.z - b * (c2.x - c1.x));
-    if (this->point_on_segment(pt2) && seg.point_on_segment(pt2))
+    Point pt2 = Point(p.X + b * (c2.Z - c1.Z), p.Z - b * (c2.X - c1.X));
+    if (this->pointOnSegment(pt2) && seg.pointOnSegment(pt2))
     {
         pts.push_back(pt2);
     }
@@ -381,15 +381,15 @@ std::vector<Point> Segment::intersect_circle_circle(Segment seg, bool extend = f
     return pts;
 }
 
-bool Segment::point_on_segment(Point point)
+bool Segment::pointOnSegment(Point point)
 {
     // Determine if point is on segment //
     if (this->bulge == 0)
     {
 
-        float length = get_length();
-        float sp = start.distance_to(point);
-        float pe = point.distance_to(end);
+        float length = getLength();
+        float sp = start.distanceTo(point);
+        float pe = point.distanceTo(end);
 
         // if the distance start > point + point > end is equal to length, point is online
         if (Utils::roundoff(length, 5) == Utils::roundoff(sp + pe, 5))
@@ -402,14 +402,14 @@ bool Segment::point_on_segment(Point point)
     else
     {
         //  Arc
-        Point c = this->get_centre_point();
-        float radius = this->get_radius();
-        float sa = c.angle_to(this->start);
-        float ea = c.angle_to(this->end);
-        float pnt_ang = c.angle_to(point);
+        Point c = this->getCentrePoint();
+        float radius = this->getRadius();
+        float sa = c.angleTo(this->start);
+        float ea = c.angleTo(this->end);
+        float pnt_ang = c.angleTo(point);
 
         //  if (the point isn't on the segment radius it's not a true intersection
-        if (Utils::roundoff(c.distance_to(point), 2) != Utils::roundoff(radius, 2))
+        if (Utils::roundoff(c.distanceTo(point), 2) != Utils::roundoff(radius, 2))
         {
             return false;
         }
@@ -425,16 +425,16 @@ bool Segment::point_on_segment(Point point)
     }
 }
 
-float Segment::distance_to_point(Point point)
+float Segment::distanceToPoint(Point point)
 {
     // get the closest point on segment to point //
 
     if (this->bulge == 0)
     {
-        float APx = point.x - start.x;
-        float APy = point.z - start.z;
-        float ABx = end.x - start.x;
-        float ABy = end.z - start.z;
+        float APx = point.X - start.X;
+        float APy = point.Z - start.Z;
+        float ABx = end.X - start.X;
+        float ABy = end.Z - start.Z;
 
         float magAB2 = ABx * ABx + ABy * ABy;
         float ABdotAP = ABx * APx + ABy * APy;
@@ -443,30 +443,30 @@ float Segment::distance_to_point(Point point)
         // check if the point is < start or > end
         if (t > 0.0 && t < 1.0)
         {
-            float x = start.x + ABx * t;
-            float z = start.z + ABy * t;
+            float x = start.X + ABx * t;
+            float z = start.Z + ABy * t;
             Point p = Point(x, z);
-            return p.distance_to(point);
+            return p.distanceTo(point);
         }
 
         if (t < 0)
         {
-            return start.distance_to(point);
+            return start.distanceTo(point);
         }
 
-        return end.distance_to(point);
+        return end.distanceTo(point);
     }
     else
     {
         // Arcs support has minimal benefit as the defeature function
         // returns straight segments
         // TODO: remove this to tidy up
-        float length = point.distance_to(this->get_centre_point());
-        float Cx = this->get_centre_point().x + this->get_radius() * (point.x - this->get_centre_point().x) / length;
-        float Cz = this->get_centre_point().z + this->get_radius() * (point.z - this->get_centre_point().z) / length;
+        float length = point.distanceTo(this->getCentrePoint());
+        float Cx = this->getCentrePoint().X + this->getRadius() * (point.X - this->getCentrePoint().X) / length;
+        float Cz = this->getCentrePoint().Z + this->getRadius() * (point.Z - this->getCentrePoint().Z) / length;
         Point closestPoint = Point(Cx, Cz);
 
-        float distance = point.distance_to(closestPoint);
+        float distance = point.distanceTo(closestPoint);
 
         return distance;
     }

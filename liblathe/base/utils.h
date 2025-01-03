@@ -15,7 +15,7 @@ public:
         return round(value * pow_10) / pow_10;
     }
 
-    static bool compare_floats(float A, float B, float prec = 0.1)
+    static bool compareFloats(float A, float B, float prec = 0.1)
     {
         // check if A and B are the same within precision
         return (fabs(A - B) < prec);

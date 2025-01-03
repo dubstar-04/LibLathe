@@ -82,8 +82,8 @@ class test_tool(unittest.TestCase):
         TriangleToolCuttingDirection = self.TShapeTool.get_cutting_direction()
         self.assertEqual(TriangleToolCuttingDirection, "N")
 
-    def test_get_rotation(self):
-        rotation = self.tool.get_rotation()
+    def test_getRotation(self):
+        rotation = self.tool.getRotation()
         self.assertEqual(rotation, 0)
 
     def test_set_tip_angle(self):

@@ -3,20 +3,20 @@
 BoundBox::BoundBox(Point pt1, Point pt2)
 {
 
-    this->x_min = std::min(pt1.x, pt2.x);
-    this->z_min = std::min(pt1.z, pt2.z);
-    this->x_max = std::max(pt1.x, pt2.x);
-    this->z_max = std::max(pt1.z, pt2.z);
+    this->XMin = std::min(pt1.X, pt2.X);
+    this->ZMin = std::min(pt1.Z, pt2.Z);
+    this->XMax = std::max(pt1.X, pt2.X);
+    this->ZMax = std::max(pt1.Z, pt2.Z);
 }
 
-float BoundBox::x_length()
+float BoundBox::XLength()
 {
     // Return length in x direction//
-    return abs(this->x_max - this->x_min);
+    return abs(this->XMax - this->XMin);
 }
 
-float BoundBox::z_length()
+float BoundBox::ZLength()
 {
     // Return length in z direction//
-    return abs(this->z_max - this->z_min);
+    return abs(this->ZMax - this->ZMin);
 }

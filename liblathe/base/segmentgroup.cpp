@@ -6,19 +6,19 @@ SegmentGroup::SegmentGroup()
 {
 }
 
-void SegmentGroup::add_segment(Segment segment)
+void SegmentGroup::addSegment(Segment segment)
 {
     // Add segment to group //
     this->segments.push_back(segment);
 }
 
-void SegmentGroup::insert_segment(Segment segment, int position)
+void SegmentGroup::insertSegment(Segment segment, int position)
 {
     // Insert segment into group at position //
     segments.insert(segments.begin() + position, segment);
 }
 
-std::vector<Segment> SegmentGroup::get_segments()
+std::vector<Segment> SegmentGroup::getSegments()
 {
     // Return segments //
     return this->segments;
@@ -27,7 +27,7 @@ std::vector<Segment> SegmentGroup::get_segments()
 void SegmentGroup::extend(SegmentGroup segmentgroup)
 {
     // Add segment group to this segmentgroup //
-    std::vector<Segment> segs = segmentgroup.get_segments();
+    std::vector<Segment> segs = segmentgroup.getSegments();
     this->segments.insert(segments.end(), segs.begin(), segs.end());
 }
 
@@ -52,31 +52,31 @@ BoundBox SegmentGroup::boundbox()
     // collect all points from each segment by direction
     for (auto &segment : this->segments)
     {
-        BoundBox bb = segment.get_boundbox();
+        BoundBox bb = segment.Boundbox();
 
-        xvalues.push_back(bb.x_min);
-        xvalues.push_back(bb.x_max);
+        xvalues.push_back(bb.XMin);
+        xvalues.push_back(bb.XMax);
 
-        zvalues.push_back(bb.z_min);
-        zvalues.push_back(bb.z_max);
+        zvalues.push_back(bb.ZMin);
+        zvalues.push_back(bb.ZMax);
     }
 
-    float x_min = *std::min_element(std::begin(xvalues), std::end(xvalues));
-    float x_max = *std::max_element(std::begin(xvalues), std::end(xvalues));
-    float z_min = *std::min_element(zvalues.begin(), zvalues.end());
-    float z_max = *std::max_element(zvalues.begin(), zvalues.end());
+    float XMin = *std::min_element(std::begin(xvalues), std::end(xvalues));
+    float XMax = *std::max_element(std::begin(xvalues), std::end(xvalues));
+    float ZMin = *std::min_element(zvalues.begin(), zvalues.end());
+    float ZMax = *std::max_element(zvalues.begin(), zvalues.end());
 
-    Point pt1 = Point(x_min, z_min);
-    Point pt2 = Point(x_max, z_max);
+    Point pt1 = Point(XMin, ZMin);
+    Point pt2 = Point(XMax, ZMax);
     BoundBox segmentgroupBoundBox = BoundBox(pt1, pt2);
 
     return segmentgroupBoundBox;
 }
 
-bool SegmentGroup::intersects_group(SegmentGroup segment_group)
+bool SegmentGroup::intersectsGroup(SegmentGroup segment_group)
 {
     // check if the segment_group intersects self //
-    for (auto &segment : segment_group.get_segments())
+    for (auto &segment : segment_group.getSegments())
     {
         for (auto &seg : this->segments)
         {
@@ -104,46 +104,46 @@ SegmentGroup SegmentGroup::offset(float step_over)
     // 5. effects of scaling the segment group and quadtree
 
     BoundBox bb = this->boundbox();
-    float height = bb.x_length() + 10;
-    float width = bb.z_length(); //+ 10;
+    float height = bb.XLength() + 10;
+    float width = bb.ZLength(); //+ 10;
 
-    Point center = Point(height / 2, bb.z_min + width / 2);
+    Point center = Point(height / 2, bb.ZMin + width / 2);
 
     Quadtree qt = Quadtree();
     qt.initialise(this, center, width, height);
-    std::vector<Point> offset = qt.get_offset(step_over);
+    std::vector<Point> offset = qt.getOffset(step_over);
 
     // attempt simplification
     float resolution = 0.01;
     std::vector<Point> defeatured_points;
     this->rdp(offset, resolution, defeatured_points);
-    return this->from_points(defeatured_points);
+    return this->fromPoints(defeatured_points);
 }
 
 SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving = false)
 {
     // Defeature the segment group. Remove features that cannot be turned. e.g. undercuts / grooves etc //
 
-    float x_min = 0;
-    float x_max = stock.x_max;
-    float z_min = stock.z_min;
-    float z_max = stock.z_max;
+    float XMin = 0;
+    float XMax = stock.XMax;
+    float ZMin = stock.ZMin;
+    float ZMax = stock.ZMax;
     float resolution = 0.01;
 
     std::vector<Point> points;
 
     // get start position
-    Point start = Point(0, this->boundbox().z_max); // segments[0].start;
+    Point start = Point(0, this->boundbox().ZMax); // segments[0].start;
     SegmentGroup tool_shape = tool.add(start);
 
-    if (start.x > 0)
+    if (start.X > 0)
     {
         throw std::runtime_error("segment groups first segment must be at x = 0");
     }
 
-    if (this->boundbox().z_max < stock.z_max)
+    if (this->boundbox().ZMax < stock.ZMax)
     {
-        while (intersects_group(tool_shape))
+        while (intersectsGroup(tool_shape))
         {
             // move the tool along the z axis until it no longer intersects the part.
             start = start.add(Point(0, resolution));
@@ -153,32 +153,32 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
         points.push_back(start);
     }
 
-    float z_pos = start.z;
-    while (z_pos > z_min)
+    float z_pos = start.Z;
+    while (z_pos > ZMin)
     {
         // test for intersection at z with a single segment
-        Segment test_segment = Segment(Point(x_max, z_pos), Point(x_min, z_pos));
+        Segment test_segment = Segment(Point(XMax, z_pos), Point(XMin, z_pos));
         for (auto seg : this->segments)
         {
             // TODO: remove the bool false from the segment call
             std::vector<Point> pts = test_segment.intersect(seg, false);
             if (pts.size() > 0)
             {
-                float x_pos = pts[0].x - resolution;
-                while (x_pos < (pts[0].x + resolution))
+                float x_pos = pts[0].X - resolution;
+                while (x_pos < (pts[0].X + resolution))
                 {
                     Point iteration_position = Point(x_pos, z_pos);
                     SegmentGroup tool_shape = tool.add(iteration_position);
-                    if (!intersects_group(tool_shape))
+                    if (!intersectsGroup(tool_shape))
                     {
 
                         // if allow_grooving is false
                         if (points.size() > 1 && allow_grooving == false)
                         {
-                            float last_x = points.back().x;
+                            float last_x = points.back().X;
                             if (x_pos < last_x)
                             {
-                                iteration_position.x = last_x;
+                                iteration_position.X = last_x;
                             }
                         }
 
@@ -197,7 +197,7 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
     // attempt simplification
     std::vector<Point> defeatured_points;
     this->rdp(points, resolution, defeatured_points);
-    return this->from_points(defeatured_points);
+    return this->fromPoints(defeatured_points);
 }
 
 SegmentGroup SegmentGroup::add(Point point)
@@ -208,16 +208,16 @@ SegmentGroup SegmentGroup::add(Point point)
 
     for (auto seg : this->segments)
     {
-        Point start = Point(seg.start.x + point.x, seg.start.z + point.z);
-        Point end = Point(seg.end.x + point.x, seg.end.z + point.z);
+        Point start = Point(seg.start.X + point.X, seg.start.Z + point.Z);
+        Point end = Point(seg.end.X + point.X, seg.end.Z + point.Z);
         Segment new_seg = Segment(start, end);
-        out.add_segment(new_seg);
+        out.addSegment(new_seg);
     }
 
     return out;
 }
 
-SegmentGroup SegmentGroup::from_points(std::vector<Point> points)
+SegmentGroup SegmentGroup::fromPoints(std::vector<Point> points)
 {
     // create a segment group from a vector of points //
     SegmentGroup segment_group = SegmentGroup();
@@ -229,7 +229,7 @@ SegmentGroup SegmentGroup::from_points(std::vector<Point> points)
             if (i >= 1)
             {
                 Segment seg = Segment(points[i - 1], points[i]);
-                segment_group.add_segment(seg);
+                segment_group.addSegment(seg);
             }
         }
     }
@@ -244,15 +244,15 @@ SegmentGroup SegmentGroup::copy()
 
     for (auto &segment : this->segments)
     {
-        Point start = Point(segment.start.x, segment.start.z);
-        Point end = Point(segment.end.x, segment.end.z);
-        segment_group.add_segment(Segment(start, end, segment.bulge));
+        Point start = Point(segment.start.X, segment.start.Z);
+        Point end = Point(segment.end.X, segment.end.Z);
+        segment_group.addSegment(Segment(start, end, segment.bulge));
     }
 
     return segment_group;
 }
 
-std::vector<Point> SegmentGroup::get_rdp(std::vector<Point> &points, float tolerance)
+std::vector<Point> SegmentGroup::reduce(std::vector<Point> &points, float tolerance)
 {
     std::vector<Point> out;
     this->rdp(points, tolerance, out);
@@ -261,6 +261,7 @@ std::vector<Point> SegmentGroup::get_rdp(std::vector<Point> &points, float toler
 
 void SegmentGroup::rdp(std::vector<Point> &points, float tolerance, std::vector<Point> &out)
 {
+    // reduce the number of points in the segmentgroup using a Ramer–Douglas–Peucker algorithm
 
     if (points.size() < 2)
     {
@@ -273,7 +274,7 @@ void SegmentGroup::rdp(std::vector<Point> &points, float tolerance, std::vector<
     size_t end = points.size() - 1;
     for (size_t i = 1; i < end; i++)
     {
-        double d = Segment(points[0], points[end]).distance_to_point(points[i]);
+        double d = Segment(points[0], points[end]).distanceToPoint(points[i]);
         if (d > dmax)
         {
             index = i;
@@ -331,7 +332,7 @@ float SegmentGroup::sdv(Point point)
     // find closest point on the segments
     for (auto &segment : this->segments)
     {
-        float clst_dist = segment.distance_to_point(point);
+        float clst_dist = segment.distanceToPoint(point);
         dist_clst_pnt = std::min(clst_dist, dist_clst_pnt);
     }
 
@@ -350,9 +351,9 @@ bool SegmentGroup::isInside(Point point)
     int intersections = 0;
 
     // generate a ray to perform the crossing
-    float x = point.x;
+    float x = point.X;
     // ensure that the ray starts outside the segments boundbox
-    float z = this->boundbox().z_max + 10;
+    float z = this->boundbox().ZMax + 10;
     Segment ray = Segment(Point(x, z), point);
 
     // TODO: consider is there is a better way to ensure the start and end are at X0
@@ -360,23 +361,23 @@ bool SegmentGroup::isInside(Point point)
     SegmentGroup segmentGroupCopy = this->copy();
 
     // check the group starts at X0
-    if (segmentGroupCopy.get_segments().front().start.x != 0)
+    if (segmentGroupCopy.getSegments().front().start.X != 0)
     {
         // add a new segment to fill between the group start and x = 0 //
-        Point end_point = segmentGroupCopy.get_segments().front().start;
-        Point start_point = Point(0, end_point.z);
+        Point end_point = segmentGroupCopy.getSegments().front().start;
+        Point start_point = Point(0, end_point.Z);
         Segment start_filler_segment = Segment(start_point, end_point);
-        segmentGroupCopy.insert_segment(start_filler_segment, 0);
+        segmentGroupCopy.insertSegment(start_filler_segment, 0);
     }
 
     // check the group end at X0
-    if (segmentGroupCopy.get_segments().back().end.x != 0)
+    if (segmentGroupCopy.getSegments().back().end.X != 0)
     {
         // add a new segment to fill between the group end and x = 0 //
-        Point start_point = segmentGroupCopy.get_segments().back().end;
-        Point end_point = Point(0, start_point.z);
+        Point start_point = segmentGroupCopy.getSegments().back().end;
+        Point end_point = Point(0, start_point.Z);
         Segment end_filler_segment = Segment(start_point, end_point);
-        segmentGroupCopy.add_segment(end_filler_segment);
+        segmentGroupCopy.addSegment(end_filler_segment);
     }
 
     // collect the number of times ray intersects the segments

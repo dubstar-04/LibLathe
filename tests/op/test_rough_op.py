@@ -99,8 +99,8 @@ class test_RoughOP(unittest.TestCase):
                 if "Z" in command.getParams():
                     min_z = min(command.getParams()['Z'], min_z)
 
-        # test the z value matches the stock z_min
-        self.assertEqual(min_z, self.op.stock.z_min)
+        # test the z value matches the stock ZMin
+        self.assertEqual(min_z, self.op.stock.ZMin)
 
 
 if __name__ == '__main__':

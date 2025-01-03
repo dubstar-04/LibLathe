@@ -87,15 +87,15 @@ class Plot:
 
         for segment_group in segment_groups:
 
-            segments = segment_group.get_segments()
+            segments = segment_group.getSegments()
 
             for seg in segments:
-                start = self._translate_point(Point(seg.start.z, seg.start.x))
-                end = self._translate_point(Point(seg.end.z, seg.end.x))
+                start = self._translate_point(Point(seg.start.Z, seg.start.X))
+                end = self._translate_point(Point(seg.end.Z, seg.end.X))
 
                 if seg.bulge != 0:
-                    center_point = seg.get_centre_point()
-                    centre = self._translate_point(Point(center_point.z, center_point.x))
+                    center_point = seg.getCentrePoint()
+                    centre = self._translate_point(Point(center_point.Z, center_point.X))
                     orientation = "CW"
 
                     if seg.bulge > 0:
@@ -144,16 +144,16 @@ class Plot:
 
     def drawline(self, start, end, colour):
         """ Add a line element to the drawing """
-        self.draw.line([(start.x, start.z), (end.x, end.z)], fill=colour, width=self.line_thickness)
+        self.draw.line([(start.X, start.Z), (end.X, end.Z)], fill=colour, width=self.line_thickness)
 
     def drawarc(self, start, end, centre, colour, orientation):
         """ Add an arc element to the drawing """
 
-        distance = self._get_distance(centre.x, centre.z, start.x, start.z)
+        distance = self._get_distance(centre.X, centre.Z, start.X, start.Z)
 
-        start_angle = self._get_angle(centre.x, centre.z, start.x, start.z)
-        end_angle = self._get_angle(centre.x, centre.z, end.x, end.z)
-        boundbox = [(centre.x - distance, centre.z - distance), (centre.x + distance, centre.z + distance)]
+        start_angle = self._getAngle(centre.X, centre.Z, start.X, start.Z)
+        end_angle = self._getAngle(centre.X, centre.Z, end.X, end.Z)
+        boundbox = [(centre.X - distance, centre.Z - distance), (centre.X + distance, centre.Z + distance)]
 
         if orientation == "CW":
             self.draw.arc(boundbox, end_angle, start_angle, fill=colour, width=self.line_thickness)
@@ -163,8 +163,8 @@ class Plot:
 
     def _translate_point(self, point):
         """ convert the supplied point to local coordinates"""
-        x = (point.x - self._max_x) * self.scale + self.x_offset
-        y = point.z * self.scale + self.z_offset
+        x = (point.X - self._max_x) * self.scale + self.X_offset
+        y = point.Z * self.scale + self.Z_offset
 
         return Point(x, y)
 
@@ -199,16 +199,16 @@ class Plot:
         else:
             # process segment groups
             boundbox = input_geometry[-1].boundbox()
-            self._min_x = boundbox.z_min
-            self._max_x = boundbox.z_max
-            self._min_y = boundbox.x_min
-            self._max_y = boundbox.x_max
+            self._min_x = boundbox.ZMin
+            self._max_x = boundbox.ZMax
+            self._min_y = boundbox.XMin
+            self._max_y = boundbox.XMax
 
         # size of the image (should be based on the max path point)
         self.scale = self._image_size()
         # define the x and y offset required to translate input geometry to local coordinates - Centre in image for both x and y
-        self.x_offset = math.floor(self.image_size[0] - ((self.image_size[0] - (abs(self._max_x - self._min_x) * self.scale)) / 2))
-        self.z_offset = math.floor((self.image_size[1] * 0.5))
+        self.X_offset = math.floor(self.image_size[0] - ((self.image_size[0] - (abs(self._max_x - self._min_x) * self.scale)) / 2))
+        self.Z_offset = math.floor((self.image_size[1] * 0.5))
 
         if self.transparency:
             img = Image.new('RGBA', self.image_size, (255, 0, 0, 0))
@@ -267,7 +267,7 @@ class Plot:
 
         return min([x_scale, y_scale])
 
-    def _get_angle(self, x_start, y_start, x_end, y_end):
+    def _getAngle(self, x_start, y_start, x_end, y_end):
         dX = x_end - x_start
         dY = y_end - y_start
         angle = (math.degrees(math.atan2(dY, dX)) + 360) % 360
