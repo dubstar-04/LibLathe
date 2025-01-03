@@ -22,7 +22,8 @@ jobs:
           CIBW_ARCHS_MACOS: auto universal2
           # delete CIBW_ARCHS_LINUX to build for the all platforms
           CIBW_ARCHS_LINUX: auto
-          CIBW_SKIP: cp36-* cp37-* cp38-* cp39-* pp36-* pp37-* pp38-* pp39-*
+          CIBW_BUILD: cp310-*
+          CIBW_SKIP: cp36-* cp37-* cp38-* cp39-* pp36-* pp37-* pp38-* pp39-* *-musllinux*
 
       - uses: actions/upload-artifact@v4
         with:
