@@ -40,13 +40,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: sdist
           path: dist/*.tar.gz
 
   upload_to_pypi:
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
     environment:
-      # publish is a github environment
       name: publish
       url: https://pypi.org/p/liblathe
     permissions:
@@ -62,9 +62,9 @@ jobs:
       - name: Download source distributions
         uses: actions/download-artifact@v4
         with:
-            pattern: *.tar.gz
-            path: dist
-            merge-multiple: true
+          pattern: sdist*
+          path: dist
+          merge-multiple: true
 
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
