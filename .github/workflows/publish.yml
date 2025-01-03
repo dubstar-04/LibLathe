@@ -55,4 +55,5 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          # this will need to be removed when released
           repository_url: https://test.pypi.org/legacy/
