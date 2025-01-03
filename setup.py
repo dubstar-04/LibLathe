@@ -5,9 +5,9 @@ import warnings
 import sys
 import os
 
-if sys.version_info[:3] < (3, 8, 0):
+if sys.version_info[:3] < (3, 10, 0):
     warnings.warn("liblathe does not support versions below "
-                  "Python 3.8.0", RuntimeWarning)
+                  "Python 3.10.0", RuntimeWarning)
 
 __dir__ = os.path.dirname(__file__)
 version_file = os.path.join(__dir__, "liblathe/version.py")
@@ -70,12 +70,9 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
 )
