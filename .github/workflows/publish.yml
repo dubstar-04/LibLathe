@@ -47,9 +47,9 @@ jobs:
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
     # Specifying a GitHub environment is optional, but strongly encouraged
-    environment:
-      name: pypi
-      url: https://pypi.org/p/liblathe
+    #environment:
+      #name: pypi
+      #url: https://pypi.org/p/liblathe
     permissions:
       id-token: write
     steps:
