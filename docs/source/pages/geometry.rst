@@ -12,7 +12,7 @@ and path representations.
 
 The Segment
 +++++++++++
-The segment is the fundamental representation of LibLathe geometry. The segment 
+The segment is the fundamental representation of LibLathe geometry. The segment
 can represent one of two basic forms; A line segment or an arc segment.
 
 .. figure:: /LL_static/images/segment.png
@@ -21,26 +21,26 @@ can represent one of two basic forms; A line segment or an arc segment.
     :target: /LL_static/images/segment.png
 
 Grouping the geometry into a single type is possible as both lines and arcs can
-be defined by three components: 
+be defined by three components:
 
 - Start Point
 - End Point
 - Bulge
 
-This method of segment representation is inspired by a technical paper 
+This method of segment representation is inspired by a technical paper
 titled **An offset algorithm for polyline curves** by Xu-Zheng Liu et al, ISBN: 0166-3615
 
 Line Segments
 -------------
-Line segments are represented by two points; a start point and an end point, 
-the buldge value is always equal to zero for line segments. 
+Line segments are represented by two points; a start point and an end point,
+the buldge value is always equal to zero for line segments.
 
 
 Arc Segments
 ------------
 Arc segments are more complicated than line segments, however using the segment
 method arcs can be simplified to a three component representation.
-As with lines arcs also need start and end points, arcs however require a non-zero 
+As with lines arcs also need start and end points, arcs however require a non-zero
 bulge value
 
 refer to :doc:`bulge` for more information.
@@ -49,14 +49,14 @@ refer to :doc:`bulge` for more information.
 The Segment Group
 +++++++++++++++++
 
-.. figure:: /LL_static/images/segment_group.png
+.. figure:: /LL_static/images/segmentGroup.png
     :align: center
     :figwidth: 600px
-    :target: /LL_static/images/segment_group.png
+    :target: /LL_static/images/segmentGroup.png
 
-The segment group is a container object that holds a collection of segments, usually 
+The segment group is a container object that holds a collection of segments, usually
 representing a 'pass'. The segment group can perform a set of operations on the segments
-such as: 
+such as:
 
 - Offsetting
 - Converting to gcode
