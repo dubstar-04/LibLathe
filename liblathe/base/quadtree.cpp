@@ -36,16 +36,20 @@ std::vector<Point> Quadtree::getOffset(float offset_value)
 {
     // return the points that represent the calculated offset //
     this->offset = offset_value;
+    // start to process the quadtree, populating the offsetBoundaryPoints
     this->conquer(this->basenode);
-    std::vector<Point> found_points;
-    std::vector<Point> point = this->query(this->basenode, found_points);
-    return this->sortPoints(segment_group->getSegments()[0].start, found_points);
+    // sort the points so they can be used to build a tool path
+    return this->sortPoints(segmentGroup->getSegments()[0].start, this->offsetBoundaryPoints);
 }
 
 void Quadtree::conquer(Node &node)
 {
-    // Divide each node until the target precision is reached
+    // Recursively divide each node until the target precision is reached //
 
+    // get the nodes signed distance value
+    // representing the distance from the closest point on the segmentGroup
+    // negative values are inside the segmentGroup
+    // positive values are outside the segmentGroup
     node.sdv = this->segmentGroup->sdv(node.center);
 
     // check if it is possible that this node contains the target offset
@@ -151,7 +155,8 @@ bool Quadtree::insideNode(Point &point, Node &node)
     // point is inside if it lies on the min boundary of node
     if (point.X >= nodeXMin && point.X < nodeXMax)
     {
-        return true;
+        if (point.Z >= nodeZMin && point.Z < nodeZMax)
+            return true;
     }
 
     return false;
