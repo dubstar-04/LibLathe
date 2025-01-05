@@ -321,6 +321,26 @@ void SegmentGroup::validate()
     // check that the start and end points are at x = 0 (only valid for the primary group / part shape)
 }
 
+Point SegmentGroup::closestPoint(Point point)
+{
+    // get the closest point on the segment group to point //
+    Point clst_pnt;
+    float dist_clst_pnt = std::numeric_limits<float>::infinity();
+
+    for (auto &segment : this->segments)
+    {
+        Point pnt = segment.closestPoint(point);
+        float dist = pnt.distanceTo(point);
+        if (dist < dist_clst_pnt)
+        {
+            clst_pnt = pnt;
+            dist_clst_pnt = dist;
+        }
+    }
+
+    return clst_pnt;
+}
+
 float SegmentGroup::sdv(Point point)
 {
     // return a signed distance value to the closest point on the segments //

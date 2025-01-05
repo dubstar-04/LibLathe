@@ -29,6 +29,7 @@ public:
     std::vector<Point> reduce(std::vector<Point> &points, float tolerance);
     bool isInside(Point point);
     float sdv(Point point);
+    Point closestPoint(Point point);
 
 private:
     std::vector<Segment> segments;
