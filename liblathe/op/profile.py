@@ -26,10 +26,9 @@ class ProfileOP(liblathe.op.base.BaseOP):
             # generate the offset profile path
             segmentgroup.extend(base_segmentGroup.offset(self.step_over * f_pass))
             # check if segement group intersect the part (internal offset)
-            if segmentgroup.intersectsGroup(internal_offset):
-                #Debug().draw([internal_offset, segmentgroup])
-                #raise ValueError("Calculated profile path intersects part")
-                pass
+            if segmentgroup.intersectsGroup(internalOffset):
+                #Debug().draw([internalOffset, segmentgroup])
+                raise ValueError("Calculated profile path intersects part")
 
             # add the segment group to the tool paths
             self.tool_paths.append(segmentgroup)
