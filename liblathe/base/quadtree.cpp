@@ -16,6 +16,14 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     // basenode the the primary tree node
 
     this->segmentGroup = segmentgroup;
+
+    // check width and height are the same
+    // TODO: remove the width and height if they need to match
+    if (width != height)
+    {
+        throw std::runtime_error("quadtree width and height must match");
+    }
+    // create the base node
     int depth = 0;
     Node bn = {center, width, height, depth};
     this->basenode = bn;
