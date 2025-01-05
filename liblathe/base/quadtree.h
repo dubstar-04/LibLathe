@@ -35,6 +35,7 @@ public:
     std::vector<Node> getNodes();
 
 private:
+    // value to offset the segmentgroup by
     float offset;
     // precision of the quadtree
     float precision;
