@@ -20,12 +20,12 @@ from liblathe.debug.debug import Debug
 from liblathe.tool.tool import Tool
 
 # Define Part Geometry
-part_segments = []
-part_segments.append(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
-part_segments.append(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
-part_segments.append(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
-part_segments.append(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
-part_segments.append(Segment(Point(14, -15) ,Point(0, 0), -0.3))
+partSegments = []
+partSegments.append(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
+partSegments.append(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
+partSegments.append(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
+partSegments.append(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
+partSegments.append(Segment(Point(14, -15) ,Point(0, 0), -0.3))
 
 # Define stock bounds
 stockPt1 = Point(0, -105)
@@ -45,7 +45,7 @@ params['vfeed'] = 10
 roughOP = RoughOP()
 roughOP.setParams(params)
 roughOP.add_stock(StockBoundingBox)
-roughOP.addPartSegments(part_segments)
+roughOP.addPartSegments(partSegments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
 # tool.set_rotation(45)

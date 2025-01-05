@@ -13,9 +13,9 @@ class Path:
         self.commands.append(cmd)
 
     def get_min_retract_x(self, segment, pass_segments, operation):
-        """ returns the minimum x retract based on the current segments and the part_segments """
+        """ returns the minimum x retract based on the current segments and the partSegments """
 
-        # part_segments = partSegmentGroup.getSegments()
+        # partSegments = partSegmentGroup.getSegments()
         currentIdx = pass_segments.index(segment)
         x_values = []
 

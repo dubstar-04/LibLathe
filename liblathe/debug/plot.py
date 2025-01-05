@@ -87,7 +87,7 @@ class Plot:
 
         for segmentGroup in segmentGroups:
 
-            segments = segment_group.getSegments()
+            segments = segmentGroup.getSegments()
 
             for seg in segments:
                 start = self._translate_point(Point(seg.start.Z, seg.start.X))

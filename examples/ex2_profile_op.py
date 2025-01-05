@@ -20,7 +20,7 @@ from liblathe.debug.debug import Debug
 from liblathe.tool.tool import Tool
 
 # Define Part Geometry
-part_segments = []
+partSegments = []
 PartPt1 = Point(0, 10)
 PartPt2 = Point(5, -9)
 PartPt3 = Point(9.5, -15.85)
@@ -30,13 +30,13 @@ PartPt6 = Point(13, -45)
 PartPt7 = Point(13, -48)
 PartPt8 = Point(0, -48)
 
-part_segments.append(Segment(PartPt1, PartPt2, 0.75))
-part_segments.append(Segment(PartPt2, PartPt3))
-part_segments.append(Segment(PartPt3, PartPt4))
-part_segments.append(Segment(PartPt4, PartPt5))
-part_segments.append(Segment(PartPt5, PartPt6))
-part_segments.append(Segment(PartPt6, PartPt7))
-part_segments.append(Segment(PartPt7, PartPt8))
+partSegments.append(Segment(PartPt1, PartPt2, 0.75))
+partSegments.append(Segment(PartPt2, PartPt3))
+partSegments.append(Segment(PartPt3, PartPt4))
+partSegments.append(Segment(PartPt4, PartPt5))
+partSegments.append(Segment(PartPt5, PartPt6))
+partSegments.append(Segment(PartPt6, PartPt7))
+partSegments.append(Segment(PartPt7, PartPt8))
 
 # Define stock bounds
 stockPt1 = Point(0, 15)
@@ -56,7 +56,7 @@ params['vfeed'] = 10
 profileOP = ProfileOP()
 profileOP.setParams(params)
 profileOP.add_stock(StockBoundingBox)
-profileOP.addPartSegments(part_segments)
+profileOP.addPartSegments(partSegments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
 tool.set_rotation(45)

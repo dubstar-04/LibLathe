@@ -21,7 +21,7 @@ class test_FaceOP(unittest.TestCase):
     def setUp(self):
 
         # Define Part Geometry
-        part_segments = []
+        partSegments = []
 
         PartPt1 = Point(0, 10)
         PartPt2 = Point(5, -9)
@@ -32,13 +32,13 @@ class test_FaceOP(unittest.TestCase):
         PartPt7 = Point(13, -48)
         PartPt8 = Point(0, -48)
 
-        part_segments.append(Segment(PartPt1, PartPt2, -0.75))
-        part_segments.append(Segment(PartPt2, PartPt3))
-        part_segments.append(Segment(PartPt3, PartPt4))
-        part_segments.append(Segment(PartPt4, PartPt5))
-        part_segments.append(Segment(PartPt5, PartPt6))
-        part_segments.append(Segment(PartPt6, PartPt8))
-        part_segments.append(Segment(PartPt7, PartPt8))
+        partSegments.append(Segment(PartPt1, PartPt2, -0.75))
+        partSegments.append(Segment(PartPt2, PartPt3))
+        partSegments.append(Segment(PartPt3, PartPt4))
+        partSegments.append(Segment(PartPt4, PartPt5))
+        partSegments.append(Segment(PartPt5, PartPt6))
+        partSegments.append(Segment(PartPt6, PartPt8))
+        partSegments.append(Segment(PartPt7, PartPt8))
 
         # Define stock bounds
         stockPt1 = Point(0, 15)
@@ -60,7 +60,7 @@ class test_FaceOP(unittest.TestCase):
         self.op = FaceOP()
         self.op.setParams(params)
         self.op.add_stock(stock_boundbox)
-        self.op.addPartSegments(part_segments)
+        self.op.addPartSegments(partSegments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
         self.op.add_tool(tool)

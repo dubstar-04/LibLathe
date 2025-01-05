@@ -21,20 +21,20 @@ from liblathe.tool.tool import Tool
 
 
 # Define Part Geometry
-part_segments = []
-part_segments.append(Segment(Point(0, 0), Point(14, -15), 0.3))
-part_segments.append(Segment(Point(14, -15), Point(14, -75) , 0.000000))
-part_segments.append(Segment(Point(14, -75), Point(27.5, -85) , 0.000000))
-part_segments.append(Segment(Point(27.5, -85), Point(27.5, -100.0) , 0.000000))
-part_segments.append(Segment(Point(27.5, -100.0), Point(0.0, -100.0) , 0.000000))
+partSegments = []
+partSegments.append(Segment(Point(0, 0), Point(14, -15), 0.3))
+partSegments.append(Segment(Point(14, -15), Point(14, -75) , 0.000000))
+partSegments.append(Segment(Point(14, -75), Point(27.5, -85) , 0.000000))
+partSegments.append(Segment(Point(27.5, -85), Point(27.5, -100.0) , 0.000000))
+partSegments.append(Segment(Point(27.5, -100.0), Point(0.0, -100.0) , 0.000000))
 
 """
 # segments reversed from above
-part_segments.append(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
-part_segments.append(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
-part_segments.append(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
-part_segments.append(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
-part_segments.append(Segment(Point(14, -15) ,Point(0, 0), -0.3))
+partSegments.append(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
+partSegments.append(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
+partSegments.append(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
+partSegments.append(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
+partSegments.append(Segment(Point(14, -15) ,Point(0, 0), -0.3))
 """
 
 
@@ -56,7 +56,7 @@ params['vfeed'] = 10
 profileOP = ProfileOP()
 profileOP.setParams(params)
 profileOP.add_stock(StockBoundingBox)
-profileOP.addPartSegments(part_segments)
+profileOP.addPartSegments(partSegments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')
 tool.set_rotation(22.5)
