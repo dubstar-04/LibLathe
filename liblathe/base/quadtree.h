@@ -42,6 +42,8 @@ private:
     SegmentGroup *segmentGroup;
     Node basenode;
 
+    std::vector<Point> offsetBoundaryPoints;
+
     void divide(Node &);
     void conquer(Node &);
     std::vector<Point> query(Node &node, std::vector<Point> &offsetBoundaryPoints);
