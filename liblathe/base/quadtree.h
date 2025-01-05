@@ -36,6 +36,8 @@ public:
 
 private:
     float offset;
+    // precision of the quadtree
+    float precision;
 
     SegmentGroup *segmentGroup;
     Node basenode;
