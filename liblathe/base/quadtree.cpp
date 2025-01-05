@@ -125,8 +125,14 @@ void Quadtree::divide(Node &node)
 
 bool Quadtree::nodeCouldContain(float offset, Node &node)
 {
-    // check if the node could contain an a point at offset distance from the segments //
-    if (node.sdv - node.height / 2 <= offset && node.sdv + node.height / 2 >= offset)
+    // check if the target offset could be within the node//
+
+    // get the distance from the node center to a corner of the node
+    // Based on pythagoras theorem: A^2 + B^2 = C^2; assumes the node is square
+    // This is a quick check and could include false positives
+    float cornerDistance = sqrt(pow(node.width, 2) * 2) * 0.5;
+
+    if (node.sdv - cornerDistance <= offset && node.sdv + cornerDistance >= offset)
     {
         return true;
     }
