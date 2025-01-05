@@ -104,13 +104,14 @@ SegmentGroup SegmentGroup::offset(float step_over)
     // 5. effects of scaling the segment group and quadtree
 
     BoundBox bb = this->boundbox();
-    float height = bb.XLength() + 10;
-    float width = bb.ZLength(); //+ 10;
+    float height = bb.XLength();
+    float width = bb.ZLength();
 
-    Point center = Point(height / 2, bb.ZMin + width / 2);
+    float size = std::max(height, width);
+    Point center = Point(size / 2, bb.ZMin + size / 2);
 
     Quadtree qt = Quadtree();
-    qt.initialise(this, center, width, height);
+    qt.initialise(this, center, size, size);
     std::vector<Point> offset = qt.getOffset(step_over);
 
     // attempt simplification
