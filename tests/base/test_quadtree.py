@@ -13,9 +13,7 @@ from liblathe.base.quadtree import Quadtree
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
-from liblathe.debug.debug import Debug
-
-
+#from liblathe.debug.debug import Debug
 
 class test_quadtree(unittest.TestCase):
     """Test for quadtree.py"""
