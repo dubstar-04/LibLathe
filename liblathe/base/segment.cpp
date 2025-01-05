@@ -425,6 +425,36 @@ bool Segment::pointOnSegment(Point point)
     }
 }
 
+Point Segment::closestPoint(Point point)
+{
+    // get the closest point on segment to point //
+
+    float APx = point.X - start.X;
+    float APy = point.Z - start.Z;
+    float ABx = end.X - start.X;
+    float ABy = end.Z - start.Z;
+
+    float magAB2 = ABx * ABx + ABy * ABy;
+    float ABdotAP = ABx * APx + ABy * APy;
+    float t = ABdotAP / magAB2;
+
+    // check if the point is < start or > end
+    if (t > 0.0 && t < 1.0)
+    {
+        float x = start.X + ABx * t;
+        float z = start.Z + ABy * t;
+        Point p = Point(x, z);
+        return p;
+    }
+
+    if (t < 0)
+    {
+        return start;
+    }
+
+    return end;
+}
+
 float Segment::distanceToPoint(Point point)
 {
     // get the closest point on segment to point //

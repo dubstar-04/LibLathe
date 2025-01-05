@@ -38,6 +38,7 @@ public:
     std::vector<Point> intersect(Segment seg, bool extend);
     bool pointOnSegment(Point point);
     float distanceToPoint(Point point);
+    Point closestPoint(Point point);
 
 private:
     std::vector<Point> intersectLineLine(Segment seg, bool extend);

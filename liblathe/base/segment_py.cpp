@@ -36,5 +36,6 @@ PYBIND11_MODULE(segment, m)
         .def("isSame", &Segment::isSame)
         .def("intersect", &Segment::intersect, "", py::arg(), py::arg("extend") = false)
         .def("pointOnSegment", &Segment::pointOnSegment)
-        .def("distanceToPoint", &Segment::distanceToPoint);
+        .def("distanceToPoint", &Segment::distanceToPoint)
+        .def("closestPoint", &Segment::closestPoint);
 }
