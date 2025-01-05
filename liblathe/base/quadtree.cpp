@@ -48,19 +48,35 @@ void Quadtree::conquer(Node &node)
 
     node.sdv = this->segmentGroup->sdv(node.center);
 
-    if (node.depth >= 11)
+    // check if it is possible that this node contains the target offset
+    if (this->nodeCouldContain(this->offset, node))
     {
-        return;
-    }
+        // check if we have reached the desired precision
+        // check that the signed distance value is the same sign as the requested offset
+        if ((node.width <= this->precision) && (0 > node.sdv) == (0 > this->offset))
+        {
+            // get the closest point on the segmentGroup
+            Point closest = this->segmentGroup->closestPoint(node.center);
+            // get the projected boundary point
+            Point projectedPoint = closest.project(closest.angleTo(node.center), abs(this->offset));
 
-    if (node.sdv >= this->offset && node.sdv <= this->offset + 0.005)
-    {
-        return;
-    }
+            // check if projected point is inside the node
+            if (this->insideNode(projectedPoint, node))
+            {
+                Point segmentStart = segmentGroup->getSegments()[0].start;
+                // only collect points inside the segment boundary
+                if (projectedPoint.Z <= segmentStart.Z)
+                {
+                    this->offsetBoundaryPoints.push_back(projectedPoint);
+                }
+            }
 
-    if (node.depth < 5 || this->nodeCouldContain(this->offset, node))
-    {
-        this->divide(node);
+            return;
+        }
+        else
+        {
+            this->divide(node);
+        }
     }
 }
 
