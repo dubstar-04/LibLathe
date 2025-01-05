@@ -56,22 +56,25 @@ void Quadtree::conquer(Node &node)
     if (this->nodeCouldContain(this->offset, node))
     {
         // check if we have reached the desired precision
-        // check that the signed distance value is the same sign as the requested offset
-        if ((node.width <= this->precision) && (0 > node.sdv) == (0 > this->offset))
+        if ((node.width <= this->precision))
         {
-            // get the closest point on the segmentGroup
-            Point closest = this->segmentGroup->closestPoint(node.center);
-            // get the projected boundary point
-            Point projectedPoint = closest.project(closest.angleTo(node.center), abs(this->offset));
-
-            // check if projected point is inside the node
-            if (this->insideNode(projectedPoint, node))
+            // check that the signed distance value is the same sign as the requested offset
+            if (std::signbit(node.sdv) == std::signbit(this->offset))
             {
-                Point segmentStart = segmentGroup->getSegments()[0].start;
-                // only collect points inside the segment boundary
-                if (projectedPoint.Z <= segmentStart.Z)
+                // get the closest point on the segmentGroup
+                Point closest = this->segmentGroup->closestPoint(node.center);
+                // get the projected boundary point
+                Point projectedPoint = closest.project(closest.angleTo(node.center), abs(this->offset));
+
+                // check if projected point is inside the node
+                if (this->insideNode(projectedPoint, node))
                 {
-                    this->offsetBoundaryPoints.push_back(projectedPoint);
+                    Point segmentStart = segmentGroup->getSegments()[0].start;
+                    // only collect points inside the segment boundary
+                    if (projectedPoint.Z <= segmentStart.Z)
+                    {
+                        this->offsetBoundaryPoints.push_back(projectedPoint);
+                    }
                 }
             }
 
