@@ -115,7 +115,19 @@ bool Quadtree::nodeCouldContain(float offset, Node &node)
         return true;
     }
 
-    if (node.sdv - node.width / 2 <= offset && node.sdv + node.width / 2 >= offset)
+    return false;
+}
+
+bool Quadtree::insideNode(Point &point, Node &node)
+{
+    // determine if point is inside node //
+    float nodeXMin = node.center.X - node.height * 0.5;
+    float nodeXMax = node.center.X + node.height * 0.5;
+    float nodeZMin = node.center.Z - node.width * 0.5;
+    float nodeZMax = node.center.Z + node.width * 0.5;
+
+    // point is inside if it lies on the min boundary of node
+    if (point.X >= nodeXMin && point.X < nodeXMax)
     {
         return true;
     }

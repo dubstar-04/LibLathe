@@ -47,6 +47,7 @@ private:
     std::vector<Point> query(Node &node, std::vector<Point> &offsetBoundaryPoints);
     std::vector<Node> queryNodes(Node &node, std::vector<Node> &nodes);
     bool nodeCouldContain(float offset, Node &node);
+    bool insideNode(Point &point, Node &node);
     std::vector<Point> sortPoints(Point datum, std::vector<Point> &points);
 };
 
