@@ -32,10 +32,10 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     this->precision = 0.5;
 }
 
-std::vector<Point> Quadtree::getOffset(float offset_value)
+std::vector<Point> Quadtree::getOffset(float offsetValue)
 {
     // return the points that represent the calculated offset //
-    this->offset = offset_value;
+    this->offset = offsetValue;
     // start to process the quadtree, populating the offsetBoundaryPoints
     this->conquer(this->basenode);
     // sort the points so they can be used to build a tool path

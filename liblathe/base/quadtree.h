@@ -31,7 +31,7 @@ public:
     ~Quadtree();
 
     void initialise(SegmentGroup *segmentgroup, Point center, float width, float height);
-    std::vector<Point> getOffset(float offset_value);
+    std::vector<Point> getOffset(float offsetValue);
     std::vector<Node> getNodes();
 
 private:
