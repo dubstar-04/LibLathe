@@ -198,7 +198,7 @@ std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &offsetBoundar
     // Find the points in the quadtree that are close to target value //
 
     float dist = node.sdv;
-    if (dist >= this->offset && dist <= this->offset + 0.0075)
+    if (dist - this->precision * 0.5 >= this->offset && dist + this->precision * 0.5 <= this->offset)
     {
         offsetBoundaryPoints.push_back(node.center);
     }
