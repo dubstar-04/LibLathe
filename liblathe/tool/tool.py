@@ -35,7 +35,7 @@ class Tool:
         self.direction = None               # R-L-N
         self.orientation = ToolOri.X        # orientation of the tool X or Z
         self.tool_rotation = 0              # tool rotation about tool tip
-        self.segment_group = SegmentGroup()  # tool shape
+        self.segmentGroup = SegmentGroup()  # tool shape
 
         if tool_string:
             self.set_tool_from_string(tool_string)
@@ -61,7 +61,7 @@ class Tool:
     def set_tool_from_segments(self, segments):
         """Set the tools shape from segments"""
         for segment in segments:
-            self.segment_group.addSegment(segment)
+            self.segmentGroup.addSegment(segment)
 
     def get_segmentgroup(self):
         """
@@ -73,7 +73,7 @@ class Tool:
             return self.rotate_tool_shape()
 
         # return the segment group
-        return self.segment_group
+        return self.segmentGroup
 
     def getToolShape(self):
         """
@@ -252,16 +252,16 @@ class Tool:
             SegmentGroup: The rotated segment group
         """
 
-        segment_group = self.get_segmentgroup()
-        rotated_segment_group = SegmentGroup()
+        segmentGroup = self.segmentGroup
+        rotated_segmentGroup = SegmentGroup()
         angle = math.radians(self.getRotation())
 
-        for segment in segment_group.getSegments():
+        for segment in segmentGroup.getSegments():
             start = segment.start.rotate(Point(), angle)
             end = segment.end.rotate(Point(), angle)
-            rotated_segment_group.addSegment(Segment(start, end, segment.bulge))
+            rotated_segmentGroup.addSegment(Segment(start, end, segment.bulge))
 
-        return rotated_segment_group
+        return rotated_segmentGroup
 
 
     def set_segmentgroup_from_string(self):
@@ -314,7 +314,7 @@ class Tool:
 
         # Debug().draw([shape_group])
 
-        self.segment_group = shape_group
+        self.segmentGroup = shape_group
 
     def get_segmentgroup_from_string_round(self):
         """Get the parts shape from the tool string"""
@@ -332,7 +332,7 @@ class Tool:
         shape_group.addSegment(seg1)
         shape_group.addSegment(seg2)
 
-        self.segment_group = shape_group
+        self.segmentGroup = shape_group
 
     def get_segmentgroup_from_string_triangle(self):
         """Get the parts shape from the tool string"""
@@ -352,4 +352,4 @@ class Tool:
         shape_group.addSegment(seg2)
         shape_group.addSegment(seg3)
 
-        self.segment_group = shape_group
+        self.segmentGroup = shape_group

@@ -37,12 +37,12 @@ public:
 private:
     float offset;
 
-    SegmentGroup *segment_group;
+    SegmentGroup *segmentGroup;
     Node basenode;
 
     void divide(Node &);
     void conquer(Node &);
-    std::vector<Point> query(Node &node, std::vector<Point> &found_points);
+    std::vector<Point> query(Node &node, std::vector<Point> &offsetBoundaryPoints);
     std::vector<Node> queryNodes(Node &node, std::vector<Node> &nodes);
     bool nodeCouldContain(float offset, Node &node);
     std::vector<Point> sortPoints(Point datum, std::vector<Point> &points);

@@ -15,7 +15,7 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     // depth is the current node depth
     // basenode the the primary tree node
 
-    this->segment_group = segmentgroup;
+    this->segmentGroup = segmentgroup;
     int depth = 0;
     Node bn = {center, width, height, depth};
     this->basenode = bn;
@@ -35,7 +35,7 @@ void Quadtree::conquer(Node &node)
 {
     // Divide each node until the target precision is reached
 
-    node.sdv = this->segment_group->sdv(node.center);
+    node.sdv = this->segmentGroup->sdv(node.center);
 
     if (node.depth >= 11)
     {
@@ -154,25 +154,25 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
     return sorted_points;
 }
 
-std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &found_points)
+std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &offsetBoundaryPoints)
 {
     // Find the points in the quadtree that are close to target value //
 
     float dist = node.sdv;
     if (dist >= this->offset && dist <= this->offset + 0.0075)
     {
-        found_points.push_back(node.center);
+        offsetBoundaryPoints.push_back(node.center);
     }
 
     if (node.divided)
     {
         for (auto &child : node.child_nodes)
         {
-            this->query(child, found_points);
+            this->query(child, offsetBoundaryPoints);
         }
     }
 
-    return found_points;
+    return offsetBoundaryPoints;
 }
 
 std::vector<Node> Quadtree::getNodes()

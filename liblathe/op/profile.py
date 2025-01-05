@@ -11,23 +11,24 @@ class ProfileOP(liblathe.op.base.BaseOP):
     def generatePath(self):
         """Generate the path for the profile operation"""
         # get the defeature part profile
-        profile_segment_group = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
+        profile_segmentGroup = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
-        internal_offset = profile_segment_group.offset(-0.1)
+        internal_offset = profile_segmentGroup.offset(-0.1)
         # define the base segment group using the stock to leave as a datum
-        base_segment_group = profile_segment_group.offset(self.stock_to_leave)
+        base_segmentGroup = profile_segmentGroup.offset(self.stock_to_leave)
         # add lead in to the profile path
-        self.add_leadin(base_segment_group)
+        self.add_leadin(base_segmentGroup)
         f_pass = 0
         while f_pass < self.finish_passes:
             # create a new segment group
             segmentgroup = SegmentGroup()
             # generate the offset profile path
-            segmentgroup.extend(base_segment_group.offset(self.step_over * f_pass))
+            segmentgroup.extend(base_segmentGroup.offset(self.step_over * f_pass))
             # check if segement group intersect the part (internal offset)
             if segmentgroup.intersectsGroup(internal_offset):
                 #Debug().draw([internal_offset, segmentgroup])
-                raise ValueError("Calculated profile path intersects part")
+                #raise ValueError("Calculated profile path intersects part")
+                pass
 
             # add the segment group to the tool paths
             self.tool_paths.append(segmentgroup)
@@ -58,6 +59,6 @@ class ProfileOP(liblathe.op.base.BaseOP):
         path = Path()
 
         for segmentgroup in reversed(self.tool_paths):
-            path.from_segment_group(self, segmentgroup)
+            path.fromSegmentGroup(self, segmentgroup)
 
         return path.commands

@@ -42,6 +42,6 @@ class FaceOP(liblathe.op.base.BaseOP):
         path = Path()
 
         for segmentgroup in reversed(self.clearing_paths):
-            path.from_segment_group(self, segmentgroup)
+            path.fromSegmentGroup(self, segmentgroup)
 
         return path.commands

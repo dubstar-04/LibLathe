@@ -77,7 +77,7 @@ class Plot:
         self.flip_image = not self.flip_image
         self.mirror_image = False
 
-    def _plot_segment_groups(self, segment_groups):
+    def _plot_segmentGroups(self, segmentGroups):
         """
         Convert an image from supplied geometry
         Valid input: List of type liblathe.segmentgroup
@@ -85,7 +85,7 @@ class Plot:
 
         line_colour = self._get_line_colour("G1")
 
-        for segment_group in segment_groups:
+        for segmentGroup in segmentGroups:
 
             segments = segment_group.getSegments()
 
@@ -226,7 +226,7 @@ class Plot:
         if isinstance(input_geometry[0], Command):
             self._plot_commands(input_geometry, include_rapids)
         else:
-            self._plot_segment_groups(input_geometry)
+            self._plot_segmentGroups(input_geometry)
 
         # Mirror because its draw flipped.
         if self.mirror_image:

@@ -161,7 +161,7 @@ class Debug:
         finally:
             Part.show(path_profile, name)
 
-    def segment_group_to_py(self, segmentgroup):
+    def segmentGroup_to_py(self, segmentgroup):
         """print the segment group to allow use in a python function"""
         print('sg = SegmentGroup()')
         for segment in segmentgroup.getSegments():

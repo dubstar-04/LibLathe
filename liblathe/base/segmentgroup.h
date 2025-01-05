@@ -21,7 +21,7 @@ public:
     void extend(SegmentGroup segmentgroup);
     int count();
     BoundBox boundbox();
-    bool intersectsGroup(SegmentGroup segment_group);
+    bool intersectsGroup(SegmentGroup segmentGroup);
     SegmentGroup offset(float step_over);
     SegmentGroup defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving);
     void validate();

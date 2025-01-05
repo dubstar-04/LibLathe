@@ -105,10 +105,10 @@ print("Defeature time: ", defeature_time - init_time)
 
 print('defeatured group size', defeatured_group.count())
 
-segment_groups = []
-segment_groups.append(sg)
-segment_groups.append(defeatured_group)
-segment_groups.append(tool)
+segmentGroups = []
+segmentGroups.append(sg)
+segmentGroups.append(defeatured_group)
+segmentGroups.append(tool)
 
 offset_time = time.time()
 
@@ -118,9 +118,9 @@ offset_time = time.time()
 # 0.015 seconds - using node size as limit, returning the found points from quadtree build
 
 for i in range(1, 5, 1):
-    segment_groups.append(defeatured_group.offset(i))
+    segmentGroups.append(defeatured_group.offset(i))
     iteration_time = time.time()
     print("Offset time:", i, ": ",  iteration_time - offset_time)
     offset_time = iteration_time
 
-Debug().draw(segment_groups)
+Debug().draw(segmentGroups)

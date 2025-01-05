@@ -53,7 +53,7 @@ class Path:
 
         return False
 
-    def from_segment_group(self, operation, segment_group):
+    def fromSegmentGroup(self, operation, segmentGroup):
         """converts segmentgroup to gcode commands"""
 
         def get_pos(pnt):
@@ -70,7 +70,7 @@ class Path:
 
             return arcType
 
-        segments = segment_group.getSegments()
+        segments = segmentGroup.getSegments()
 
         for seg in segments:
             min_x_retract = self.get_min_retract_x(seg, segments, operation)

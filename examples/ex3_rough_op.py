@@ -54,13 +54,13 @@ gcode = roughOP.getGCode()
 plot = Plot()
 plot.backplot(gcode)
 
-segment_groups = [roughOP.partSegmentGroup]
+segmentGroups = [roughOP.partSegmentGroup]
 
 # Append all tool paths to be drawn
 for segmentgroup in roughOP.tool_paths:
-    segment_groups.append(segmentgroup)
+    segmentGroups.append(segmentgroup)
 
-Debug().draw(segment_groups)
+Debug().draw(segmentGroups)
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")

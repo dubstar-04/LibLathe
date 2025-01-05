@@ -13,7 +13,7 @@ from liblathe.base.segmentgroup import SegmentGroup
 from liblathe.base.boundbox import BoundBox
 
 
-class test_segment_group(unittest.TestCase):
+class test_segmentGroup(unittest.TestCase):
     """Test for segmentgroup.py"""
     def setUp(self):
         self.segmentGroup = SegmentGroup()

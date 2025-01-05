@@ -65,13 +65,13 @@ gcode = profileOP.getGCode()
 plot = Plot()
 plot.backplot(gcode)
 
-segment_groups = [profileOP.partSegmentGroup, tool.get_segmentgroup()]
+segmentGroups = [profileOP.partSegmentGroup, tool.get_segmentgroup()]
 
 # Append all tool paths to be drawn
 for segmentgroup in profileOP.tool_paths:
-    segment_groups.append(segmentgroup)
+    segmentGroups.append(segmentgroup)
 
-Debug().draw(segment_groups)
+Debug().draw(segmentGroups)
 
 # Write the gcode to a file in the Examples folder
 f = open(thisFolder + "/profile.gcode", "w")

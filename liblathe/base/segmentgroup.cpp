@@ -73,10 +73,10 @@ BoundBox SegmentGroup::boundbox()
     return segmentgroupBoundBox;
 }
 
-bool SegmentGroup::intersectsGroup(SegmentGroup segment_group)
+bool SegmentGroup::intersectsGroup(SegmentGroup segmentGroup)
 {
-    // check if the segment_group intersects self //
-    for (auto &segment : segment_group.getSegments())
+    // check if the segmentGroup intersects self //
+    for (auto &segment : segmentGroup.getSegments())
     {
         for (auto &seg : this->segments)
         {
@@ -220,7 +220,7 @@ SegmentGroup SegmentGroup::add(Point point)
 SegmentGroup SegmentGroup::fromPoints(std::vector<Point> points)
 {
     // create a segment group from a vector of points //
-    SegmentGroup segment_group = SegmentGroup();
+    SegmentGroup segmentGroup = SegmentGroup();
 
     if (points.size() > 0)
     {
@@ -229,27 +229,27 @@ SegmentGroup SegmentGroup::fromPoints(std::vector<Point> points)
             if (i >= 1)
             {
                 Segment seg = Segment(points[i - 1], points[i]);
-                segment_group.addSegment(seg);
+                segmentGroup.addSegment(seg);
             }
         }
     }
 
-    return segment_group;
+    return segmentGroup;
 }
 
 SegmentGroup SegmentGroup::copy()
 {
     // create a copy of the segment group //
-    SegmentGroup segment_group = SegmentGroup();
+    SegmentGroup segmentGroup = SegmentGroup();
 
     for (auto &segment : this->segments)
     {
         Point start = Point(segment.start.X, segment.start.Z);
         Point end = Point(segment.end.X, segment.end.Z);
-        segment_group.addSegment(Segment(start, end, segment.bulge));
+        segmentGroup.addSegment(Segment(start, end, segment.bulge));
     }
 
-    return segment_group;
+    return segmentGroup;
 }
 
 std::vector<Point> SegmentGroup::reduce(std::vector<Point> &points, float tolerance)

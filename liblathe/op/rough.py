@@ -16,10 +16,10 @@ class RoughOP(liblathe.op.base.BaseOP):
 
     def generatePath(self):
         """Generate the path for the Rough operation"""
-        roughing_segment_group = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
+        roughing_segmentGroup = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
 
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
-        internal_offset = roughing_segment_group.offset(-0.1)
+        internal_offset = roughing_segmentGroup.offset(-0.1)
 
         self.clearing_paths = []
         ZMax = self.stock.ZMax
@@ -28,7 +28,7 @@ class RoughOP(liblathe.op.base.BaseOP):
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
         offset = 0.01 + self.stock_to_leave
-        roughing_boundary = roughing_segment_group.offset(offset)
+        roughing_boundary = roughing_segmentGroup.offset(offset)
 
         # define the x limits for roughing
         XMin = self.stock.XMin
@@ -138,6 +138,6 @@ class RoughOP(liblathe.op.base.BaseOP):
         path = Path()
 
         for segmentgroup in reversed(self.tool_paths):
-            path.from_segment_group(self, segmentgroup)
+            path.fromSegmentGroup(self, segmentgroup)
 
         return path.commands
