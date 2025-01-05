@@ -49,6 +49,13 @@ segmentgroup = Pybind11Extension('liblathe.base.segmentgroup',
                                   'liblathe/base/segment.cpp',
                                   'liblathe/base/quadtree.cpp'])
 
+quadtree = Pybind11Extension('liblathe.base.quadtree',
+                            ['liblathe/base/quadtree_py.cpp',
+                             'liblathe/base/quadtree.cpp',
+                             'liblathe/base/point.cpp',
+                             'liblathe/base/segment.cpp',
+                             'liblathe/base/segmentgroup.cpp'])
+
 setup(
     name='liblathe',
     version=version,
@@ -62,7 +69,7 @@ setup(
     keywords="lathe turning CAD CAM CNC",
     packages=['liblathe', "liblathe/op", "liblathe/tool", "liblathe/gcode"],
     install_requires=['pillow'],
-    ext_modules=[point, boundbox, segment, segmentgroup],
+    ext_modules=[point, boundbox, segment, segmentgroup, quadtree],
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
