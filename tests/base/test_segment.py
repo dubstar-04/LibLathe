@@ -326,6 +326,37 @@ class test_segment(unittest.TestCase):
         dist = self.arcSegment1.distanceToPoint(point)
         self.assertAlmostEqual(dist, 4.65147, 4)
 
+    def test_closestPoint(self):
+
+        """
+        # Arcs not supported
+        point = Point(12, 0)
+        closest = self.arcSegment1.closestPoint(point)
+        self.assertAlmostEqual(closest.X, self.lineSegment1MidPoint.X, 4)
+        self.assertAlmostEqual(closest.Z, self.lineSegment1MidPoint.Z, 4)
+        """
+
+        # closest start segment
+        point = Point(3, -7.5)
+        closest = self.lineSegment1.closestPoint(point)
+        self.assertAlmostEqual(closest.X, self.lineSegment1.start.X, 4)
+        self.assertAlmostEqual(closest.Z, self.lineSegment1.start.Z, 4)
+
+        # closest mid segment
+        point = self.lineSegment1Intersect.start
+        closest = self.lineSegment1.closestPoint(point)
+        self.assertAlmostEqual(closest.X, self.lineSegment1MidPoint.X, 4)
+        self.assertAlmostEqual(closest.Z, self.lineSegment1MidPoint.Z, 4)
+
+        # closest end segment
+        point = self.lineSegment2.getCentrePoint()
+        closest = self.lineSegment1.closestPoint(point)
+        self.assertAlmostEqual(closest.X, self.lineSegment1.end.X, 4)
+        self.assertAlmostEqual(closest.Z, self.lineSegment1.end.Z, 4)
+
+
+
+
 
 if __name__ == '__main__':
     unittest.main()
