@@ -31,7 +31,8 @@ sg.addSegment(Segment(Point(0, 0) ,Point(10, 0), 0))
 bb = sg.boundbox()
 height = bb.XLength() + 10
 width = bb.ZLength() + 10
-center = Point( height / 2, bb.ZMin + width / 2)
+size = max(height, width)
+center = Point( size / 2, bb.ZMin + size / 2)
 
 # Define a tool
 tool = Tool()
@@ -49,7 +50,7 @@ offset = defeatured.offset(0.5)
 Debug().draw([sg, toolShape, defeatured, offset])
 
 qt = Quadtree()
-qt.initialise(defeatured, center, width, height)
+qt.initialise(defeatured, center, size, size)
 offset = qt.getOffset(0.5)
 
 nodes = qt.getNodes()
