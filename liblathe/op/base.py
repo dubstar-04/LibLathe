@@ -1,4 +1,5 @@
 from liblathe.base.segmentgroup import SegmentGroup
+import math
 
 
 class BaseOP:
@@ -8,14 +9,10 @@ class BaseOP:
 
         self.stock = None
         self.tool = None
-        self.part_segment_group = SegmentGroup()
+        self.partSegmentGroup = SegmentGroup()
 
         self.tool_paths = []
 
-        self.min_dia = 0
-        self.extra_dia = 0
-        self.start_offset = 0
-        self.end_offset = 0
         self.allow_grooving = False
         self.step_over = 1.5
         self.finish_passes = 1
@@ -24,11 +21,10 @@ class BaseOP:
         self.vfeed = 50
         self.clearance = 3
 
-        self.leadin_angle = 270
-        self.leadout_angle = 315
-        # TODO: implement invert_x to pass to segment_group().to_commands()
+        self.leadin_angle = math.pi * 1.5
+        self.leadout_angle = math.pi * 1.75
 
-    def set_params(self, params):
+    def setParams(self, params):
         """Set operations parameters"""
 
         for param in params:
@@ -37,45 +33,43 @@ class BaseOP:
             else:
                 raise Warning("Attempting to set undefined parameter '%s'" % param)
 
-    def get_params(self):
+    def getParams(self):
         """Return operations parameters"""
-        return {'min_dia': self.min_dia, 'extra_dia': self.extra_dia, 'start_offset': self.start_offset,
-                'end_offset': self.end_offset, 'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
-                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed, 
-                'vfeed': self.vfeed, 'clearance': self.clearance}
+        return {'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
+            'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
+            'vfeed': self.vfeed, 'clearance': self.clearance}
 
-    def get_gcode(self):
+    def getGCode(self):
         """Base function for all turning operations"""
 
         if self.tool is None:
             raise Warning("Tool is unset")
 
-        self.generate_path()
-        path = self.generate_gcode()
+        self.generatePath()
+        path = self.generateGCode()
         return path
 
-    def generate_path(self):
+    def generatePath(self):
         """Main processing function for each op"""
-
         pass
 
-    def generate_gcode(self):
+    def generateGCode(self):
         """Generate Gcode for the op segments"""
 
         return ""
 
-    def add_part_edges(self, part_edges):
-        """Add edges to define the part geometry part_edges = array of LibLathe segments"""
+    def addPartSegments(self, partSegments):
+        """Add edges to define the part geometry partSegments = array of LibLathe segments"""
 
-        for segment in part_edges:
-            self.part_segment_group.add_segment(segment)
+        for segment in partSegments:
+            self.partSegmentGroup.addSegment(segment)
 
-        self.part_segment_group.validate()
-        # self.part_segment_group.create_freecad_shape('part_segment_group')
+        self.partSegmentGroup.validate()
+        # self.partSegmentGroup.create_freecad_shape('partSegmentGroup')
 
-    def add_stock(self, stock_bb):
-        """Define bounding box for the stock material stock_bb = LibLathe BoundBox"""
-        self.stock = stock_bb
+    def add_stock(self, stockBoundbox):
+        """Define bounding box for the stock material stockBoundbox = LibLathe BoundBox"""
+        self.stock = stockBoundbox
 
     def add_tool(self, tool):
         """Set the tool for the operation"""

@@ -3,33 +3,40 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
+from liblathe.gcode.path import Path
+
 
 class PartoffOP(liblathe.op.base.BaseOP):
 
-    def generate_path(self):
+    def generatePath(self):
         """Generate the path for the Part operation"""
 
         self.tool_paths = []
+        toolShape = self.tool.get_segmentgroup()
+        toolBoundbox = toolShape.boundbox()
+        toolWidth = toolBoundbox.XLength()
 
-        toolWidth = self.tool.get_width()
-        x_min = self.stock.x_min - self.extra_dia * 0.5 - self.clearance
-        x_max = 0 - self.min_dia * 0.5
-        z_min = self.stock.z_min - toolWidth
+        XMin = self.stock.XMin
+        XMax = self.stock.XMax + self.clearance
+        ZMin = self.stock.ZMin - toolWidth
+
+        #TODO: Add a chip break / pecking option
 
         # build list of segments
         segmentgroup = SegmentGroup()
-        startPt = Point(x_min, 0, z_min)
-        endPt = Point(x_max, 0, z_min)
+        startPt = Point(XMax, ZMin)
+        endPt = Point(XMin, ZMin)
         seg = Segment(startPt, endPt)
-        segmentgroup.add_segment(seg)
+        segmentgroup.addSegment(seg)
 
         self.tool_paths.append(segmentgroup)
 
-    def generate_gcode(self):
+    def generateGCode(self):
         """Generate Gcode for the op segments"""
 
-        path = []
+        path = Path()
+
         for segmentgroup in self.tool_paths:
-            finish = segmentgroup.to_commands(self.part_segment_group, self.stock, self.step_over, self.finish_passes, self.hfeed, self.vfeed)
-            path.extend(finish)
-        return path
+            path.fromSegmentGroup(self, segmentgroup)
+
+        return path.commands

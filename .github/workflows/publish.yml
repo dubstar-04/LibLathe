@@ -1,0 +1,70 @@
+name: Build and upload to PyPI
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest] #, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.22.0
+        env:
+          #CIBW_ARCHS_MACOS: auto universal2
+          #CIBW_ARCHS_LINUX: auto
+          #CIBW_BUILD: cp310-* cp311-*
+          # Don't build python versions 3.6 - 3.9
+          CIBW_SKIP: cp36-* cp37-* cp38-* cp39-* pp36-* pp37-* pp38-* pp39-*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.cibw_archs }}
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build sdist
+        run: pipx run build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  upload_to_pypi:
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    environment:
+      name: publish
+      url: https://pypi.org/p/liblathe
+    permissions:
+      id-token: write
+    steps:
+      - name: Download wheel distributions
+        uses: actions/download-artifact@v4
+        with:
+            pattern: wheels*
+            path: dist
+            merge-multiple: true
+
+      - name: Download source distributions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: sdist*
+          path: dist
+          merge-multiple: true
+
+      - name: Publish package distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,12 +1,13 @@
 import re
-from setuptools import setup
+from pybind11.setup_helpers import Pybind11Extension, build_ext
+from distutils.core import setup
 import warnings
 import sys
 import os
 
-if sys.version_info[:3] < (3, 5, 0):
+if sys.version_info[:3] < (3, 10, 0):
     warnings.warn("liblathe does not support versions below "
-                  "Python 3.5.0", RuntimeWarning)
+                  "Python 3.10.0", RuntimeWarning)
 
 __dir__ = os.path.dirname(__file__)
 version_file = os.path.join(__dir__, "liblathe/version.py")
@@ -24,6 +25,38 @@ else:
 with open(os.path.join(__dir__, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+
+point = Pybind11Extension('liblathe.base.point',
+                          ['liblathe/base/point_py.cpp',
+                           'liblathe/base/point.cpp'])
+
+boundbox = Pybind11Extension('liblathe.base.boundbox',
+                             ['liblathe/base/boundbox_py.cpp',
+                              'liblathe/base/boundbox.cpp',
+                              'liblathe/base/point.cpp'])
+
+segment = Pybind11Extension('liblathe.base.segment',
+                            ['liblathe/base/segment_py.cpp',
+                             'liblathe/base/segment.cpp',
+                             'liblathe/base/point.cpp',
+                             'liblathe/base/boundbox.cpp'])
+
+segmentgroup = Pybind11Extension('liblathe.base.segmentgroup',
+                                 ['liblathe/base/segmentgroup_py.cpp',
+                                  'liblathe/base/segmentgroup.cpp',
+                                  'liblathe/base/point.cpp',
+                                  'liblathe/base/boundbox.cpp',
+                                  'liblathe/base/segment.cpp',
+                                  'liblathe/base/quadtree.cpp'])
+
+quadtree = Pybind11Extension('liblathe.base.quadtree',
+                            ['liblathe/base/quadtree_py.cpp',
+                             'liblathe/base/quadtree.cpp',
+                             'liblathe/base/boundbox.cpp',
+                             'liblathe/base/point.cpp',
+                             'liblathe/base/segment.cpp',
+                             'liblathe/base/segmentgroup.cpp'])
+
 setup(
     name='liblathe',
     version=version,
@@ -35,18 +68,19 @@ setup(
     author_email='s.d.wood.82@googlemail.com',
     license='GPL2',
     keywords="lathe turning CAD CAM CNC",
-    packages=['liblathe'],
+    packages=['liblathe', "liblathe/op", "liblathe/tool", "liblathe/gcode"],
     install_requires=['pillow'],
+    ext_modules=[point, boundbox, segment, segmentgroup, quadtree],
 
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
 )
