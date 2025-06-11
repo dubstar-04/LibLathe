@@ -1,4 +1,6 @@
 from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.base.boundbox import BoundBox
+from liblathe.base.point import Point
 import math
 
 
@@ -69,6 +71,11 @@ class BaseOP:
 
     def add_stock(self, stockBoundbox):
         """Define bounding box for the stock material stockBoundbox = LibLathe BoundBox"""
+        self.stock = stockBoundbox
+
+    def add_stock_from_limits(self, xmin, xmax, zmin, zmax):
+        """Define bounding box for the stock material xmin, xmax, zmin, zmax = float values defining the stock limits"""
+        stockBoundbox = BoundBox(Point(xmin, zmin), Point(xmax, zmax))
         self.stock = stockBoundbox
 
     def add_tool(self, tool):
