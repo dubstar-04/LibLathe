@@ -58,12 +58,6 @@ faces explicitly included in the profile remain eligible. The existing
 start-Z clip is retained. In LibLathe's plotted view, Z is horizontal and X
 increases downward from the centreline.
 
-Raw and RDP-simplified offset chords are checked against a total signed-distance
-error budget of **0.05 model units**. Offsetting raises `RuntimeError` if it
-cannot certify that budget or detects a collapsed, zero-width branch, rather
-than returning an inaccurate path. This does not guarantee that arbitrarily
-small features or every contour component are extracted.
-
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approaches.
 
 ## Examples
