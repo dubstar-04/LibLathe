@@ -1,3 +1,4 @@
+// Optional native memory diagnostic, not part of the required Python test suite.
 // From the repository root:
 // g++ -std=c++17 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer
 //   -I liblathe/base tests/native/quadtree_memory.cpp

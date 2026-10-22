@@ -35,6 +35,15 @@ Local testing
 python3 ./examples/defeature_example.py
 ```
 
+## Tests
+
+After building, run the Python suite with `pytest --ignore=extern`, as used by
+the test workflows. These tests exercise the compiled C++ core through Python.
+
+The [native memory driver](tests/native/quadtree_memory.cpp) is an optional
+diagnostic for investigating C++ memory issues, not a required test or CI step.
+Its header contains the manual build and sanitizer instructions.
+
 ## Design
 Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts in two geometry steps:
 
