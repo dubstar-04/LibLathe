@@ -16,6 +16,10 @@ class Debug:
 
     def draw(self, segmentgroups):
         """create an image of the segmentgroups"""
+        self.render(segmentgroups).show()
+
+    def render(self, segmentgroups):
+        """Render a preview without opening an external viewer."""
         scale = 20
         z_len = 0
         x_len = 0
@@ -39,7 +43,7 @@ class Debug:
         for segmentgroup in segmentgroups:
             self.drawSegmentGroup(img1, segmentgroup, image_offset, scale)
 
-        img.show()
+        return img
 
 
     def drawSegmentGroup(self, img, segmentgroup, offset, scale):

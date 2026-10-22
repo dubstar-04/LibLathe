@@ -171,6 +171,74 @@ prove that contour branches were complete.
 - Accuracy depends on the distance field being exact. The review found sign and
   arc-distance bugs (see PLAN.md).
 
+## Corrected performance baseline
+
+Measured on 2026-10-22 after the accuracy and flat-node fixes (core revision
+`ca9ce25`), using CPython 3.13.15, Linux x86_64 and a `RelWithDebInfo` build.
+These machine-specific timings are not portable guarantees.
+
+```sh
+python3 examples/benchmark.py --build-type RelWithDebInfo > run1.json
+python3 examples/benchmark.py --build-type RelWithDebInfo > run2.json
+python3 examples/benchmark.py --build-type RelWithDebInfo --cases example --render
+```
+
+Each stage has one untimed warm-up followed by five `perf_counter()` samples.
+The JSON contains all samples, medians, nearest-rank p95s, input/output segment
+counts and Python/platform/build metadata. With five samples the nearest-rank
+p95 is the maximum sample. Build type is explicitly supplied by the caller and
+must describe the compiled extensions actually loaded; it is not auto-detected.
+Rendering and viewer launch are excluded from geometry timings. `--render`
+times image creation and disposal separately, without launching a viewer.
+
+Workloads:
+- **Example:** the existing 24-line profile and rectangular 5-by-5 tool fixture;
+  offsets use the 15-line defeatured profile.
+- **16x segments:** split each original line into 16 pieces for defeaturing
+  (384 inputs). Split the resulting 15 lines into 240 for the offset workload,
+  rather than letting defeaturing erase the intended SDF segment-count stress.
+- **8x dimensions:** multiply profile, stock margins and tool dimensions by
+  eight. Offset distances remain 1, 2, 3 and 4 model units; leaf width and
+  simplification tolerance are unchanged.
+- **Arc-heavy:** five quarter arcs and two lines. Defeaturing is timed normally,
+  but offsets use the original seven-segment profile so the distance-field
+  workload retains arcs instead of measuring only defeatured lines.
+
+Output counts were identical across warm-ups, all repetitions and both full
+runs. Stage medians differed by at most 7.2%; all but one differed by less than
+2%. The table retains the slower p95 from either run, including the example
+offset-2 outlier, rather than hiding the observed timing noise.
+
+| Case | Stage | Input/output segments | Run 1 median (ms) | Run 2 median (ms) | Max run p95 (ms) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Example | Defeature | 24 / 15 | 13.98 | 13.90 | 14.01 |
+| Example | Offset 1 | 15 / 45 | 106.25 | 104.57 | 109.36 |
+| Example | Offset 2 | 15 / 49 | 100.22 | 107.38 | 136.31 |
+| Example | Offset 3 | 15 / 61 | 96.30 | 95.83 | 96.35 |
+| Example | Offset 4 | 15 / 62 | 93.02 | 92.51 | 93.10 |
+| 16x segments | Defeature | 384 / 15 | 170.03 | 169.93 | 171.83 |
+| 16x segments | Offset 1 | 240 / 45 | 329.86 | 329.72 | 335.23 |
+| 16x segments | Offset 2 | 240 / 49 | 320.79 | 320.38 | 327.98 |
+| 16x segments | Offset 3 | 240 / 61 | 303.93 | 304.05 | 304.80 |
+| 16x segments | Offset 4 | 240 / 62 | 299.76 | 299.35 | 299.80 |
+| 8x dimensions | Defeature | 24 / 15 | 113.90 | 113.92 | 114.12 |
+| 8x dimensions | Offset 1 | 15 / 44 | 5691.68 | 5684.96 | 5741.90 |
+| 8x dimensions | Offset 2 | 15 / 55 | 5545.83 | 5576.22 | 5596.59 |
+| 8x dimensions | Offset 3 | 15 / 72 | 5486.54 | 5474.24 | 5518.03 |
+| 8x dimensions | Offset 4 | 15 / 78 | 5413.31 | 5416.31 | 5452.46 |
+| Arc-heavy | Defeature | 7 / 51 | 44.98 | 44.99 | 45.03 |
+| Arc-heavy | Offset 1 | 7 / 82 | 122.29 | 121.71 | 122.48 |
+| Arc-heavy | Offset 2 | 7 / 74 | 118.99 | 118.55 | 121.04 |
+| Arc-heavy | Offset 3 | 7 / 76 | 116.74 | 116.35 | 117.96 |
+| Arc-heavy | Offset 4 | 7 / 81 | 112.97 | 112.75 | 113.35 |
+
+Two separate example preview runs produced 1440-by-460 images. Render medians
+were 1.045 and 1.031 ms; p95s were 1.710 and 1.691 ms. The interactive example
+still opens its viewer by default; its `--headless` flag skips that step.
+Imports are side-effect-free so the benchmark can reuse the same geometry.
+These corrected timings supersede the historical pre-correction figures in
+the local plan.
+
 ## Alternatives
 
 ### 1. Upper envelope / Minkowski sum
