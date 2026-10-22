@@ -38,7 +38,8 @@ must form a simple region.
 4. **Build the contour.** Keep machining candidates from the original profile,
    not the artificial closure. Remove duplicates, order points by greedy
    nearest neighbour and simplify the resulting polyline with
-   Ramer-Douglas-Peucker.
+   Ramer-Douglas-Peucker. A spatial index accelerates neighbour searches without
+   changing the greedy rule or its tie-breaking.
 
 5. **Validate the result.** Check connecting chords before and after
    simplification against the requested signed-distance level. Reject

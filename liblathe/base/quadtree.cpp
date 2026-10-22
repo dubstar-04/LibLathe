@@ -2,8 +2,191 @@
 #include <limits>
 #include <cmath>
 #include <stdexcept>
+#include <cstdint>
+#include <unordered_map>
 
 #include "quadtree.h"
+
+namespace
+{
+constexpr const char *orderingError = "Quadtree error when ordering offset points";
+
+struct PointCell
+{
+    int64_t x;
+    int64_t z;
+    bool operator==(const PointCell &other) const
+    {
+        return x == other.x && z == other.z;
+    }
+};
+
+struct PointCellHash
+{
+    size_t operator()(const PointCell &cell) const
+    {
+        const size_t x = std::hash<int64_t>{}(cell.x);
+        const size_t z = std::hash<int64_t>{}(cell.z);
+        return x ^ (z + size_t(0x9e3779b9) + (x << 6) + (x >> 2));
+    }
+};
+
+struct PointBucket
+{
+    std::vector<size_t> indices;
+    float xmin = std::numeric_limits<float>::infinity();
+    float xmax = -std::numeric_limits<float>::infinity();
+    float zmin = std::numeric_limits<float>::infinity();
+    float zmax = -std::numeric_limits<float>::infinity();
+
+    float lowerBound(const Point &point) const
+    {
+        const float dx = std::max({0.0f, xmin - point.X, point.X - xmax});
+        const float dz = std::max({0.0f, zmin - point.Z, point.Z - zmax});
+        return std::sqrt(dx * dx + dz * dz);
+    }
+};
+
+class PointGrid
+{
+public:
+    PointGrid(const std::vector<Point> &points, float precision) : points(points)
+    {
+        float zmin = points.front().Z;
+        float zmax = zmin;
+        for (const auto &point : points)
+        {
+            zmin = std::min(zmin, point.Z);
+            zmax = std::max(zmax, point.Z);
+        }
+        originX = points.front().X;
+        originZ = zmin;
+        const double spanX = double(points.back().X) - originX;
+        const double spanZ = double(zmax) - originZ;
+        // Bound keys with ample headroom for ring offsets and double arithmetic.
+        width = std::max(double(precision),
+                         std::max(spanX, spanZ) / std::numeric_limits<int32_t>::max());
+        // Inset search boundaries to account for rounding in the grid arithmetic.
+        roundingSlack = 8 * std::numeric_limits<double>::epsilon() *
+                        std::max({1.0, std::abs(originX), std::abs(originZ), spanX, spanZ});
+        cells.reserve(points.size());
+        for (size_t i = 0; i < points.size(); ++i)
+        {
+            auto &bucket = cells[cellFor(points[i])];
+            bucket.indices.push_back(i);
+            bucket.xmin = std::min(bucket.xmin, points[i].X);
+            bucket.xmax = std::max(bucket.xmax, points[i].X);
+            bucket.zmin = std::min(bucket.zmin, points[i].Z);
+            bucket.zmax = std::max(bucket.zmax, points[i].Z);
+        }
+    }
+
+    size_t takeNearest(Point &target)
+    {
+        size_t best = points.size();
+        float distance = std::numeric_limits<float>::infinity();
+        auto consider = [&](const PointBucket &bucket) {
+            if (bucket.lowerBound(target) > distance)
+                return;
+            for (const size_t index : bucket.indices)
+            {
+                const float candidate = target.distanceTo(points[index]);
+                // Canonical indices preserve ties independently of bucket traversal.
+                if (candidate < distance ||
+                    (candidate == distance && best != points.size() && index < best))
+                {
+                    best = index;
+                    distance = candidate;
+                }
+            }
+        };
+        const PointCell centre = cellFor(target);
+        const size_t budget = cells.size();
+        size_t probes = 0;
+        auto visit = [&](int64_t x, int64_t z) {
+            if (probes == budget)
+                return false;
+            ++probes;
+            auto found = cells.find({x, z});
+            if (found != cells.end())
+                consider(found->second);
+            return true;
+        };
+        for (int64_t radius = 0;; ++radius)
+        {
+            bool complete = true;
+            if (radius == 0)
+                complete = visit(centre.x, centre.z);
+            else
+            {
+                for (int64_t dx = -radius; complete && dx <= radius; ++dx)
+                    complete = visit(centre.x + dx, centre.z - radius) &&
+                               visit(centre.x + dx, centre.z + radius);
+                for (int64_t dz = 1 - radius; complete && dz < radius; ++dz)
+                    complete = visit(centre.x - radius, centre.z + dz) &&
+                               visit(centre.x + radius, centre.z + dz);
+            }
+            if (complete && best != points.size() &&
+                outsideBound(target, centre, radius) > distance)
+                break;
+            if (probes == budget)
+            {
+                // Sparse jumps must not walk an arbitrarily large empty lattice.
+                for (const auto &cell : cells)
+                    consider(cell.second);
+                break;
+            }
+        }
+        if (best == points.size())
+            throw std::runtime_error(orderingError);
+        auto found = cells.find(cellFor(points[best]));
+        if (found == cells.end())
+            throw std::runtime_error(orderingError);
+        auto &indices = found->second.indices;
+        auto position = std::find(indices.begin(), indices.end(), best);
+        if (position == indices.end())
+            throw std::runtime_error(orderingError);
+        *position = indices.back();
+        indices.pop_back();
+        if (indices.empty())
+            cells.erase(found);
+        return best;
+    }
+
+private:
+    const std::vector<Point> &points;
+    std::unordered_map<PointCell, PointBucket, PointCellHash> cells;
+    double originX;
+    double originZ;
+    double width;
+    double roundingSlack;
+
+    PointCell cellFor(const Point &point) const
+    {
+        return {static_cast<int64_t>(std::floor((double(point.X) - originX) / width)),
+                static_cast<int64_t>(std::floor((double(point.Z) - originZ) / width))};
+    }
+
+    float outsideBound(const Point &target, PointCell centre, int64_t radius) const
+    {
+        auto separation = [&](float coordinate, double edge, bool positive) {
+            const float infinity = std::numeric_limits<float>::infinity();
+            const float boundary = std::nextafter(
+                static_cast<float>(edge + (positive ? -roundingSlack : roundingSlack)),
+                positive ? -infinity : infinity);
+            const float gap = std::max(0.0f, positive ? boundary - coordinate
+                                                    : coordinate - boundary);
+            // Match float distance arithmetic, including rounded ties and underflow.
+            return std::sqrt(gap * gap);
+        };
+        return std::min({
+            separation(target.X, originX + (centre.x - radius) * width, false),
+            separation(target.X, originX + (centre.x + radius + 1) * width, true),
+            separation(target.Z, originZ + (centre.z - radius) * width, false),
+            separation(target.Z, originZ + (centre.z + radius + 1) * width, true)});
+    }
+};
+}
 
 Quadtree::Quadtree()
 {
@@ -236,7 +419,9 @@ bool Quadtree::insideNode(Point &point, Node &node)
 
 std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
 {
-    // sort the point set into a ordered set of points starting from datum //
+    for (const auto &point : points)
+        if (!std::isfinite(point.X) || !std::isfinite(point.Z))
+            throw std::runtime_error(orderingError);
     std::sort(points.begin(), points.end(), [](const Point &first, const Point &second) {
         return first.X < second.X || (first.X == second.X && first.Z < second.Z);
     });
@@ -245,11 +430,8 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
                  points.end());
     std::vector<Point> sorted_points;
     sorted_points.reserve(points.size());
-    int point_count = points.size();
+    const size_t input_point_count = points.size();
     Point target = datum;
-    int closest_index;
-
-    int input_point_count = points.size();
 
     if (!points.empty())
     {
@@ -263,35 +445,21 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
         target = *start;
     }
 
-    while (points.size() != 0)
+    if (points.empty())
+        return sorted_points;
+    PointGrid grid(points, this->precision);
+    while (sorted_points.size() < input_point_count)
     {
-        float dist = std::numeric_limits<float>::infinity();
-        int index = 0;
-
-        for (index; index < points.size(); index++)
-        {
-            // find closest point
-            float target_to_point = target.distanceTo(points[index]);
-
-            if (target_to_point < dist)
-            {
-                closest_index = index;
-                dist = target_to_point;
-            }
-        }
-
-        // add closest point to sorted points
-        sorted_points.push_back(Point(points[closest_index].X, points[closest_index].Z));
-        // remove point from points array
-        points.erase(points.begin() + closest_index);
-        // set target to last found point
+        const size_t closest_index = grid.takeNearest(target);
+        sorted_points.push_back(points[closest_index]);
         target = sorted_points.back();
     }
 
     if (input_point_count != sorted_points.size())
     {
-        throw std::runtime_error("Quadtree error when ordering offset points");
+        throw std::runtime_error(orderingError);
     }
+    points.clear();
     return sorted_points;
 }
 
