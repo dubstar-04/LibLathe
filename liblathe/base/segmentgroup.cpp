@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <stdexcept>
+#include <array>
 
 #include "segmentgroup.h"
 
@@ -386,51 +387,102 @@ float SegmentGroup::sdv(Point point)
 
 bool SegmentGroup::isInside(Point point)
 {
-    // determine if point is inside the segmentgroup //
+    if (this->segments.empty())
+        throw std::invalid_argument("Cannot classify empty geometry");
+
+    // Return -1 on the boundary; otherwise count crossings above the query.
+    auto crossings = [&](Segment &segment) -> int {
+        const Point start = segment.start;
+        const Point end = segment.end;
+        if (point.X == start.X && point.Z == start.Z)
+            return -1;
+        if (point.X == end.X && point.Z == end.Z)
+            return -1;
+        if (segment.bulge == 0 || (start.X == end.X && start.Z == end.Z))
+        {
+            const double dx = double(end.X) - start.X;
+            const double dz = double(end.Z) - start.Z;
+            const double cross = dx * (double(point.Z) - start.Z) -
+                                 dz * (double(point.X) - start.X);
+            if (cross == 0 &&
+                point.X >= std::min(start.X, end.X) && point.X <= std::max(start.X, end.X) &&
+                point.Z >= std::min(start.Z, end.Z) && point.Z <= std::max(start.Z, end.Z))
+                return -1;
+            if ((start.X > point.X) == (end.X > point.X))
+                return 0;
+            const double z = start.Z + (double(point.X) - start.X) * dz / dx;
+            return z > point.Z ? 1 : 0;
+        }
+
+        const Point centre = segment.getCentrePoint();
+        const double radius = segment.getRadius();
+        const double pi = std::acos(-1.0);
+        const double direction = segment.bulge > 0 ? -1 : 1;
+        const double sweep = 4 * std::atan(std::abs(double(segment.bulge)));
+        const double startAngle = std::atan2(double(start.Z) - centre.Z,
+                                             double(start.X) - centre.X);
+        auto progress = [&](double angle) {
+            return std::fmod(direction * (angle - startAngle) + 2 * pi, 2 * pi);
+        };
+        const double px = double(point.X) - centre.X;
+        const double pz = double(point.Z) - centre.Z;
+        const double epsilon = 4 * std::numeric_limits<float>::epsilon();
+        if (std::abs(px * px + pz * pz - radius * radius) <=
+                epsilon * radius * radius &&
+            progress(std::atan2(pz, px)) <= sweep + epsilon)
+            return -1;
+
+        // Split at X extrema so the same half-open endpoint rule works for arcs.
+        std::array<std::pair<double, double>, 4> breaks;
+        breaks[0] = {0, start.X};
+        breaks[1] = {sweep, end.X};
+        size_t count = 2;
+        for (double angle : {0.0, pi})
+        {
+            const double position = progress(angle);
+            if (position > 0 && position < sweep)
+                breaks[count++] = {position, centre.X + (angle == 0 ? radius : -radius)};
+        }
+        std::sort(breaks.begin(), breaks.begin() + count);
+        const double discriminant = radius * radius - px * px;
+        if (discriminant <= 0)
+            return 0;
+        const double height = std::sqrt(discriminant);
+        int result = 0;
+        for (size_t i = 1; i < count; ++i)
+        {
+            if ((breaks[i - 1].second > point.X) == (breaks[i].second > point.X))
+                continue;
+            const double middle = startAngle + direction *
+                                  (breaks[i - 1].first + breaks[i].first) / 2;
+            const double z = centre.Z + (std::sin(middle) > 0 ? height : -height);
+            if (z > point.Z)
+                ++result;
+        }
+        return result;
+    };
+
     int intersections = 0;
-
-    // generate a ray to perform the crossing
-    float x = point.X;
-    // ensure that the ray starts outside the segments boundbox
-    float z = this->boundbox().ZMax + 10;
-    Segment ray = Segment(Point(x, z), point);
-
-    // TODO: consider is there is a better way to ensure the start and end are at X0
-    //  get a copy of the segment group
-    SegmentGroup segmentGroupCopy = this->copy();
-
-    // check the group starts at X0
-    if (segmentGroupCopy.getSegments().front().start.X != 0)
+    for (auto &segment : this->segments)
     {
-        // add a new segment to fill between the group start and x = 0 //
-        Point end_point = segmentGroupCopy.getSegments().front().start;
-        Point start_point = Point(0, end_point.Z);
-        Segment start_filler_segment = Segment(start_point, end_point);
-        segmentGroupCopy.insertSegment(start_filler_segment, 0);
+        const int count = crossings(segment);
+        if (count < 0)
+            return true;
+        intersections += count;
     }
-
-    // check the group end at X0
-    if (segmentGroupCopy.getSegments().back().end.X != 0)
+    const Point start = this->segments.front().start;
+    const Point end = this->segments.back().end;
+    std::array<Segment, 3> closure = {
+        Segment(Point(0, start.Z), start),
+        Segment(end, Point(0, end.Z)),
+        Segment(Point(0, end.Z), Point(0, start.Z))
+    };
+    for (auto &segment : closure)
     {
-        // add a new segment to fill between the group end and x = 0 //
-        Point start_point = segmentGroupCopy.getSegments().back().end;
-        Point end_point = Point(0, start_point.Z);
-        Segment end_filler_segment = Segment(start_point, end_point);
-        segmentGroupCopy.addSegment(end_filler_segment);
+        const int count = crossings(segment);
+        if (count < 0)
+            return true;
+        intersections += count;
     }
-
-    // collect the number of times ray intersects the segments
-    for (auto &segment : segmentGroupCopy.segments)
-    {
-        std::vector<Point> pnts = ray.intersect(segment, false);
-        intersections += pnts.size();
-    }
-
-    if (intersections % 2 == 0 && intersections > 0 || intersections == 0)
-    {
-        // even
-        return false;
-    }
-    // odd
-    return true;
+    return intersections % 2 != 0;
 }

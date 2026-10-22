@@ -27,5 +27,7 @@ PYBIND11_MODULE(segmentgroup, m)
         .def("fromPoints", &SegmentGroup::fromPoints)
         .def("reduce", &SegmentGroup::reduce)
         .def("sdv", &SegmentGroup::sdv)
-        .def("isInside", &SegmentGroup::isInside);
+        .def("isInside", &SegmentGroup::isInside,
+             "Classify a point against the profile closed along the axis. "
+             "Boundary points count as inside; empty geometry raises ValueError.");
 }
