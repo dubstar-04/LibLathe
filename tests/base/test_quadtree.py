@@ -10,11 +10,15 @@ baseFolder = os.path.dirname(thisFolder)
 parentFolder = os.path.dirname(baseFolder)
 sys.path.append(parentFolder)
 
+import liblathe
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.quadtree import Node, Quadtree
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
+
+# Use the imported package location so an unbuilt checkout cannot shadow it.
+packageFolder = os.path.dirname(os.path.dirname(liblathe.__file__))
 
 #from liblathe.debug.debug import Debug
 
@@ -198,7 +202,7 @@ class test_quadtree(unittest.TestCase):
         """)
         result = subprocess.run(
             [sys.executable, '-c', script],
-            cwd=parentFolder,
+            cwd=packageFolder,
             capture_output=True,
             text=True,
             timeout=30,
@@ -254,7 +258,7 @@ class test_quadtree(unittest.TestCase):
         """)
         result = subprocess.run(
             [sys.executable, '-c', script],
-            cwd=parentFolder,
+            cwd=packageFolder,
             capture_output=True,
             text=True,
             timeout=30,
