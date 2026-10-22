@@ -9,7 +9,9 @@ from liblathe.gcode.path import Path
 class ProfileOP(liblathe.op.base.BaseOP):
 
     def generatePath(self):
-        """Generate the path for the profile operation"""
+        """Replace toolpaths on success; leave no published paths on failure."""
+        self.tool_paths = []
+        tool_paths = []
         # get the defeature part profile
         profileSegmentGroup = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
@@ -31,9 +33,11 @@ class ProfileOP(liblathe.op.base.BaseOP):
                 raise ValueError("Calculated profile path intersects part")
 
             # add the segment group to the tool paths
-            self.tool_paths.append(segmentgroup)
+            tool_paths.append(segmentgroup)
             # increment f_pass to the next pass
             f_pass += 1
+
+        self.tool_paths = tool_paths
 
     def add_leadin(self, segmentgroup):
         # get the first segment of the segment group

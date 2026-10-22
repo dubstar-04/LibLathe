@@ -36,6 +36,9 @@ PYBIND11_MODULE(segment, m)
         .def("isSame", &Segment::isSame)
         .def("intersect", &Segment::intersect, "", py::arg(), py::arg("extend") = false)
         .def("pointOnSegment", &Segment::pointOnSegment)
-        .def("distanceToPoint", &Segment::distanceToPoint)
-        .def("closestPoint", &Segment::closestPoint);
+        .def("distanceToPoint", &Segment::distanceToPoint,
+             "Return the distance to the closest point on the finite line or arc.")
+        .def("closestPoint", &Segment::closestPoint,
+             "Return the closest point on the finite line or arc, including endpoints. "
+             "Arc-centre queries and endpoint ties return the start point.");
 }

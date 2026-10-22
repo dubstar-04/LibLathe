@@ -322,19 +322,110 @@ class test_segment(unittest.TestCase):
         dist = self.lineSegment1.distanceToPoint(point)
         self.assertAlmostEqual(dist, 4.24536, 4)
 
-        # TODO: remove this test when the arc support is removed from segement
         dist = self.arcSegment1.distanceToPoint(point)
         self.assertAlmostEqual(dist, 4.65147, 4)
 
-    def test_closestPoint(self):
+    def assert_closest_point(self, segment, query, expected, distance):
+        closest = segment.closestPoint(query)
+        actual_distance = segment.distanceToPoint(query)
+        self.assertTrue(math.isfinite(closest.X) and math.isfinite(closest.Z))
+        self.assertTrue(math.isfinite(actual_distance))
+        self.assertAlmostEqual(closest.X, expected.X, delta=2e-6)
+        self.assertAlmostEqual(closest.Z, expected.Z, delta=2e-6)
+        self.assertAlmostEqual(actual_distance, distance, delta=2e-6)
+        self.assertAlmostEqual(actual_distance, query.distanceTo(closest), delta=2e-6)
 
-        """
-        # Arcs not supported
-        point = Point(12, 0)
-        closest = self.arcSegment1.closestPoint(point)
-        self.assertAlmostEqual(closest.X, self.lineSegment1MidPoint.X, 4)
-        self.assertAlmostEqual(closest.Z, self.lineSegment1MidPoint.Z, 4)
-        """
+    def test_finite_semicircle_closest_point(self):
+        for bulge in (1, -1):
+            for reverse in (False, True):
+                start, end = Point(0, 0), Point(2, 0)
+                if reverse:
+                    start, end = end, start
+                arc = Segment(start, end, -bulge if reverse else bulge)
+                for query, expected, distance in (
+                    (Point(1, bulge), Point(1, bulge), 0),
+                    (Point(1, 2 * bulge), Point(1, bulge), 1),
+                    (Point(1, 0.5 * bulge), Point(1, bulge), 0.5),
+                    (Point(-1, -bulge), Point(0, 0), math.sqrt(2)),
+                    (Point(3, -bulge), Point(2, 0), math.sqrt(2)),
+                    (Point(1, -bulge), start, math.sqrt(2)),
+                    (Point(1, 0), start, 1),
+                    (start, start, 0),
+                    (end, end, 0),
+                ):
+                    with self.subTest(bulge=bulge, reverse=reverse,
+                                      query=(query.X, query.Z)):
+                        self.assert_closest_point(arc, query, expected, distance)
+
+    def test_arc_sweep_matches_dense_sampling(self):
+        for radius in (0.001, 1, 100):
+            for start_degrees, sweep_degrees in (
+                (170, 40), (10, -40), (170, 270), (10, -270),
+            ):
+                start_angle = math.radians(start_degrees)
+                sweep = math.radians(sweep_degrees)
+
+                def on_circle(angle):
+                    return Point(radius * math.cos(angle),
+                                 radius * math.sin(angle))
+
+                start = on_circle(start_angle)
+                end = on_circle(start_angle + sweep)
+                arc = Segment(start, end, -math.tan(sweep / 4))
+                samples = [on_circle(start_angle + sweep * i / 4096)
+                           for i in range(4097)]
+                tolerance = max(2e-6, radius * 2e-6)
+                for angle_degrees in range(-180, 180, 15):
+                    angle = math.radians(angle_degrees)
+                    for scale in (0.5, 1, 2):
+                        query = Point(scale * radius * math.cos(angle),
+                                      scale * radius * math.sin(angle))
+                        with self.subTest(radius=radius, start=start_degrees,
+                                          sweep=sweep_degrees,
+                                          angle=angle_degrees, scale=scale):
+                            closest = arc.closestPoint(query)
+                            distance = arc.distanceToPoint(query)
+                            self.assertTrue(math.isfinite(distance))
+                            self.assertAlmostEqual(
+                                distance, query.distanceTo(closest),
+                                delta=tolerance)
+                            progress = ((angle - start_angle) * (1 if sweep > 0 else -1)) % math.tau
+                            if progress <= abs(sweep):
+                                expected = on_circle(angle)
+                            else:
+                                expected = min((start, end),
+                                               key=query.distanceTo)
+                            self.assertAlmostEqual(closest.X, expected.X,
+                                                   delta=tolerance)
+                            self.assertAlmostEqual(closest.Z, expected.Z,
+                                                   delta=tolerance)
+                            sampled_distance = min(query.distanceTo(p)
+                                                   for p in samples)
+                            # Sampling can overestimate by at most one arc step.
+                            self.assertLessEqual(distance,
+                                                 sampled_distance + tolerance)
+                            self.assertLessEqual(sampled_distance - distance,
+                                                 radius * abs(sweep) / 4096 + tolerance)
+
+    def test_line_closest_point_endpoints_and_degenerate_segments(self):
+        line = Segment(Point(1, 2), Point(4, 2))
+        for query, expected, distance in (
+            (Point(1, 2), Point(1, 2), 0),
+            (Point(4, 2), Point(4, 2), 0),
+            (Point(1, 3), Point(1, 2), 1),
+            (Point(0, 2), Point(1, 2), 1),
+            (Point(5, 2), Point(4, 2), 1),
+            (Point(2, 3), Point(2, 2), 1),
+        ):
+            with self.subTest(query=(query.X, query.Z)):
+                self.assert_closest_point(line, query, expected, distance)
+        for bulge in (0, 1, -1):
+            with self.subTest(bulge=bulge):
+                self.assert_closest_point(
+                    Segment(Point(1, 2), Point(1, 2), bulge),
+                    Point(4, 6), Point(1, 2), 5)
+
+    def test_closestPoint(self):
 
         # closest start segment
         point = Point(3, -7.5)

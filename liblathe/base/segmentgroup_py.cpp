@@ -21,11 +21,21 @@ PYBIND11_MODULE(segmentgroup, m)
         .def("count", &SegmentGroup::count)
         .def("boundbox", &SegmentGroup::boundbox)
         .def("intersectsGroup", &SegmentGroup::intersectsGroup)
-        .def("offset", &SegmentGroup::offset)
+        .def("offset", &SegmentGroup::offset,
+             "Extract an offset polyline with raw and simplified chord errors "
+             "bounded by 0.05 model units in the closed signed-distance field. "
+             "Raises RuntimeError for detected zero-width branches, uncertifiable "
+             "chords or fewer than two contour points. Does not guarantee completeness.")
         .def("defeature", &SegmentGroup::defeature)
         .def("validate", &SegmentGroup::validate)
         .def("fromPoints", &SegmentGroup::fromPoints)
         .def("reduce", &SegmentGroup::reduce)
-        .def("sdv", &SegmentGroup::sdv)
-        .def("isInside", &SegmentGroup::isInside);
+        .def("sdv", &SegmentGroup::sdv,
+             "Signed distance to the profile and its axis closure: negative inside, "
+             "zero on the boundary, positive outside. Empty geometry and nonfinite "
+             "query points raise ValueError.")
+        .def("isInside", &SegmentGroup::isInside,
+             "Classify a point against the profile closed along the axis. "
+             "Closed profiles add no edges; endpoints at the same Z close directly. "
+             "Boundary points count as inside; empty geometry raises ValueError.");
 }

@@ -16,9 +16,22 @@ PYBIND11_MODULE(quadtree, m)
     // bindings to Quadtree class
     py::class_<Quadtree>(m, "Quadtree")
         .def(py::init<>())
-        .def("initialise", &Quadtree::initialise)
-        .def("getOffset", &Quadtree::getOffset)
-        .def("getNodes", &Quadtree::getNodes);
+        .def("initialise", &Quadtree::initialise, py::keep_alive<1, 2>(),
+             "Retain source geometry until this tree is destroyed, including "
+             "geometry supplied by earlier initialise calls. Invalid geometry "
+             "pointers or root bounds raise ValueError without changing configuration.")
+        .def("getOffset", &Quadtree::getOffset,
+             "Return offset points, or an empty list when no contour is found. "
+             "Use the axis-closed distance field but exclude artificial-closure "
+             "candidates, retaining original geometry on exact ties and the start-Z clip. "
+             "Zero offsets sample both sides; projected candidates are checked "
+             "against the requested signed distance. "
+             "Raise RuntimeError before initialisation, or ValueError for empty "
+             "geometry or nonfinite offsets.")
+        .def("getNodes", &Quadtree::getNodes,
+             "Return independent flat node snapshots in root-first depth-first order. "
+             "Before extraction, including after initialise, return only the root. "
+             "Mutating a snapshot does not change this tree.");
 
     py::class_<Node>(m, "Node")
         .def(py::init<>())

@@ -35,6 +35,31 @@ Local testing
 python3 ./examples/defeature_example.py
 ```
 
+## Tests
+
+After building, run the Python suite with `pytest --ignore=extern`, as used by
+the test workflows. These tests exercise the compiled C++ core through Python.
+
+The [native memory driver](tests/native/quadtree_memory.cpp) is an optional
+diagnostic for investigating C++ memory issues, not a required test or CI step.
+Its header contains the manual build and sanitizer instructions.
+
+## Design
+Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts in two geometry steps:
+
+1. **Defeature:** the tool is moved along the part and only the area it can actually reach is kept, removing features that can't be turned, such as undercuts.
+2. **Offset:** a signed distance field (SDF) gives the distance from any point to the profile. A quadtree samples it, refining only near the target distance. Points at that distance are collected, ordered and simplified with the Ramer-Douglas-Peucker (RDP) algorithm into the offset path.
+
+The operations (face, rough, profile and part-off) combine these steps into toolpaths and gcode. The geometry core is C++ exposed to Python with pybind11.
+
+The SDF uses the profile closed back to X = 0: sign and distance include the
+same boundary. Artificial closing edges do not generate offset candidates;
+faces explicitly included in the profile remain eligible. The existing
+start-Z clip is retained. In LibLathe's plotted view, Z is horizontal and X
+increases downward from the centreline.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approaches.
+
 ## Examples
 ### Facing:
 ![Facing Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/FacingOp.jpeg)
@@ -53,4 +78,3 @@ python3 ./examples/defeature_example.py
 * CNC: https://en.wikipedia.org/wiki/Numerical_control
 * GCode: https://en.wikipedia.org/wiki/G-code
 * PyPi: https://pypi.org/project/liblathe/
-

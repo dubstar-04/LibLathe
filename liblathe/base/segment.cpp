@@ -1,3 +1,4 @@
+#include <cmath>
 #include <iostream>
 #include "segment.h"
 
@@ -427,77 +428,80 @@ bool Segment::pointOnSegment(Point point)
 
 Point Segment::closestPoint(Point point)
 {
-    // get the closest point on segment to point //
+    return this->closestPointPrepared(point, this->prepareArc());
+}
 
-    float APx = point.X - start.X;
-    float APy = point.Z - start.Z;
-    float ABx = end.X - start.X;
-    float ABy = end.Z - start.Z;
-
-    float magAB2 = ABx * ABx + ABy * ABy;
-    float ABdotAP = ABx * APx + ABy * APy;
-    float t = ABdotAP / magAB2;
-
-    // check if the point is < start or > end
-    if (t > 0.0 && t < 1.0)
+Segment::ArcGeometry Segment::prepareArc()
+{
+    ArcGeometry arc;
+    if (this->bulge != 0 && (start.X != end.X || start.Z != end.Z))
     {
-        float x = start.X + ABx * t;
-        float z = start.Z + ABy * t;
-        Point p = Point(x, z);
-        return p;
+        arc.centre = this->getCentrePoint();
+        arc.radius = this->getRadius();
+        arc.direction = this->bulge > 0 ? -1 : 1;
+        arc.startAngle = std::atan2(double(start.Z) - arc.centre.Z,
+                                   double(start.X) - arc.centre.X);
+        arc.sweep = 4 * std::atan(std::abs(double(this->bulge)));
     }
+    return arc;
+}
 
-    if (t < 0)
+Point Segment::closestPointPrepared(const Point &point, const ArcGeometry &arc) const
+{
+    const Point &start = this->start;
+    const Point &end = this->end;
+    if ((start.X == end.X && start.Z == end.Z) ||
+        (point.X == start.X && point.Z == start.Z))
     {
         return start;
     }
+    if (point.X == end.X && point.Z == end.Z)
+    {
+        return end;
+    }
 
-    return end;
+    if (this->bulge == 0)
+    {
+        double APx = double(point.X) - start.X;
+        double APz = double(point.Z) - start.Z;
+        double ABx = double(end.X) - start.X;
+        double ABz = double(end.Z) - start.Z;
+        double t = (ABx * APx + ABz * APz) / (ABx * ABx + ABz * ABz);
+
+        if (t <= 0)
+            return start;
+        if (t >= 1)
+            return end;
+        return Point(start.X + ABx * t, start.Z + ABz * t);
+    }
+
+    Point centre = arc.centre;
+    double dx = double(point.X) - centre.X;
+    double dz = double(point.Z) - centre.Z;
+    double length = std::hypot(dx, dz);
+    if (length == 0)
+        return start;
+
+    // Positive bulge sweeps clockwise in conventional (X, Z) coordinates.
+    double direction = arc.direction;
+    double startAngle = arc.startAngle;
+    double circle = 2 * std::acos(-1.0);
+    double progress = std::fmod(direction * (std::atan2(dz, dx) - startAngle), circle);
+    if (progress < 0)
+        progress += circle;
+    double sweep = arc.sweep;
+    if (progress > sweep)
+    {
+        Point startCopy = start;
+        Point endCopy = end;
+        return startCopy.distanceTo(point) <= endCopy.distanceTo(point) ? start : end;
+    }
+
+    double scale = arc.radius / length;
+    return Point(centre.X + dx * scale, centre.Z + dz * scale);
 }
 
 float Segment::distanceToPoint(Point point)
 {
-    // get the closest point on segment to point //
-
-    if (this->bulge == 0)
-    {
-        float APx = point.X - start.X;
-        float APy = point.Z - start.Z;
-        float ABx = end.X - start.X;
-        float ABy = end.Z - start.Z;
-
-        float magAB2 = ABx * ABx + ABy * ABy;
-        float ABdotAP = ABx * APx + ABy * APy;
-        float t = ABdotAP / magAB2;
-
-        // check if the point is < start or > end
-        if (t > 0.0 && t < 1.0)
-        {
-            float x = start.X + ABx * t;
-            float z = start.Z + ABy * t;
-            Point p = Point(x, z);
-            return p.distanceTo(point);
-        }
-
-        if (t < 0)
-        {
-            return start.distanceTo(point);
-        }
-
-        return end.distanceTo(point);
-    }
-    else
-    {
-        // Arcs support has minimal benefit as the defeature function
-        // returns straight segments
-        // TODO: remove this to tidy up
-        float length = point.distanceTo(this->getCentrePoint());
-        float Cx = this->getCentrePoint().X + this->getRadius() * (point.X - this->getCentrePoint().X) / length;
-        float Cz = this->getCentrePoint().Z + this->getRadius() * (point.Z - this->getCentrePoint().Z) / length;
-        Point closestPoint = Point(Cx, Cz);
-
-        float distance = point.distanceTo(closestPoint);
-
-        return distance;
-    }
+    return this->closestPoint(point).distanceTo(point);
 }

@@ -52,6 +52,41 @@ class test_segmentGroup(unittest.TestCase):
         self.assertEqual(segmentEnd.X, self.pt2.X)
         self.assertEqual(segmentEnd.Z, self.pt2.Z)
 
+    def test_offset_rejects_empty_and_nonfinite_inputs(self):
+        with self.assertRaisesRegex(ValueError, 'empty'):
+            self.segmentGroup.offset(1)
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(2, 0)))
+        self.segmentGroup.addSegment(Segment(Point(2, 0), Point(2, -4)))
+        self.segmentGroup.addSegment(Segment(Point(2, -4), Point(0, -4)))
+        for offset in (float('inf'), -float('inf'), float('nan')):
+            with self.subTest(offset=offset):
+                with self.assertRaisesRegex(ValueError, 'finite'):
+                    self.segmentGroup.offset(offset)
+
+    def test_offset_reports_no_contour_and_recovers(self):
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(2, 0)))
+        self.segmentGroup.addSegment(Segment(Point(2, 0), Point(2, -4)))
+        self.segmentGroup.addSegment(Segment(Point(2, -4), Point(0, -4)))
+        expected = self.segmentGroup.offset(-0.1)
+        with self.assertRaisesRegex(RuntimeError, 'Offset produced no points'):
+            self.segmentGroup.offset(-100)
+        actual = self.segmentGroup.offset(-0.1)
+        self.assertEqual(actual.count(), expected.count())
+        for segment, reference in zip(actual.getSegments(), expected.getSegments()):
+            self.assertEqual(
+                (segment.start.X, segment.start.Z, segment.end.X, segment.end.Z),
+                (reference.start.X, reference.start.Z, reference.end.X, reference.end.Z),
+            )
+
+    def test_offset_reports_single_point_contour(self):
+        # Eroding a closed square by its inradius leaves one point.
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(2, 0)))
+        self.segmentGroup.addSegment(Segment(Point(2, 0), Point(2, -2)))
+        self.segmentGroup.addSegment(Segment(Point(2, -2), Point(0, -2)))
+        self.segmentGroup.addSegment(Segment(Point(0, -2), Point(0, 0)))
+        with self.assertRaisesRegex(RuntimeError, 'Offset produced fewer than two points'):
+            self.segmentGroup.offset(-1)
+
     def test_insertSegment(self):
         self.segmentGroup.addSegment(self.lineSegment1)
         segmentStart = self.segmentGroup.getSegments()[0].start
@@ -80,6 +115,15 @@ class test_segmentGroup(unittest.TestCase):
         self.segmentGroup2.addSegment(self.lineSegment2)
         self.segmentGroup.extend(self.segmentGroup2)
         self.assertEqual(len(self.segmentGroup.getSegments()), 2)
+
+    def test_getSegments_returns_independent_copies(self):
+        self.segmentGroup.addSegment(self.lineSegment1)
+        expected = self.segmentGroup.getSegments()[0].start.Z
+        segments = self.segmentGroup.getSegments()
+        segments[0].start.Z = expected + 100
+        segments.clear()
+        self.assertEqual(self.segmentGroup.count(), 1)
+        self.assertEqual(self.segmentGroup.getSegments()[0].start.Z, expected)
 
     def test_count(self):
         self.segmentGroup.addSegment(self.lineSegment1)
@@ -236,6 +280,21 @@ class test_segmentGroup(unittest.TestCase):
         self.assertEqual(sg.sdv(Point(0, 10)), 10)
         self.assertEqual(sg.sdv(Point(10, -10)), -5)
         self.assertEqual(sg.sdv(Point(20, -10)), 5)
+
+    def test_sdv_measures_finite_arcs(self):
+        for direction in (1, -1):
+            group = SegmentGroup()
+            group.addSegment(Segment(Point(0, 0), Point(2, 0), direction))
+            group.addSegment(Segment(Point(2, 0), Point(0, 0)))
+            for query, signed_distance in (
+                (Point(1, -direction), 1),
+                (Point(1, 0.75 * direction), -0.25),
+                (Point(1, 2 * direction), 1),
+                (Point(0, 0), 0),
+            ):
+                with self.subTest(direction=direction, query=(query.X, query.Z)):
+                    self.assertAlmostEqual(group.sdv(query), signed_distance,
+                                           places=6)
 
     def test_isInside(self):
         PartPt1 = Point(0, 0)
