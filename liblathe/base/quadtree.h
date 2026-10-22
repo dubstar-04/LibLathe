@@ -11,11 +11,11 @@
 struct Node
 {
     Point center = Point(0, 0);
-    float width;
-    float height;
-    int depth;
-    bool divided;
-    float sdv;
+    float width = 0;
+    float height = 0;
+    int depth = 0;
+    bool divided = false;
+    float sdv = 0;
     std::vector<Node> child_nodes;
     Node(Point center, float width, float height, int depth) : center(center), width(width), height(height), depth(depth) {}
     Node() {}
@@ -36,11 +36,11 @@ public:
 
 private:
     // value to offset the segmentgroup by
-    float offset;
+    float offset = 0;
     // precision of the quadtree
-    float precision;
+    float precision = 0.2;
 
-    SegmentGroup *segmentGroup;
+    SegmentGroup *segmentGroup = nullptr;
     Node basenode;
 
     std::vector<Point> offsetBoundaryPoints;

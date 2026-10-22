@@ -35,6 +35,9 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
 std::vector<Point> Quadtree::getOffset(float offsetValue)
 {
     // return the points that represent the calculated offset //
+    this->offsetBoundaryPoints.clear();
+    this->basenode.child_nodes.clear();
+    this->basenode.divided = false;
     this->offset = offsetValue;
     // start to process the quadtree, populating the offsetBoundaryPoints
     this->conquer(this->basenode);
