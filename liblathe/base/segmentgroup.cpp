@@ -124,6 +124,9 @@ SegmentGroup SegmentGroup::offset(float step_over)
     Quadtree qt = Quadtree();
     qt.initialise(this, center, size, size);
     std::vector<Point> offset = qt.getOffset(step_over);
+    offset.erase(std::unique(offset.begin(), offset.end(),
+                             [](Point first, Point second) { return first.isSame(second); }),
+                 offset.end());
     if (offset.empty())
     {
         throw std::runtime_error("Offset produced no points");

@@ -40,8 +40,14 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
      artificial closing edges, including when closure becomes nearer after
      projection. Original geometry wins exact ties, so explicitly supplied
      faces remain eligible. Retain the first segment's start-Z clip.
+     Zero levels accept centres from either side. Signed nearest-feature
+     projection repeats for at most eight iterations when the nearest feature
+     changes; candidates are retained only if their SDF residual is within
+     `1e-5 + 4 * float_epsilon * max(1, |X|, |Z|, |offset|)`.
    - Order the points by greedy nearest neighbour, then simplify with
-     Ramer-Douglas-Peucker (tolerance 0.01).
+     Ramer-Douglas-Peucker (tolerance 0.01). The public offset operation removes
+     adjacent coincident samples using the existing five-decimal point
+     comparison before checking that at least two distinct points remain.
 
 The distance-field domain and the extracted machining profile are deliberately
 different: the field includes the complete closed boundary, but output omits
@@ -49,14 +55,27 @@ artificial-closure candidates. Closure can therefore change where inward
 offsets terminate. This does not yet validate all connecting segments or
 guarantee contour accuracy after ordering and simplification.
 
-On the example part this measured about 550 points with a distance error of at
-most 0.005, no dropped points and consecutive spacing of about 0.15.
+### Extraction regression budgets
+
+The raw-candidate tests cover zero, inward and outward levels on lines, a
+concave groove and an arc. Their coordinate range keeps the scale-aware
+projection tolerance below `1e-4`, which the tests enforce. Corrected inward
+rectangle corners also keep their connecting segments within `1e-4`.
+
+These are fixture-specific regression budgets, not a global accuracy guarantee.
+Zero-offset corners can still have larger chord errors at the current cell
+size; broader connectivity and accuracy work remains necessary.
+
+Earlier example measurements reported about 550 points and consecutive spacing
+of about 0.15. Those observations did not establish a global error bound or
+prove that contour branches were complete.
 
 **Pros**
-- Topology is handled implicitly: corners, concave regions, small loops and
-  negative offsets need no trimming logic.
+- The field represents corners, concave regions and negative levels without
+  constructing analytic offset joins; extraction still depends on sampling
+  and ordering.
 - One method serves any offset distance and sign.
-- Projection gives sub-cell accuracy.
+- Accepted projections are checked against the requested signed distance.
 
 **Cons**
 - Produces a polyline; connectivity is reconstructed by greedy ordering,

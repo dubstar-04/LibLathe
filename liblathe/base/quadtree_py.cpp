@@ -24,6 +24,8 @@ PYBIND11_MODULE(quadtree, m)
              "Return offset points, or an empty list when no contour is found. "
              "Use the axis-closed distance field but exclude artificial-closure "
              "candidates, retaining original geometry on exact ties and the start-Z clip. "
+             "Zero offsets sample both sides; projected candidates are checked "
+             "against the requested signed distance. "
              "Raise RuntimeError before initialisation, or ValueError for empty "
              "geometry or nonfinite offsets.")
         .def("getNodes", &Quadtree::getNodes);

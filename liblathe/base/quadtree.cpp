@@ -88,28 +88,16 @@ void Quadtree::conquer(Node &node)
         // check if we have reached the desired precision
         if ((node.width <= this->precision))
         {
-            // check that the signed distance value is the same sign as the requested offset
-            if (std::signbit(node.sdv) == std::signbit(this->offset))
+            // A zero level can be approached from either side of the boundary.
+            if (this->offset == 0 || std::signbit(node.sdv) == std::signbit(this->offset))
             {
-                bool onProfile;
-                Point closest = this->segmentGroup->closestPoint(node.center, &onProfile);
-                if (!onProfile)
-                    return;
-                // get the projected boundary point
-                Point projectedPoint = closest.project(closest.angleTo(node.center), abs(this->offset));
-
-                // check if projected point is inside the node
-                if (this->insideNode(projectedPoint, node))
+                Point projectedPoint;
+                if (this->projectToOffset(node, projectedPoint) &&
+                    this->insideNode(projectedPoint, node))
                 {
                     Point segmentStart = segmentGroup->getSegments()[0].start;
-                    // only collect points inside the segment boundary
                     if (projectedPoint.Z <= segmentStart.Z)
-                    {
-                        // Closure can become nearer after moving from the cell centre.
-                        this->segmentGroup->closestPoint(projectedPoint, &onProfile);
-                        if (onProfile)
-                            this->offsetBoundaryPoints.push_back(projectedPoint);
-                    }
+                        this->offsetBoundaryPoints.push_back(projectedPoint);
                 }
             }
 
@@ -120,6 +108,43 @@ void Quadtree::conquer(Node &node)
             this->divide(node);
         }
     }
+}
+
+bool Quadtree::projectToOffset(const Node &node, Point &point)
+{
+    Point query = node.center;
+    float value = node.sdv;
+    // Re-evaluate the nearest feature after each signed-distance projection.
+    for (int iteration = 0; iteration < 8; ++iteration)
+    {
+        bool onProfile;
+        Point closest = this->segmentGroup->closestPoint(query, &onProfile);
+        if (!onProfile)
+            return false;
+        if (value == 0)
+        {
+            if (this->offset != 0)
+                return false;
+            point = closest;
+            return true;
+        }
+        const double scale = double(this->offset) / value;
+        point = Point(closest.X + (double(query.X) - closest.X) * scale,
+                      closest.Z + (double(query.Z) - closest.Z) * scale);
+        value = this->segmentGroup->sdv(point);
+        const float magnitude = std::max({1.0f, std::abs(point.X), std::abs(point.Z),
+                                         std::abs(this->offset)});
+        // Arc centres are rounded to five decimals; coordinates are floats.
+        const float tolerance = 1e-5f +
+            4 * std::numeric_limits<float>::epsilon() * magnitude;
+        if (std::abs(value - this->offset) <= tolerance)
+        {
+            this->segmentGroup->closestPoint(point, &onProfile);
+            return onProfile;
+        }
+        query = point;
+    }
+    return false;
 }
 
 void Quadtree::divide(Node &node)

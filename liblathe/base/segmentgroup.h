@@ -24,7 +24,7 @@ public:
     BoundBox boundbox();
     bool intersectsGroup(SegmentGroup segmentGroup);
     // Throws invalid_argument for empty geometry or nonfinite offsets,
-    // runtime_error if fewer than two contour points are produced.
+    // runtime_error if fewer than two distinct contour points are produced.
     SegmentGroup offset(float step_over);
     SegmentGroup defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving);
     void validate();

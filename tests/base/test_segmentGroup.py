@@ -79,11 +79,13 @@ class test_segmentGroup(unittest.TestCase):
             )
 
     def test_offset_reports_single_point_contour(self):
-        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(0.1, 0)))
-        self.segmentGroup.addSegment(Segment(Point(0.1, 0), Point(0.1, -0.1)))
-        self.segmentGroup.addSegment(Segment(Point(0.1, -0.1), Point(0, -0.1)))
+        # Eroding a closed square by its inradius leaves one point.
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(2, 0)))
+        self.segmentGroup.addSegment(Segment(Point(2, 0), Point(2, -2)))
+        self.segmentGroup.addSegment(Segment(Point(2, -2), Point(0, -2)))
+        self.segmentGroup.addSegment(Segment(Point(0, -2), Point(0, 0)))
         with self.assertRaisesRegex(RuntimeError, 'Offset produced fewer than two points'):
-            self.segmentGroup.offset(-0.01)
+            self.segmentGroup.offset(-1)
 
     def test_insertSegment(self):
         self.segmentGroup.addSegment(self.lineSegment1)
