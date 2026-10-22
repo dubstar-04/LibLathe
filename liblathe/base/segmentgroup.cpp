@@ -7,6 +7,72 @@
 #include "segmentgroup.h"
 #include "quadtree.h"
 
+namespace
+{
+BoundBox intersectionBounds(Segment segment)
+{
+    BoundBox bounds = segment.Boundbox();
+    const float scale = std::max({1.0f, std::abs(bounds.XMin), std::abs(bounds.XMax),
+                                 std::abs(bounds.ZMin), std::abs(bounds.ZMax)});
+    // The arc narrow phase rounds radial membership to two decimals.
+    const float padding = 1e-4f + (segment.bulge != 0 ? 0.01f : 0.0f) +
+                          4 * std::numeric_limits<float>::epsilon() * scale;
+    bounds.XMin -= padding;
+    bounds.XMax += padding;
+    bounds.ZMin -= padding;
+    bounds.ZMax += padding;
+    return bounds;
+}
+
+struct IntersectionSegment
+{
+    Segment segment;
+    BoundBox bounds;
+    explicit IntersectionSegment(Segment source)
+        : segment(source), bounds(intersectionBounds(source)) {}
+};
+
+std::vector<IntersectionSegment> prepareIntersections(const std::vector<Segment> &segments)
+{
+    std::vector<IntersectionSegment> prepared;
+    prepared.reserve(segments.size());
+    for (const auto &segment : segments)
+        prepared.emplace_back(segment);
+    return prepared;
+}
+
+bool boundsOverlap(const BoundBox &first, const BoundBox &second)
+{
+    return !(first.XMax < second.XMin || first.XMin > second.XMax ||
+             first.ZMax < second.ZMin || first.ZMin > second.ZMax);
+}
+
+bool intersectsAt(const std::vector<IntersectionSegment> &part,
+                  const std::vector<IntersectionSegment> &tool, const Point &position)
+{
+    for (const auto &edge : tool)
+    {
+        BoundBox bounds = edge.bounds;
+        bounds.XMin += position.X;
+        bounds.XMax += position.X;
+        bounds.ZMin += position.Z;
+        bounds.ZMax += position.Z;
+        for (const auto &target : part)
+        {
+            if (!boundsOverlap(bounds, target.bounds))
+                continue;
+            Segment translated(
+                Point(edge.segment.start.X + position.X, edge.segment.start.Z + position.Z),
+                Point(edge.segment.end.X + position.X, edge.segment.end.Z + position.Z),
+                edge.segment.bulge);
+            if (!translated.intersect(target.segment, false).empty())
+                return true;
+        }
+    }
+    return false;
+}
+}
+
 SegmentGroup::SegmentGroup()
 {
 }
@@ -87,21 +153,8 @@ BoundBox SegmentGroup::boundbox()
 
 bool SegmentGroup::intersectsGroup(SegmentGroup segmentGroup)
 {
-    // check if the segmentGroup intersects self //
-    for (auto &segment : segmentGroup.getSegments())
-    {
-        for (auto &seg : this->segments)
-        {
-            // TODO: remove false from intersect call
-            std::vector<Point> points = segment.intersect(seg, false);
-            if (points.size() > 0)
-            {
-                return true;
-            }
-        }
-    }
-
-    return false;
+    return intersectsAt(prepareIntersections(this->segments),
+                        prepareIntersections(segmentGroup.segments), Point());
 }
 
 SegmentGroup SegmentGroup::offset(float step_over)
@@ -231,21 +284,26 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
     std::vector<Point> points;
 
     // get start position
-    Point start = Point(0, this->boundbox().ZMax); // segments[0].start;
-    SegmentGroup tool_shape = tool.add(start);
+    BoundBox partBounds = this->boundbox();
+    const auto part = prepareIntersections(this->segments);
+    std::vector<IntersectionSegment> toolEdges;
+    toolEdges.reserve(tool.segments.size());
+    // Preserve the chord footprint used by the previous tool translation.
+    for (const auto &segment : tool.segments)
+        toolEdges.emplace_back(Segment(segment.start, segment.end));
+    Point start = Point(0, partBounds.ZMax);
 
     if (start.X > 0)
     {
         throw std::runtime_error("segment groups first segment must be at x = 0");
     }
 
-    if (this->boundbox().ZMax < stock.ZMax)
+    if (partBounds.ZMax < stock.ZMax)
     {
-        while (intersectsGroup(tool_shape))
+        while (intersectsAt(part, toolEdges, start))
         {
             // move the tool along the z axis until it no longer intersects the part.
             start = start.add(Point(0, resolution));
-            tool_shape = tool.add(start);
         }
 
         points.push_back(start);
@@ -256,18 +314,19 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
     {
         // test for intersection at z with a single segment
         Segment test_segment = Segment(Point(XMax, z_pos), Point(XMin, z_pos));
-        for (auto seg : this->segments)
+        const BoundBox testBounds = intersectionBounds(test_segment);
+        for (const auto &edge : part)
         {
-            // TODO: remove the bool false from the segment call
-            std::vector<Point> pts = test_segment.intersect(seg, false);
+            if (!boundsOverlap(testBounds, edge.bounds))
+                continue;
+            std::vector<Point> pts = test_segment.intersect(edge.segment, false);
             if (pts.size() > 0)
             {
                 float x_pos = pts[0].X - resolution;
                 while (x_pos < (pts[0].X + resolution))
                 {
                     Point iteration_position = Point(x_pos, z_pos);
-                    SegmentGroup tool_shape = tool.add(iteration_position);
-                    if (!intersectsGroup(tool_shape))
+                    if (!intersectsAt(part, toolEdges, iteration_position))
                     {
 
                         // if allow_grooving is false
@@ -296,23 +355,6 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
     std::vector<Point> defeatured_points;
     this->rdp(points, resolution, defeatured_points);
     return this->fromPoints(defeatured_points);
-}
-
-SegmentGroup SegmentGroup::add(Point point)
-{
-    // add point to each segment of the segment group //
-    // TODO: this could be done in segment using the add method of the point class
-    SegmentGroup out;
-
-    for (auto seg : this->segments)
-    {
-        Point start = Point(seg.start.X + point.X, seg.start.Z + point.Z);
-        Point end = Point(seg.end.X + point.X, seg.end.Z + point.Z);
-        Segment new_seg = Segment(start, end);
-        out.addSegment(new_seg);
-    }
-
-    return out;
 }
 
 SegmentGroup SegmentGroup::fromPoints(std::vector<Point> points)

@@ -26,7 +26,15 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
 
 1. **Defeature:** step the tool shape along Z in 0.01 increments and, at each
    step, search X for the first position where the tool does not intersect the
-   part.
+   part. Prepare per-segment bounds for the part and tool footprint once per
+   call, including finite-arc extrema and conservative padding for the existing
+   intersection tolerances and float rounding. Reject disjoint bounds before
+   invoking the unchanged narrow-phase intersection routine.
+   Translate cached tool bounds during the search and construct translated
+   edges only for candidate pairs, rather than allocating a whole tool group
+   at every sample. Keep segment traversal order and first-hit behaviour.
+   Standalone group-intersection queries use the same bounds filter with fresh
+   preparation, so edits cannot leave stale intersection data.
 2. **Offset:**
    - Evaluate a signed distance field against that complete boundary: negative
      inside, zero on it, positive outside. Sign uses half-open ray crossings;

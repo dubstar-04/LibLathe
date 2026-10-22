@@ -81,7 +81,6 @@ private:
     std::vector<Segment> segments;
     std::array<Segment, 3> axisClosure();
     void rdp(std::vector<Point> &points, float tolerance, std::vector<Point> &out);
-    SegmentGroup add(Point point);
     SegmentGroup copy();
 };
 
