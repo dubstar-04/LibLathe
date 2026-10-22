@@ -1,9 +1,8 @@
 # Architecture: profile offsetting
 
 This document records how LibLathe offsets profiles today, the alternatives
-considered, and the trade-offs of each. It is a decision aid, not a commitment:
-the pros and cons are reasoned from the code and a small number of measurements,
-and should be validated with benchmarks before any change.
+considered, and the trade-offs of each. It is a high-level decision aid, not a
+commitment to a particular alternative or a record of benchmark results.
 See [PLAN.md](PLAN.md) for the correctness and performance work in progress.
 
 ## Problem
@@ -76,20 +75,7 @@ extraction, including after reinitialisation, it returns just the root. This
 avoids recursively copying descendants and the growing output vector merely
 to draw the tree; offset accuracy and sampling are unchanged.
 
-On the quadtree example with 27,197 nodes and 11,167 offset points, a diagnostic
-run measured `getNodes()` at 258.938 seconds before flat storage and 0.005 seconds
-afterward. The complete headless example fell from 259.498 to 0.610 seconds.
-Rendering both debug images, with only external viewer launch disabled, completed
-in 0.690 seconds after the change. These are machine-specific single-run
-observations, not the repeatable performance baseline. The 0.05 accuracy budget
-and leaf width were unchanged.
-
-### Extraction regression budgets
-
-The raw-candidate tests cover zero, inward and outward levels on lines, a
-concave groove and an arc. Their coordinate range keeps the scale-aware
-projection tolerance below `1e-4`, which the tests enforce. Corrected inward
-rectangle corners also keep their connecting segments within `1e-4`.
+### Accuracy and topology
 
 The agreed complete-contour target is **0.05 model units**, not 0.05 diameter
 units or an additional machining clearance. The production guard uses the
@@ -106,53 +92,13 @@ rectangular groove offset by half its width. Such contours raise an explicit
 error; no topology-repair fallback is attempted. This is a degeneracy check,
 not a general topology validator.
 
-The regression suite samples chords at spacing no greater than 0.01, adding
-half the actual spacing to the measured maximum as a Lipschitz bound. It covers
-convex/concave corners, 0.3- and 2-unit grooves, feature switches, small circular
-loops of radii 0.08 and 0.35, and an analytic rectangle, circle and quarter disk.
-Coverage checks additionally sample expected contours, so a missing groove or
-loop cannot pass solely because the remaining points are accurate. The exact
-inward rectangle intersections and their tighter `1e-4` chord regression remain
-enforced. Arbitrarily small features and global contour completeness are not
-guaranteed; supported profiles must still form a simple region with their closure.
-
-Machining regressions use the actual supported `DCMT070204R` insert at 0, 22.5
-and 45 degrees and `TCMT160404N` at 0 degrees. Defeaturing removes the illustrated
-width-2/depth-4 groove with either grooving setting. Width-6 and width-10 grooves
-remain accessible to the diamond insert at 0 and 22.5 degrees when grooving is
-enabled; their raw and simplified offsets are checked against the same 0.05
-budget. The synthetic collapsed-groove example alone is therefore not evidence
-that those machining workflows require topology-aware extraction.
-
-Measured regression bounds after the Step 10 changes (model units; each includes
-half the sampling spacing, rather than reporting only the sampled residual):
-
-| Fixtures | Raw chord bound | Simplified chord bound |
-| --- | ---: | ---: |
-| Rectangle, analytic field | 0.005113 | 0.014150 |
-| Grooves, corners and feature switches | 0.005463 | 0.013958 |
-| Quarter disk, analytic field | 0.005026 | 0.014750 |
-| Small circles, analytic field | 0.005836 | 0.011914 |
-| Supported inserts, narrow groove removed | 0.005134 | 0.014629 |
-| Supported diamond insert, accessible grooves | 0.011355 | 0.014946 |
-
-Before these changes, the added regressions found a groove raw-chord bound of
-about 0.0683 at zero offset, multi-unit connecting errors at nonzero offsets,
-and no points for the radius-0.08 circle eroded by 0.02. These observations are
-not a benchmark baseline. The finer grid, extra seeds and validation add work;
-the next performance baseline must measure this corrected implementation.
-
-For the rectangular and curved end-face bounds fixtures at offsets 1 and 5,
-samples at endpoints and eighths of each padded-tree raw connecting chord have
-residual at most 0.01. Public simplified chords must stay within 0.02 and within
-the measured reference raw error plus the existing 0.01 RDP tolerance (with
-`1e-4` numerical slack). Raw curved extrema are checked against analytic values;
-simplified extrema may differ by the existing RDP tolerance, rather than being
-required to match a different sampled grid to four decimal places.
-
-Earlier example measurements reported about 550 points and consecutive spacing
-of about 0.15. Those observations did not establish a global error bound or
-prove that contour branches were complete.
+Accuracy and coverage are separate concerns: a contour can contain accurate
+points while missing a groove, loop or entire component. Validation therefore
+needs to consider both connecting segments and expected contour coverage.
+Arbitrarily small features and global contour completeness are not guaranteed;
+supported profiles must still form a simple region with their closure.
+Defeaturing can remove inaccessible grooves before offsetting, so machining
+workflows and direct offset queries have different feature requirements.
 
 **Pros**
 - The field represents corners, concave regions and negative levels without
@@ -170,74 +116,6 @@ prove that contour branches were complete.
 - A point is dropped silently if its projection lands outside its own cell.
 - Accuracy depends on the distance field being exact. The review found sign and
   arc-distance bugs (see PLAN.md).
-
-## Corrected performance baseline
-
-Measured on 2026-10-22 after the accuracy and flat-node fixes (core revision
-`ca9ce25`), using CPython 3.13.15, Linux x86_64 and a `RelWithDebInfo` build.
-These machine-specific timings are not portable guarantees.
-
-```sh
-python3 examples/benchmark.py --build-type RelWithDebInfo > run1.json
-python3 examples/benchmark.py --build-type RelWithDebInfo > run2.json
-python3 examples/benchmark.py --build-type RelWithDebInfo --cases example --render
-```
-
-Each stage has one untimed warm-up followed by five `perf_counter()` samples.
-The JSON contains all samples, medians, nearest-rank p95s, input/output segment
-counts and Python/platform/build metadata. With five samples the nearest-rank
-p95 is the maximum sample. Build type is explicitly supplied by the caller and
-must describe the compiled extensions actually loaded; it is not auto-detected.
-Rendering and viewer launch are excluded from geometry timings. `--render`
-times image creation and disposal separately, without launching a viewer.
-
-Workloads:
-- **Example:** the existing 24-line profile and rectangular 5-by-5 tool fixture;
-  offsets use the 15-line defeatured profile.
-- **16x segments:** split each original line into 16 pieces for defeaturing
-  (384 inputs). Split the resulting 15 lines into 240 for the offset workload,
-  rather than letting defeaturing erase the intended SDF segment-count stress.
-- **8x dimensions:** multiply profile, stock margins and tool dimensions by
-  eight. Offset distances remain 1, 2, 3 and 4 model units; leaf width and
-  simplification tolerance are unchanged.
-- **Arc-heavy:** five quarter arcs and two lines. Defeaturing is timed normally,
-  but offsets use the original seven-segment profile so the distance-field
-  workload retains arcs instead of measuring only defeatured lines.
-
-Output counts were identical across warm-ups, all repetitions and both full
-runs. Stage medians differed by at most 7.2%; all but one differed by less than
-2%. The table retains the slower p95 from either run, including the example
-offset-2 outlier, rather than hiding the observed timing noise.
-
-| Case | Stage | Input/output segments | Run 1 median (ms) | Run 2 median (ms) | Max run p95 (ms) |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Example | Defeature | 24 / 15 | 13.98 | 13.90 | 14.01 |
-| Example | Offset 1 | 15 / 45 | 106.25 | 104.57 | 109.36 |
-| Example | Offset 2 | 15 / 49 | 100.22 | 107.38 | 136.31 |
-| Example | Offset 3 | 15 / 61 | 96.30 | 95.83 | 96.35 |
-| Example | Offset 4 | 15 / 62 | 93.02 | 92.51 | 93.10 |
-| 16x segments | Defeature | 384 / 15 | 170.03 | 169.93 | 171.83 |
-| 16x segments | Offset 1 | 240 / 45 | 329.86 | 329.72 | 335.23 |
-| 16x segments | Offset 2 | 240 / 49 | 320.79 | 320.38 | 327.98 |
-| 16x segments | Offset 3 | 240 / 61 | 303.93 | 304.05 | 304.80 |
-| 16x segments | Offset 4 | 240 / 62 | 299.76 | 299.35 | 299.80 |
-| 8x dimensions | Defeature | 24 / 15 | 113.90 | 113.92 | 114.12 |
-| 8x dimensions | Offset 1 | 15 / 44 | 5691.68 | 5684.96 | 5741.90 |
-| 8x dimensions | Offset 2 | 15 / 55 | 5545.83 | 5576.22 | 5596.59 |
-| 8x dimensions | Offset 3 | 15 / 72 | 5486.54 | 5474.24 | 5518.03 |
-| 8x dimensions | Offset 4 | 15 / 78 | 5413.31 | 5416.31 | 5452.46 |
-| Arc-heavy | Defeature | 7 / 51 | 44.98 | 44.99 | 45.03 |
-| Arc-heavy | Offset 1 | 7 / 82 | 122.29 | 121.71 | 122.48 |
-| Arc-heavy | Offset 2 | 7 / 74 | 118.99 | 118.55 | 121.04 |
-| Arc-heavy | Offset 3 | 7 / 76 | 116.74 | 116.35 | 117.96 |
-| Arc-heavy | Offset 4 | 7 / 81 | 112.97 | 112.75 | 113.35 |
-
-Two separate example preview runs produced 1440-by-460 images. Render medians
-were 1.045 and 1.031 ms; p95s were 1.710 and 1.691 ms. The interactive example
-still opens its viewer by default; its `--headless` flag skips that step.
-Imports are side-effect-free so the benchmark can reuse the same geometry.
-These corrected timings supersede the historical pre-correction figures in
-the local plan.
 
 ## Alternatives
 
