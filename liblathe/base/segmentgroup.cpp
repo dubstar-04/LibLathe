@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cmath>
+#include <stdexcept>
 
 #include "segmentgroup.h"
 
@@ -95,6 +97,14 @@ bool SegmentGroup::intersectsGroup(SegmentGroup segmentGroup)
 SegmentGroup SegmentGroup::offset(float step_over)
 {
     // Create an offset segmentgroup by the distance of step_over //
+    if (this->count() == 0)
+    {
+        throw std::invalid_argument("Cannot offset empty geometry");
+    }
+    if (!std::isfinite(step_over))
+    {
+        throw std::invalid_argument("Offset must be finite");
+    }
 
     // TODO: investigate:
     // 1. using a square node - will this affect precision / performance
@@ -113,6 +123,14 @@ SegmentGroup SegmentGroup::offset(float step_over)
     Quadtree qt = Quadtree();
     qt.initialise(this, center, size, size);
     std::vector<Point> offset = qt.getOffset(step_over);
+    if (offset.empty())
+    {
+        throw std::runtime_error("Offset produced no points");
+    }
+    if (offset.size() < 2)
+    {
+        throw std::runtime_error("Offset produced fewer than two points");
+    }
 
     // attempt simplification
     float resolution = 0.01;

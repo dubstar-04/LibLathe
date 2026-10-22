@@ -1,5 +1,7 @@
 #include <iostream>
 #include <limits>
+#include <cmath>
+#include <stdexcept>
 
 #include "quadtree.h"
 
@@ -15,18 +17,31 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     // depth is the current node depth
     // basenode the the primary tree node
 
-    this->segmentGroup = segmentgroup;
+    if (segmentgroup == nullptr)
+    {
+        throw std::invalid_argument("Quadtree source geometry must not be null");
+    }
+    if (!std::isfinite(center.X) || !std::isfinite(center.Z))
+    {
+        throw std::invalid_argument("Quadtree centre must be finite");
+    }
+    if (!std::isfinite(width) || !std::isfinite(height) || width <= 0 || height <= 0)
+    {
+        throw std::invalid_argument("Quadtree dimensions must be finite and positive");
+    }
 
     // check width and height are the same
     // TODO: remove the width and height if they need to match
     if (width != height)
     {
-        throw std::runtime_error("quadtree width and height must match");
+        throw std::invalid_argument("quadtree width and height must match");
     }
     // create the base node
     int depth = 0;
     Node bn = {center, width, height, depth};
     this->basenode = bn;
+    this->segmentGroup = segmentgroup;
+    this->initialised = true;
 
     // set the precision
     this->precision = 0.2;
@@ -35,6 +50,18 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
 std::vector<Point> Quadtree::getOffset(float offsetValue)
 {
     // return the points that represent the calculated offset //
+    if (!this->initialised)
+    {
+        throw std::runtime_error("Quadtree must be initialised before generating an offset");
+    }
+    if (this->segmentGroup->count() == 0)
+    {
+        throw std::invalid_argument("Cannot offset empty geometry");
+    }
+    if (!std::isfinite(offsetValue))
+    {
+        throw std::invalid_argument("Offset must be finite");
+    }
     this->offsetBoundaryPoints.clear();
     this->basenode.child_nodes.clear();
     this->basenode.divided = false;

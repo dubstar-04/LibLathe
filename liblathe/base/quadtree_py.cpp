@@ -18,8 +18,12 @@ PYBIND11_MODULE(quadtree, m)
         .def(py::init<>())
         .def("initialise", &Quadtree::initialise, py::keep_alive<1, 2>(),
              "Retain source geometry until this tree is destroyed, including "
-             "geometry supplied by earlier initialise calls.")
-        .def("getOffset", &Quadtree::getOffset)
+             "geometry supplied by earlier initialise calls. Invalid geometry "
+             "pointers or root bounds raise ValueError without changing configuration.")
+        .def("getOffset", &Quadtree::getOffset,
+             "Return offset points, or an empty list when no contour is found. "
+             "Raise RuntimeError before initialisation, or ValueError for empty "
+             "geometry or nonfinite offsets.")
         .def("getNodes", &Quadtree::getNodes);
 
     py::class_<Node>(m, "Node")

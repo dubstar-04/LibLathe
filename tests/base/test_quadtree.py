@@ -138,6 +138,85 @@ class test_quadtree(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_invalid_inputs_in_subprocess(self):
+        script = textwrap.dedent("""
+            import resource
+            import unittest
+
+            from liblathe.base.point import Point
+            from liblathe.base.quadtree import Quadtree
+            from liblathe.base.segment import Segment
+            from liblathe.base.segmentgroup import SegmentGroup
+
+            resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+            check = unittest.TestCase()
+            tree = Quadtree()
+            with check.assertRaisesRegex(RuntimeError, 'initialised'):
+                tree.getOffset(1)
+
+            group = SegmentGroup()
+            group.addSegment(Segment(Point(0, 0), Point(2, 0)))
+            group.addSegment(Segment(Point(2, 0), Point(2, -4)))
+            group.addSegment(Segment(Point(2, -4), Point(0, -4)))
+            empty = SegmentGroup()
+            tree.initialise(empty, Point(4, 0), 8, 8)
+            with check.assertRaisesRegex(ValueError, 'empty'):
+                tree.getOffset(1)
+
+            for value in (float('inf'), -float('inf'), float('nan'), 0, -1):
+                for width, height in ((value, 8), (8, value), (value, value)):
+                    with check.assertRaises(ValueError):
+                        tree.initialise(group, Point(4, 0), width, height)
+            for value in (float('inf'), -float('inf'), float('nan')):
+                for centre in (Point(value, 0), Point(4, value)):
+                    with check.assertRaises(ValueError):
+                        tree.initialise(group, centre, 8, 8)
+            with check.assertRaises(ValueError):
+                tree.initialise(None, Point(4, 0), 8, 8)
+            with check.assertRaises(ValueError):
+                tree.initialise(group, Point(4, 0), 8, 4)
+
+            tree.initialise(group, Point(4, 0), 8, 8)
+            expected = [(p.X, p.Z) for p in tree.getOffset(1)]
+            for value in (float('inf'), -float('inf'), float('nan')):
+                with check.assertRaises(ValueError):
+                    tree.getOffset(value)
+                check.assertEqual([(p.X, p.Z) for p in tree.getOffset(1)], expected)
+            check.assertEqual(tree.getOffset(100), [])
+            check.assertEqual([(p.X, p.Z) for p in tree.getOffset(1)], expected)
+        """)
+        result = subprocess.run(
+            [sys.executable, '-c', script],
+            cwd=parentFolder,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_rejected_initialisation_preserves_valid_tree(self):
+        expected = self.coordinates(self.qt.getOffset(1))
+        replacement = SegmentGroup()
+        replacement.addSegment(Segment(Point(0, 0), Point(1, -1)))
+        for centre, width, height in (
+            (Point(4, 0), 8, 4),
+            (Point(float('nan'), 0), 8, 8),
+            (Point(4, 0), 0, 0),
+        ):
+            with self.subTest(width=width, height=height):
+                with self.assertRaises(ValueError):
+                    self.qt.initialise(replacement, centre, width, height)
+                self.assertEqual(self.coordinates(self.qt.getOffset(1)), expected)
+
+    def test_zero_and_negative_offsets_remain_supported(self):
+        for offset in (0, -0.1):
+            with self.subTest(offset=offset):
+                fresh = Quadtree()
+                fresh.initialise(self.sg, Point(15, -5), 30, 30)
+                expected = self.coordinates(fresh.getOffset(offset))
+                self.assertTrue(expected)
+                self.assertEqual(self.coordinates(self.qt.getOffset(offset)), expected)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -32,7 +32,10 @@ public:
 
     // C++ callers own the geometry; it must outlive its use by this tree.
     // Python retains all groups supplied to initialise until the tree is destroyed.
+    // Invalid geometry pointers or root bounds throw invalid_argument without changing state.
     void initialise(SegmentGroup *segmentgroup, Point center, float width, float height);
+    // Throws runtime_error before initialisation, invalid_argument for empty geometry
+    // or nonfinite offsets. A valid request with no contour returns an empty vector.
     std::vector<Point> getOffset(float offsetValue);
     std::vector<Node> getNodes();
 
@@ -43,6 +46,7 @@ private:
     float precision = 0.2;
 
     SegmentGroup *segmentGroup = nullptr;
+    bool initialised = false;
     Node basenode;
 
     std::vector<Point> offsetBoundaryPoints;

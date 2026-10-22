@@ -52,6 +52,39 @@ class test_segmentGroup(unittest.TestCase):
         self.assertEqual(segmentEnd.X, self.pt2.X)
         self.assertEqual(segmentEnd.Z, self.pt2.Z)
 
+    def test_offset_rejects_empty_and_nonfinite_inputs(self):
+        with self.assertRaisesRegex(ValueError, 'empty'):
+            self.segmentGroup.offset(1)
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(2, 0)))
+        self.segmentGroup.addSegment(Segment(Point(2, 0), Point(2, -4)))
+        self.segmentGroup.addSegment(Segment(Point(2, -4), Point(0, -4)))
+        for offset in (float('inf'), -float('inf'), float('nan')):
+            with self.subTest(offset=offset):
+                with self.assertRaisesRegex(ValueError, 'finite'):
+                    self.segmentGroup.offset(offset)
+
+    def test_offset_reports_no_contour_and_recovers(self):
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(2, 0)))
+        self.segmentGroup.addSegment(Segment(Point(2, 0), Point(2, -4)))
+        self.segmentGroup.addSegment(Segment(Point(2, -4), Point(0, -4)))
+        expected = self.segmentGroup.offset(-0.1)
+        with self.assertRaisesRegex(RuntimeError, 'Offset produced no points'):
+            self.segmentGroup.offset(-100)
+        actual = self.segmentGroup.offset(-0.1)
+        self.assertEqual(actual.count(), expected.count())
+        for segment, reference in zip(actual.getSegments(), expected.getSegments()):
+            self.assertEqual(
+                (segment.start.X, segment.start.Z, segment.end.X, segment.end.Z),
+                (reference.start.X, reference.start.Z, reference.end.X, reference.end.Z),
+            )
+
+    def test_offset_reports_single_point_contour(self):
+        self.segmentGroup.addSegment(Segment(Point(0, 0), Point(0.1, 0)))
+        self.segmentGroup.addSegment(Segment(Point(0.1, 0), Point(0.1, -0.1)))
+        self.segmentGroup.addSegment(Segment(Point(0.1, -0.1), Point(0, -0.1)))
+        with self.assertRaisesRegex(RuntimeError, 'Offset produced fewer than two points'):
+            self.segmentGroup.offset(-0.01)
+
     def test_insertSegment(self):
         self.segmentGroup.addSegment(self.lineSegment1)
         segmentStart = self.segmentGroup.getSegments()[0].start
