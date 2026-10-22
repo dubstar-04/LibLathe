@@ -27,7 +27,7 @@ class SegmentGroup;
 class Quadtree
 {
 public:
-    static constexpr float defaultPrecision = 0.2f;
+    static constexpr float defaultPrecision = 0.05f;
 
     Quadtree();
     ~Quadtree();
@@ -40,8 +40,10 @@ public:
     // or nonfinite offsets. A valid request with no contour returns an empty vector.
     // Uses the axis-closed field, but excludes artificial-closure candidates.
     // Original faces remain eligible; the first segment's start-Z clip is retained.
-    // Zero levels sample both sides. Candidates must converge to the requested
-    // level within float/arc-rounding precision; this does not bound connecting chords.
+    // Zero levels sample both sides; centre/corner seeds preserve feature joins.
+    // Candidates converge within float/arc-rounding precision. Connecting chords
+    // must satisfy SegmentGroup::offsetTolerance; detected collapsed branches
+    // and uncertifiable chords throw runtime_error. Completeness is not guaranteed.
     std::vector<Point> getOffset(float offsetValue);
     std::vector<Node> getNodes();
 
@@ -59,7 +61,7 @@ private:
 
     void divide(Node &);
     void conquer(Node &);
-    bool projectToOffset(const Node &node, Point &point);
+    bool projectToOffset(Point query, float value, Point &point);
     std::vector<Point> query(Node &node, std::vector<Point> &offsetBoundaryPoints);
     std::vector<Node> queryNodes(Node &node, std::vector<Node> &nodes);
     bool nodeCouldContain(float offset, Node &node);

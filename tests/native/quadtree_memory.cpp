@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     Quadtree tree;
     tree.initialise(&group, Point(4, 0), 8, 8);
     const auto expected = tree.getOffset(1);
-    require(expected.size() == 32, "Unexpected reference point count");
+    require(expected.size() > 1, "Reference contour has fewer than two points");
     const auto expectedNodes = tree.getNodes().size();
     size_t heapBaseline = 0;
     for (int i = 0; i < 100; ++i)
@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < 100; ++i)
     {
         tree.initialise(&group, Point(4, 0), 8, 8);
-        require(tree.getOffset(1).size() == 32, "Reinitialisation changes point count");
+        require(tree.getOffset(1).size() == expected.size(), "Reinitialisation changes point count");
     }
     std::cout << "Repeated offsets and reinitialisation passed";
     if (heapCheck)

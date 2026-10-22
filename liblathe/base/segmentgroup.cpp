@@ -2,6 +2,7 @@
 #include <cmath>
 #include <stdexcept>
 #include <array>
+#include <limits>
 
 #include "segmentgroup.h"
 
@@ -134,7 +135,76 @@ SegmentGroup SegmentGroup::offset(float step_over)
     float resolution = 0.01;
     std::vector<Point> defeatured_points;
     this->rdp(offset, resolution, defeatured_points);
+    this->validateOffsetContour(defeatured_points, step_over);
     return this->fromPoints(defeatured_points);
+}
+
+void SegmentGroup::validateOffsetContour(const std::vector<Point> &points, float offset)
+{
+    if (points.size() < 2)
+        return;
+    if (offset != 0)
+    {
+        std::vector<Segment> boundary = this->segments;
+        const auto closure = this->axisClosure();
+        boundary.insert(boundary.end(), closure.begin(), closure.end());
+        for (const Point &point : points)
+        {
+            const double magnitude = std::max({1.0, std::abs(double(point.X)),
+                                              std::abs(double(point.Z)), std::abs(double(offset))});
+            const double numerical = 1e-5 + 4 * std::numeric_limits<float>::epsilon() * magnitude;
+            if (std::abs(offset) <= numerical)
+                continue;
+            std::vector<Point> nearest;
+            for (auto &segment : boundary)
+            {
+                Point closest = segment.closestPoint(point);
+                const double distance = std::hypot(double(closest.X) - point.X,
+                                                   double(closest.Z) - point.Z);
+                if (std::abs(distance - std::abs(offset)) > numerical)
+                    continue;
+                // Opposite nearest normals identify a zero-width level-set branch.
+                for (const Point &other : nearest)
+                {
+                    if (std::hypot(double(closest.X) + other.X - 2 * double(point.X),
+                                   double(closest.Z) + other.Z - 2 * double(point.Z)) <=
+                        2 * numerical)
+                        throw std::runtime_error(
+                            "Offset contour contains a collapsed branch; "
+                            "zero-width contours are not supported");
+                }
+                nearest.push_back(closest);
+            }
+        }
+    }
+    for (size_t i = 1; i < points.size(); ++i)
+        this->validateOffsetChord(points[i - 1], points[i], offset);
+}
+
+void SegmentGroup::validateOffsetChord(Point start, Point end, float offset)
+{
+    Point midpoint = start.mid(end);
+    const double residual = std::abs(double(this->sdv(midpoint)) - offset);
+    const double magnitude = std::max({1.0, std::abs(double(midpoint.X)),
+                                      std::abs(double(midpoint.Z)), std::abs(double(offset))});
+    const double numerical = 1e-5 + 4 * std::numeric_limits<float>::epsilon() * magnitude;
+    if (residual > offsetTolerance)
+        throw std::runtime_error(
+            "Offset contour exceeds 0.05 model-unit accuracy; "
+            "collapsed or disconnected contours are not supported");
+
+    // The signed distance is 1-Lipschitz: bound the entire chord from its midpoint.
+    const double radius = std::max(
+        std::hypot(double(start.X) - midpoint.X, double(start.Z) - midpoint.Z),
+        std::hypot(double(end.X) - midpoint.X, double(end.Z) - midpoint.Z));
+    if (residual + numerical + radius <= offsetTolerance)
+        return;
+    if ((midpoint.X == start.X && midpoint.Z == start.Z) ||
+        (midpoint.X == end.X && midpoint.Z == end.Z))
+        throw std::runtime_error(
+            "Cannot certify offset contour within 0.05 model units at coordinate precision");
+    this->validateOffsetChord(start, midpoint, offset);
+    this->validateOffsetChord(midpoint, end, offset);
 }
 
 SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving = false)

@@ -21,7 +21,11 @@ PYBIND11_MODULE(segmentgroup, m)
         .def("count", &SegmentGroup::count)
         .def("boundbox", &SegmentGroup::boundbox)
         .def("intersectsGroup", &SegmentGroup::intersectsGroup)
-        .def("offset", &SegmentGroup::offset)
+        .def("offset", &SegmentGroup::offset,
+             "Extract an offset polyline with raw and simplified chord errors "
+             "bounded by 0.05 model units in the closed signed-distance field. "
+             "Raises RuntimeError for detected zero-width branches, uncertifiable "
+             "chords or fewer than two contour points. Does not guarantee completeness.")
         .def("defeature", &SegmentGroup::defeature)
         .def("validate", &SegmentGroup::validate)
         .def("fromPoints", &SegmentGroup::fromPoints)

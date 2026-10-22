@@ -38,8 +38,8 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
      bound at the axis (or the profile's X minimum if negative); the start-Z
      output clip is independent of the root.
    - Subdivide a quadtree where `|distance - offset|` is within the cell's
-     half-diagonal, down to 0.2 cell width.
-   - Project each leaf centre onto its nearest boundary point and move it
+     half-diagonal, down to 0.05 cell width.
+   - Project each leaf centre and corner onto its nearest boundary point and move it
      towards the centre by the offset's magnitude. Exclude candidates owned by
      artificial closing edges, including when closure becomes nearer after
      projection. Original geometry wins exact ties, so explicitly supplied
@@ -48,16 +48,25 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
      projection repeats for at most eight iterations when the nearest feature
      changes; candidates are retained only if their SDF residual is within
      `1e-5 + 4 * float_epsilon * max(1, |X|, |Z|, |offset|)`.
+   - Allow float-rounding slack at shared leaf edges so adjacent rounded cell
+     centres cannot leave an unsampled crack. Remove coincident samples before
+     ordering. Start on the retained contour's highest Z, breaking ties by
+     distance to the original start; starting at the nearest point to that
+     original start can incorrectly begin inside a groove.
    - Order the points by greedy nearest neighbour, then simplify with
      Ramer-Douglas-Peucker (tolerance 0.01). The public offset operation removes
      adjacent coincident samples using the existing five-decimal point
      comparison before checking that at least two distinct points remain.
+   - Validate both raw and simplified connecting chords against the requested
+     signed-distance level with a total error budget of **0.05 model units**.
+     Reject detected zero-width branches instead of connecting them into the path.
 
 The distance-field domain and the extracted machining profile are deliberately
 different: the field includes the complete closed boundary, but output omits
 artificial-closure candidates. Closure can therefore change where inward
-offsets terminate. This does not yet validate all connecting segments or
-guarantee contour accuracy after ordering and simplification.
+offsets terminate. Chord validation bounds signed-distance error, but does not
+prove that every contour component is present or that ordering is topologically
+correct for every input.
 
 ### Extraction regression budgets
 
@@ -66,9 +75,56 @@ concave groove and an arc. Their coordinate range keeps the scale-aware
 projection tolerance below `1e-4`, which the tests enforce. Corrected inward
 rectangle corners also keep their connecting segments within `1e-4`.
 
-These are fixture-specific regression budgets, not a global accuracy guarantee.
-Zero-offset corners can still have larger chord errors at the current cell
-size; broader connectivity and accuracy work remains necessary.
+The agreed complete-contour target is **0.05 model units**, not 0.05 diameter
+units or an additional machining clearance. The production guard uses the
+closed field's 1-Lipschitz property: midpoint residual plus the distance to the
+farther endpoint bounds the entire chord. It bisects until that bound, including
+float/arc-rounding allowance, fits the budget. It raises `RuntimeError` if a
+sample exceeds the budget or coordinate precision prevents certification.
+This guard runs before and after RDP; RDP's tolerance remains 0.01 and does not
+add another 0.01 to the final allowed error.
+
+Nonzero-level vertices are also checked for equidistant, opposing nearest
+boundary normals. These identify collapsed, zero-width branches such as a
+rectangular groove offset by half its width. Such contours raise an explicit
+error; no topology-repair fallback is attempted. This is a degeneracy check,
+not a general topology validator.
+
+The regression suite samples chords at spacing no greater than 0.01, adding
+half the actual spacing to the measured maximum as a Lipschitz bound. It covers
+convex/concave corners, 0.3- and 2-unit grooves, feature switches, small circular
+loops of radii 0.08 and 0.35, and an analytic rectangle, circle and quarter disk.
+Coverage checks additionally sample expected contours, so a missing groove or
+loop cannot pass solely because the remaining points are accurate. The exact
+inward rectangle intersections and their tighter `1e-4` chord regression remain
+enforced. Arbitrarily small features and global contour completeness are not
+guaranteed; supported profiles must still form a simple region with their closure.
+
+Machining regressions use the actual supported `DCMT070204R` insert at 0, 22.5
+and 45 degrees and `TCMT160404N` at 0 degrees. Defeaturing removes the illustrated
+width-2/depth-4 groove with either grooving setting. Width-6 and width-10 grooves
+remain accessible to the diamond insert at 0 and 22.5 degrees when grooving is
+enabled; their raw and simplified offsets are checked against the same 0.05
+budget. The synthetic collapsed-groove example alone is therefore not evidence
+that those machining workflows require topology-aware extraction.
+
+Measured regression bounds after the Step 10 changes (model units; each includes
+half the sampling spacing, rather than reporting only the sampled residual):
+
+| Fixtures | Raw chord bound | Simplified chord bound |
+| --- | ---: | ---: |
+| Rectangle, analytic field | 0.005113 | 0.014150 |
+| Grooves, corners and feature switches | 0.005463 | 0.013958 |
+| Quarter disk, analytic field | 0.005026 | 0.014750 |
+| Small circles, analytic field | 0.005836 | 0.011914 |
+| Supported inserts, narrow groove removed | 0.005134 | 0.014629 |
+| Supported diamond insert, accessible grooves | 0.011355 | 0.014946 |
+
+Before these changes, the added regressions found a groove raw-chord bound of
+about 0.0683 at zero offset, multi-unit connecting errors at nonzero offsets,
+and no points for the radius-0.08 circle eroded by 0.02. These observations are
+not a benchmark baseline. The finer grid, extra seeds and validation add work;
+the next performance baseline must measure this corrected implementation.
 
 For the rectangular and curved end-face bounds fixtures at offsets 1 and 5,
 samples at endpoints and eighths of each padded-tree raw connecting chord have

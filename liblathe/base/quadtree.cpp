@@ -69,7 +69,10 @@ std::vector<Point> Quadtree::getOffset(float offsetValue)
     // start to process the quadtree, populating the offsetBoundaryPoints
     this->conquer(this->basenode);
     // sort the points so they can be used to build a tool path
-    return this->sortPoints(segmentGroup->getSegments()[0].start, this->offsetBoundaryPoints);
+    std::vector<Point> points =
+        this->sortPoints(segmentGroup->getSegments()[0].start, this->offsetBoundaryPoints);
+    this->segmentGroup->validateOffsetContour(points, offsetValue);
+    return points;
 }
 
 void Quadtree::conquer(Node &node)
@@ -88,11 +91,22 @@ void Quadtree::conquer(Node &node)
         // check if we have reached the desired precision
         if ((node.width <= this->precision))
         {
-            // A zero level can be approached from either side of the boundary.
-            if (this->offset == 0 || std::signbit(node.sdv) == std::signbit(this->offset))
+            // Corner seeds preserve intersections when offset features meet inside a leaf.
+            const float half = node.width / 2;
+            const std::array<Point, 5> seeds = {
+                node.center,
+                Point(node.center.X - half, node.center.Z - half),
+                Point(node.center.X - half, node.center.Z + half),
+                Point(node.center.X + half, node.center.Z - half),
+                Point(node.center.X + half, node.center.Z + half)};
+            for (size_t i = 0; i < seeds.size(); ++i)
             {
+                float value = i == 0 ? node.sdv : this->segmentGroup->sdv(seeds[i]);
+                // A zero level can be approached from either side of the boundary.
+                if (this->offset != 0 && std::signbit(value) != std::signbit(this->offset))
+                    continue;
                 Point projectedPoint;
-                if (this->projectToOffset(node, projectedPoint) &&
+                if (this->projectToOffset(seeds[i], value, projectedPoint) &&
                     this->insideNode(projectedPoint, node))
                 {
                     Point segmentStart = segmentGroup->getSegments()[0].start;
@@ -110,10 +124,8 @@ void Quadtree::conquer(Node &node)
     }
 }
 
-bool Quadtree::projectToOffset(const Node &node, Point &point)
+bool Quadtree::projectToOffset(Point query, float value, Point &point)
 {
-    Point query = node.center;
-    float value = node.sdv;
     // Re-evaluate the nearest feature after each signed-distance projection.
     for (int iteration = 0; iteration < 8; ++iteration)
     {
@@ -215,25 +227,41 @@ bool Quadtree::insideNode(Point &point, Node &node)
     float nodeZMin = node.center.Z - node.width * 0.5;
     float nodeZMax = node.center.Z + node.width * 0.5;
 
-    // point is inside if it lies on the min boundary of node
-    if (point.X >= nodeXMin && point.X < nodeXMax)
-    {
-        if (point.Z >= nodeZMin && point.Z < nodeZMax)
-            return true;
-    }
-
-    return false;
+    // Rounded child centres can leave gaps between nominally shared edges.
+    const float magnitude = std::max({1.0f, std::abs(node.center.X),
+                                     std::abs(node.center.Z), node.width});
+    const float tolerance = 4 * std::numeric_limits<float>::epsilon() * magnitude;
+    return point.X >= nodeXMin - tolerance && point.X < nodeXMax + tolerance &&
+           point.Z >= nodeZMin - tolerance && point.Z < nodeZMax + tolerance;
 }
 
 std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
 {
     // sort the point set into a ordered set of points starting from datum //
+    std::sort(points.begin(), points.end(), [](const Point &first, const Point &second) {
+        return first.X < second.X || (first.X == second.X && first.Z < second.Z);
+    });
+    points.erase(std::unique(points.begin(), points.end(),
+                            [](Point first, Point second) { return first.isSame(second); }),
+                 points.end());
     std::vector<Point> sorted_points;
     int point_count = points.size();
     Point target = datum;
     int closest_index;
 
     int input_point_count = points.size();
+
+    if (!points.empty())
+    {
+        // Start at the retained front plane, not at a closer interior groove.
+        auto start = std::max_element(points.begin(), points.end(),
+            [&datum](const Point &first, const Point &second) {
+                if (first.Z != second.Z)
+                    return first.Z < second.Z;
+                return datum.distanceTo(first) > datum.distanceTo(second);
+            });
+        target = *start;
+    }
 
     while (points.size() != 0)
     {

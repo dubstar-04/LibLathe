@@ -13,6 +13,8 @@
 class SegmentGroup
 {
 public:
+    static constexpr float offsetTolerance = 0.05f;
+
     SegmentGroup();
     ~SegmentGroup() {};
 
@@ -24,8 +26,12 @@ public:
     BoundBox boundbox();
     bool intersectsGroup(SegmentGroup segmentGroup);
     // Throws invalid_argument for empty geometry or nonfinite offsets,
-    // runtime_error if fewer than two distinct contour points are produced.
+    // runtime_error if fewer than two distinct contour points are produced or
+    // connecting chords cannot be certified within offsetTolerance.
     SegmentGroup offset(float step_over);
+    // C++ extraction/simplification guard; empty and single-point contours are
+    // handled separately by offset(). Does not certify contour completeness.
+    void validateOffsetContour(const std::vector<Point> &points, float offset);
     SegmentGroup defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving);
     void validate();
     SegmentGroup fromPoints(std::vector<Point> points);
@@ -45,6 +51,7 @@ public:
 private:
     std::vector<Segment> segments;
     std::array<Segment, 3> axisClosure();
+    void validateOffsetChord(Point start, Point end, float offset);
     void rdp(std::vector<Point> &points, float tolerance, std::vector<Point> &out);
     SegmentGroup add(Point point);
     SegmentGroup copy();

@@ -16,7 +16,7 @@ class test_DistanceDomain(unittest.TestCase):
 
     def tree(self, group, offset):
         tree = Quadtree()
-        tree.initialise(group, Point(8, -4), 32, 32)
+        tree.initialise(group, Point(16, -4), 32, 32)
         points = tree.getOffset(offset)
         return tree, points
 
