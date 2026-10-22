@@ -428,6 +428,28 @@ bool Segment::pointOnSegment(Point point)
 
 Point Segment::closestPoint(Point point)
 {
+    return this->closestPointPrepared(point, this->prepareArc());
+}
+
+Segment::ArcGeometry Segment::prepareArc()
+{
+    ArcGeometry arc;
+    if (this->bulge != 0 && (start.X != end.X || start.Z != end.Z))
+    {
+        arc.centre = this->getCentrePoint();
+        arc.radius = this->getRadius();
+        arc.direction = this->bulge > 0 ? -1 : 1;
+        arc.startAngle = std::atan2(double(start.Z) - arc.centre.Z,
+                                   double(start.X) - arc.centre.X);
+        arc.sweep = 4 * std::atan(std::abs(double(this->bulge)));
+    }
+    return arc;
+}
+
+Point Segment::closestPointPrepared(const Point &point, const ArcGeometry &arc) const
+{
+    const Point &start = this->start;
+    const Point &end = this->end;
     if ((start.X == end.X && start.Z == end.Z) ||
         (point.X == start.X && point.Z == start.Z))
     {
@@ -453,7 +475,7 @@ Point Segment::closestPoint(Point point)
         return Point(start.X + ABx * t, start.Z + ABz * t);
     }
 
-    Point centre = this->getCentrePoint();
+    Point centre = arc.centre;
     double dx = double(point.X) - centre.X;
     double dz = double(point.Z) - centre.Z;
     double length = std::hypot(dx, dz);
@@ -461,18 +483,21 @@ Point Segment::closestPoint(Point point)
         return start;
 
     // Positive bulge sweeps clockwise in conventional (X, Z) coordinates.
-    double direction = this->bulge > 0 ? -1 : 1;
-    double startAngle = std::atan2(double(start.Z) - centre.Z,
-                                   double(start.X) - centre.X);
+    double direction = arc.direction;
+    double startAngle = arc.startAngle;
     double circle = 2 * std::acos(-1.0);
     double progress = std::fmod(direction * (std::atan2(dz, dx) - startAngle), circle);
     if (progress < 0)
         progress += circle;
-    double sweep = 4 * std::atan(std::abs(double(this->bulge)));
+    double sweep = arc.sweep;
     if (progress > sweep)
-        return start.distanceTo(point) <= end.distanceTo(point) ? start : end;
+    {
+        Point startCopy = start;
+        Point endCopy = end;
+        return startCopy.distanceTo(point) <= endCopy.distanceTo(point) ? start : end;
+    }
 
-    double scale = this->getRadius() / length;
+    double scale = arc.radius / length;
     return Point(centre.X + dx * scale, centre.Z + dz * scale);
 }
 

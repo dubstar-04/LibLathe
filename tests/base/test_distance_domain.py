@@ -145,6 +145,18 @@ class test_DistanceDomain(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'empty'):
             SegmentGroup().sdv(Point(1, 0))
 
+    def test_standalone_queries_reflect_source_changes(self):
+        group = self.profile([(10, 0), (10, -10)])
+        query = Point(5, 0.5)
+        self.assertGreater(group.sdv(query), 0)
+        self.assertFalse(group.isInside(query))
+        group.insertSegment(Segment(Point(0, 2), Point(10, 0)), 0)
+        self.assertLess(group.sdv(query), 0)
+        self.assertTrue(group.isInside(query))
+        fresh = self.profile([(0, 2), (10, 0), (10, -10)])
+        self.assertEqual(group.sdv(query), fresh.sdv(query))
+        self.assertEqual(group.isInside(query), fresh.isInside(query))
+
     def test_nonfinite_queries_are_rejected(self):
         group = self.profile([(10, 0), (10, -10)])
         for value in (float('inf'), -float('inf'), float('nan')):

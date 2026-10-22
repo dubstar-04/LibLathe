@@ -43,6 +43,17 @@ public:
     Point closestPoint(Point point);
 
 private:
+    friend class SegmentGroup;
+    struct ArcGeometry
+    {
+        Point centre = Point();
+        double radius = 0;
+        double direction = 0;
+        double startAngle = 0;
+        double sweep = 0;
+    };
+    ArcGeometry prepareArc();
+    Point closestPointPrepared(const Point &point, const ArcGeometry &arc) const;
     std::vector<Point> intersectLineLine(Segment seg, bool extend);
     std::vector<Point> intersectCircleLine(Segment seg, bool extend);
     std::vector<Point> intersectCircleCircle(Segment seg, bool extend);

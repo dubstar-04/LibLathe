@@ -15,6 +15,7 @@ struct Node
     float height = 0;
     int depth = 0;
     float sdv = 0;
+    bool distanceSigned = true;
     Node(Point center, float width, float height, int depth) : center(center), width(width), height(height), depth(depth) {}
     Node() {}
 };
@@ -45,9 +46,11 @@ public:
     std::vector<Point> getOffset(float offsetValue);
     // Independent flat snapshots in root-first depth-first traversal order.
     // Before extraction (including after initialise), returns only the root.
+    // Deferred signs are resolved against the geometry from the latest extraction.
     std::vector<Node> getNodes();
 
 private:
+    friend class SegmentGroup;
     // value to offset the segmentgroup by
     float offset = 0;
     // precision of the quadtree
@@ -58,12 +61,16 @@ private:
     bool initialised = false;
     Node basenode;
     std::vector<Node> nodes;
+    // Rebuilt for every offset; retained only to finish debug-node signs on demand.
+    SegmentGroup::PreparedGeometry geometry;
 
     std::vector<Point> offsetBoundaryPoints;
 
-    void divide(Node &);
-    void conquer(Node &);
-    bool projectToOffset(Point query, float value, Point &point);
+    void divide(Node &, const SegmentGroup::PreparedGeometry &geometry);
+    void conquer(Node &, const SegmentGroup::PreparedGeometry &geometry);
+    bool projectToOffset(Point query, float value, Point &point,
+                         const SegmentGroup::PreparedGeometry &geometry);
+    void validateContour(const std::vector<Point> &points) const;
     bool nodeCouldContain(float offset, Node &node);
     bool insideNode(Point &point, Node &node);
     std::vector<Point> sortPoints(Point datum, std::vector<Point> &points);

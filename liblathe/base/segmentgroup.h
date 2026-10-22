@@ -8,7 +8,6 @@
 #include "point.h"
 #include "utils.h"
 #include "segment.h"
-#include "quadtree.h"
 
 class SegmentGroup
 {
@@ -51,9 +50,36 @@ public:
     Point closestPoint(Point point, bool *onProfile = nullptr);
 
 private:
+    friend class Quadtree;
+    struct PreparedSegment
+    {
+        struct Interval
+        {
+            double startX;
+            double endX;
+            bool positiveZ;
+        };
+        Segment segment;
+        Segment::ArcGeometry arc;
+        std::array<Interval, 3> intervals{};
+        size_t intervalCount = 0;
+        explicit PreparedSegment(Segment source);
+        int crossings(const Point &point) const;
+    };
+    struct PreparedGeometry
+    {
+        std::vector<PreparedSegment> boundary;
+        size_t originalCount = 0;
+        Point closestPoint(Point point, bool *onProfile = nullptr) const;
+        float unsignedDistance(Point point) const;
+        float sdv(Point point) const;
+        bool isInside(Point point) const;
+        void validateContour(const std::vector<Point> &points, float offset) const;
+        void validateChord(Point start, Point end, float offset) const;
+    };
+    PreparedGeometry prepareGeometry();
     std::vector<Segment> segments;
     std::array<Segment, 3> axisClosure();
-    void validateOffsetChord(Point start, Point end, float offset);
     void rdp(std::vector<Point> &points, float tolerance, std::vector<Point> &out);
     SegmentGroup add(Point point);
     SegmentGroup copy();

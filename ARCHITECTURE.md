@@ -32,12 +32,19 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
      inside, zero on it, positive outside. Sign uses half-open ray crossings;
      distance and projection use the nearest finite line or arc, including the
      artificial closing edges.
+   - Prepare an owned boundary snapshot once per offset, including closure,
+     finite-arc constants and X-monotone crossing intervals. Extraction and
+     contour validation share it; standalone distance and classification queries
+     prepare fresh data through the same implementation.
    - Expand the search root by the offset magnitude plus one leaf-width margin,
      so its half-open maximum edges do not clip the contour. Keep its lower X
      bound at the axis (or the profile's X minimum if negative); the start-Z
      output clip is independent of the root.
    - Subdivide a quadtree where `|distance - offset|` is within the cell's
-     half-diagonal, down to 0.05 cell width.
+     half-diagonal, down to 0.05 cell width. First reject cells using unsigned
+     distance against the offset magnitude; only surviving cells need a sign
+     test and the signed-distance pruning check. This preliminary test is
+     conservative for outward, zero and inward offsets.
    - Project each leaf centre and corner onto its nearest boundary point and move it
      towards the centre by the offset's magnitude. Exclude candidates owned by
      artificial closing edges, including when closure becomes nearer after
@@ -74,6 +81,10 @@ order, with unchanged `center`, `width`, `height` and `sdv` fields. Before
 extraction, including after reinitialisation, it returns just the root. This
 avoids recursively copying descendants and the growing output vector merely
 to draw the tree; offset accuracy and sampling are unchanged.
+Signs skipped during pruning are resolved only when debug nodes are requested.
+The owned geometry snapshot keeps those signs consistent with the extracted
+tree even if the caller subsequently edits the source. A new offset or
+reinitialisation replaces that snapshot rather than reusing stale geometry.
 
 ### Accuracy and topology
 

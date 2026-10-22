@@ -72,7 +72,7 @@ class test_quadtree(unittest.TestCase):
         arc = SegmentGroup()
         arc.addSegment(Segment(Point(0, 0), Point(2, -2), math.tan(math.pi / 8)))
         for group in (rectangle, arc):
-            for offset in (0, 0.5):
+            for offset in (-0.1, 0, 0.5):
                 with self.subTest(group=group, offset=offset):
                     tree = Quadtree()
                     tree.initialise(group, Point(4, -2), 8, 8)
@@ -105,6 +105,26 @@ class test_quadtree(unittest.TestCase):
         self.qt.initialise(self.sg, Point(16, -6), 32, 32)
         self.assertEqual(self.node_values(self.qt.getNodes()), [(16, -6, 32, 32, 0)])
         self.assertEqual(self.node_values(nodes), modified)
+
+    def test_deferred_node_signs_use_the_original_geometry_snapshot(self):
+        group = SegmentGroup()
+        group.addSegment(Segment(Point(10, 0), Point(10, -10)))
+        reference = Quadtree()
+        reference.initialise(group, Point(8, -4), 16, 16)
+        reference.getOffset(1)
+        expected = self.node_values(reference.getNodes())
+        self.assertTrue(any(row[-1] < 0 for row in expected))
+        tree = Quadtree()
+        tree.initialise(group, Point(8, -4), 16, 16)
+        tree.getOffset(1)
+        group.insertSegment(Segment(Point(0, 2), Point(10, 0)), 0)
+        self.assertEqual(self.node_values(tree.getNodes()), expected)
+        self.assertEqual(self.node_values(tree.getNodes()), expected)
+        tree.getOffset(1)
+        reference.initialise(group, Point(8, -4), 16, 16)
+        reference.getOffset(1)
+        self.assertEqual(self.node_values(tree.getNodes()),
+                         self.node_values(reference.getNodes()))
 
     def test_repeated_offsets_match_fresh_tree(self):
         for offset in (1, 3, 1):

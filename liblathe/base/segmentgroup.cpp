@@ -5,6 +5,7 @@
 #include <limits>
 
 #include "segmentgroup.h"
+#include "quadtree.h"
 
 SegmentGroup::SegmentGroup()
 {
@@ -142,19 +143,22 @@ SegmentGroup SegmentGroup::offset(float step_over)
     float resolution = 0.01;
     std::vector<Point> defeatured_points;
     this->rdp(offset, resolution, defeatured_points);
-    this->validateOffsetContour(defeatured_points, step_over);
+    qt.validateContour(defeatured_points);
     return this->fromPoints(defeatured_points);
 }
 
 void SegmentGroup::validateOffsetContour(const std::vector<Point> &points, float offset)
 {
+    this->prepareGeometry().validateContour(points, offset);
+}
+
+void SegmentGroup::PreparedGeometry::validateContour(
+    const std::vector<Point> &points, float offset) const
+{
     if (points.size() < 2)
         return;
     if (offset != 0)
     {
-        std::vector<Segment> boundary = this->segments;
-        const auto closure = this->axisClosure();
-        boundary.insert(boundary.end(), closure.begin(), closure.end());
         for (const Point &point : points)
         {
             const double magnitude = std::max({1.0, std::abs(double(point.X)),
@@ -163,9 +167,9 @@ void SegmentGroup::validateOffsetContour(const std::vector<Point> &points, float
             if (std::abs(offset) <= numerical)
                 continue;
             std::vector<Point> nearest;
-            for (auto &segment : boundary)
+            for (const auto &prepared : this->boundary)
             {
-                Point closest = segment.closestPoint(point);
+                Point closest = prepared.segment.closestPointPrepared(point, prepared.arc);
                 const double distance = std::hypot(double(closest.X) - point.X,
                                                    double(closest.Z) - point.Z);
                 if (std::abs(distance - std::abs(offset)) > numerical)
@@ -185,10 +189,10 @@ void SegmentGroup::validateOffsetContour(const std::vector<Point> &points, float
         }
     }
     for (size_t i = 1; i < points.size(); ++i)
-        this->validateOffsetChord(points[i - 1], points[i], offset);
+        this->validateChord(points[i - 1], points[i], offset);
 }
 
-void SegmentGroup::validateOffsetChord(Point start, Point end, float offset)
+void SegmentGroup::PreparedGeometry::validateChord(Point start, Point end, float offset) const
 {
     Point midpoint = start.mid(end);
     const double residual = std::abs(double(this->sdv(midpoint)) - offset);
@@ -210,8 +214,8 @@ void SegmentGroup::validateOffsetChord(Point start, Point end, float offset)
         (midpoint.X == end.X && midpoint.Z == end.Z))
         throw std::runtime_error(
             "Cannot certify offset contour within 0.05 model units at coordinate precision");
-    this->validateOffsetChord(start, midpoint, offset);
-    this->validateOffsetChord(midpoint, end, offset);
+    this->validateChord(start, midpoint, offset);
+    this->validateChord(midpoint, end, offset);
 }
 
 SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving = false)
@@ -434,14 +438,31 @@ std::array<Segment, 3> SegmentGroup::axisClosure()
 
 Point SegmentGroup::closestPoint(Point point, bool *onProfile)
 {
-    auto closure = this->axisClosure();
+    return this->prepareGeometry().closestPoint(point, onProfile);
+}
+
+SegmentGroup::PreparedGeometry SegmentGroup::prepareGeometry()
+{
+    const auto closure = this->axisClosure();
+    PreparedGeometry prepared;
+    prepared.originalCount = this->segments.size();
+    prepared.boundary.reserve(this->segments.size() + closure.size());
+    for (const auto &segment : this->segments)
+        prepared.boundary.emplace_back(segment);
+    for (const auto &segment : closure)
+        prepared.boundary.emplace_back(segment);
+    return prepared;
+}
+
+Point SegmentGroup::PreparedGeometry::closestPoint(Point point, bool *onProfile) const
+{
     if (!std::isfinite(point.X) || !std::isfinite(point.Z))
         throw std::invalid_argument("Query point must be finite");
-    Point closest = this->segments.front().start;
+    Point closest = this->boundary.front().segment.start;
     double closestDistance = std::numeric_limits<double>::infinity();
     bool closestOnProfile = true;
-    auto consider = [&](Segment &segment, bool original) {
-        Point pnt = segment.closestPoint(point);
+    auto consider = [&](const PreparedSegment &prepared, bool original) {
+        Point pnt = prepared.segment.closestPointPrepared(point, prepared.arc);
         if (!std::isfinite(pnt.X) || !std::isfinite(pnt.Z))
             throw std::runtime_error("Boundary closest point is not finite");
         const double dx = double(pnt.X) - point.X;
@@ -454,10 +475,8 @@ Point SegmentGroup::closestPoint(Point point, bool *onProfile)
             closestOnProfile = original;
         }
     };
-    for (auto &segment : this->segments)
-        consider(segment, true);
-    for (auto &segment : closure)
-        consider(segment, false);
+    for (size_t i = 0; i < this->boundary.size(); ++i)
+        consider(this->boundary[i], i < this->originalCount);
     if (onProfile != nullptr)
         *onProfile = closestOnProfile;
     return closest;
@@ -465,97 +484,118 @@ Point SegmentGroup::closestPoint(Point point, bool *onProfile)
 
 float SegmentGroup::sdv(Point point)
 {
-    const float distance = this->closestPoint(point).distanceTo(point);
+    return this->prepareGeometry().sdv(point);
+}
+
+float SegmentGroup::PreparedGeometry::unsignedDistance(Point point) const
+{
+    return this->closestPoint(point).distanceTo(point);
+}
+
+float SegmentGroup::PreparedGeometry::sdv(Point point) const
+{
+    const float distance = this->unsignedDistance(point);
     return this->isInside(point) ? -distance : distance;
 }
 
 bool SegmentGroup::isInside(Point point)
 {
-    auto closure = this->axisClosure();
+    return this->prepareGeometry().isInside(point);
+}
 
-    // Return -1 on the boundary; otherwise count crossings above the query.
-    auto crossings = [&](Segment &segment) -> int {
-        const Point start = segment.start;
-        const Point end = segment.end;
-        if (point.X == start.X && point.Z == start.Z)
-            return -1;
-        if (point.X == end.X && point.Z == end.Z)
-            return -1;
-        if (segment.bulge == 0 || (start.X == end.X && start.Z == end.Z))
-        {
-            const double dx = double(end.X) - start.X;
-            const double dz = double(end.Z) - start.Z;
-            const double cross = dx * (double(point.Z) - start.Z) -
-                                 dz * (double(point.X) - start.X);
-            if (cross == 0 &&
-                point.X >= std::min(start.X, end.X) && point.X <= std::max(start.X, end.X) &&
-                point.Z >= std::min(start.Z, end.Z) && point.Z <= std::max(start.Z, end.Z))
-                return -1;
-            if ((start.X > point.X) == (end.X > point.X))
-                return 0;
-            const double z = start.Z + (double(point.X) - start.X) * dz / dx;
-            return z > point.Z ? 1 : 0;
-        }
-
-        const Point centre = segment.getCentrePoint();
-        const double radius = segment.getRadius();
-        const double pi = std::acos(-1.0);
-        const double direction = segment.bulge > 0 ? -1 : 1;
-        const double sweep = 4 * std::atan(std::abs(double(segment.bulge)));
-        const double startAngle = std::atan2(double(start.Z) - centre.Z,
-                                             double(start.X) - centre.X);
-        auto progress = [&](double angle) {
-            return std::fmod(direction * (angle - startAngle) + 2 * pi, 2 * pi);
-        };
-        const double px = double(point.X) - centre.X;
-        const double pz = double(point.Z) - centre.Z;
-        const double epsilon = 4 * std::numeric_limits<float>::epsilon();
-        if (std::abs(px * px + pz * pz - radius * radius) <=
-                epsilon * radius * radius &&
-            progress(std::atan2(pz, px)) <= sweep + epsilon)
-            return -1;
-
-        // Split at X extrema so the same half-open endpoint rule works for arcs.
-        std::array<std::pair<double, double>, 4> breaks;
-        breaks[0] = {0, start.X};
-        breaks[1] = {sweep, end.X};
-        size_t count = 2;
-        for (double angle : {0.0, pi})
-        {
-            const double position = progress(angle);
-            if (position > 0 && position < sweep)
-                breaks[count++] = {position, centre.X + (angle == 0 ? radius : -radius)};
-        }
-        std::sort(breaks.begin(), breaks.begin() + count);
-        const double discriminant = radius * radius - px * px;
-        if (discriminant <= 0)
-            return 0;
-        const double height = std::sqrt(discriminant);
-        int result = 0;
-        for (size_t i = 1; i < count; ++i)
-        {
-            if ((breaks[i - 1].second > point.X) == (breaks[i].second > point.X))
-                continue;
-            const double middle = startAngle + direction *
-                                  (breaks[i - 1].first + breaks[i].first) / 2;
-            const double z = centre.Z + (std::sin(middle) > 0 ? height : -height);
-            if (z > point.Z)
-                ++result;
-        }
-        return result;
-    };
-
-    int intersections = 0;
-    for (auto &segment : this->segments)
+SegmentGroup::PreparedSegment::PreparedSegment(Segment source)
+    : segment(source), arc(this->segment.prepareArc())
+{
+    if (segment.bulge == 0 ||
+        (segment.start.X == segment.end.X && segment.start.Z == segment.end.Z))
+        return;
+    const double pi = std::acos(-1.0);
+    std::array<std::pair<double, double>, 4> breaks;
+    breaks[0] = {0, segment.start.X};
+    breaks[1] = {arc.sweep, segment.end.X};
+    size_t count = 2;
+    for (double angle : {0.0, pi})
     {
-        const int count = crossings(segment);
-        if (count < 0)
-            return true;
-        intersections += count;
+        const double position = std::fmod(
+            arc.direction * (angle - arc.startAngle) + 2 * pi, 2 * pi);
+        if (position > 0 && position < arc.sweep)
+            breaks[count++] = {position, arc.centre.X + (angle == 0 ? arc.radius : -arc.radius)};
     }
-    for (auto &segment : closure)
+    std::sort(breaks.begin(), breaks.begin() + count);
+    for (size_t i = 1; i < count; ++i)
     {
-        const int count = crossings(segment);
+        const double middle = arc.startAngle + arc.direction *
+                              (breaks[i - 1].first + breaks[i].first) / 2;
+        intervals[intervalCount++] = {
+            breaks[i - 1].second, breaks[i].second, std::sin(middle) > 0};
+    }
+}
+
+int SegmentGroup::PreparedSegment::crossings(const Point &point) const
+{
+    // Return -1 on the boundary; otherwise count crossings above the query.
+    const Point start = segment.start;
+    const Point end = segment.end;
+    if (point.X == start.X && point.Z == start.Z)
+        return -1;
+    if (point.X == end.X && point.Z == end.Z)
+        return -1;
+    if (segment.bulge == 0 || (start.X == end.X && start.Z == end.Z))
+    {
+        const double dx = double(end.X) - start.X;
+        const double dz = double(end.Z) - start.Z;
+        const double cross = dx * (double(point.Z) - start.Z) -
+                             dz * (double(point.X) - start.X);
+        if (cross == 0 &&
+            point.X >= std::min(start.X, end.X) && point.X <= std::max(start.X, end.X) &&
+            point.Z >= std::min(start.Z, end.Z) && point.Z <= std::max(start.Z, end.Z))
+            return -1;
+        if ((start.X > point.X) == (end.X > point.X))
+            return 0;
+        const double z = start.Z + (double(point.X) - start.X) * dz / dx;
+        return z > point.Z ? 1 : 0;
+    }
+
+    const Point centre = arc.centre;
+    const double radius = arc.radius;
+    const double pi = std::acos(-1.0);
+    const double direction = arc.direction;
+    const double sweep = arc.sweep;
+    const double startAngle = arc.startAngle;
+    auto progress = [&](double angle) {
+        return std::fmod(direction * (angle - startAngle) + 2 * pi, 2 * pi);
+    };
+    const double px = double(point.X) - centre.X;
+    const double pz = double(point.Z) - centre.Z;
+    const double epsilon = 4 * std::numeric_limits<float>::epsilon();
+    if (std::abs(px * px + pz * pz - radius * radius) <=
+            epsilon * radius * radius &&
+        progress(std::atan2(pz, px)) <= sweep + epsilon)
+        return -1;
+
+    const double discriminant = radius * radius - px * px;
+    if (discriminant <= 0)
+        return 0;
+    const double height = std::sqrt(discriminant);
+    int result = 0;
+    for (size_t i = 0; i < intervalCount; ++i)
+    {
+        const auto &interval = intervals[i];
+        if ((interval.startX > point.X) == (interval.endX > point.X))
+            continue;
+        const double z = centre.Z + (interval.positiveZ ? height : -height);
+        if (z > point.Z)
+            ++result;
+    }
+    return result;
+}
+
+bool SegmentGroup::PreparedGeometry::isInside(Point point) const
+{
+    int intersections = 0;
+    for (const auto &segment : this->boundary)
+    {
+        const int count = segment.crossings(point);
         if (count < 0)
             return true;
         intersections += count;
