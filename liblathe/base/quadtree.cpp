@@ -91,8 +91,10 @@ void Quadtree::conquer(Node &node)
             // check that the signed distance value is the same sign as the requested offset
             if (std::signbit(node.sdv) == std::signbit(this->offset))
             {
-                // get the closest point on the segmentGroup
-                Point closest = this->segmentGroup->closestPoint(node.center);
+                bool onProfile;
+                Point closest = this->segmentGroup->closestPoint(node.center, &onProfile);
+                if (!onProfile)
+                    return;
                 // get the projected boundary point
                 Point projectedPoint = closest.project(closest.angleTo(node.center), abs(this->offset));
 
@@ -103,7 +105,10 @@ void Quadtree::conquer(Node &node)
                     // only collect points inside the segment boundary
                     if (projectedPoint.Z <= segmentStart.Z)
                     {
-                        this->offsetBoundaryPoints.push_back(projectedPoint);
+                        // Closure can become nearer after moving from the cell centre.
+                        this->segmentGroup->closestPoint(projectedPoint, &onProfile);
+                        if (onProfile)
+                            this->offsetBoundaryPoints.push_back(projectedPoint);
                     }
                 }
             }

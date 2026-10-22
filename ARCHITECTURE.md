@@ -8,8 +8,13 @@ See [PLAN.md](PLAN.md) for the correctness and performance work in progress.
 
 ## Problem
 
-Part profiles are open chains of lines and arcs in X (radius) and Z (axis),
-starting at X = 0. Operations need:
+Part profiles are ordered, connected chains of lines and arcs in X (radius)
+and Z (axis). Open profiles close radially from their endpoints to X = 0 and
+along the axis; the resulting boundary must form a simple region. Inputs may
+start off the axis, as offset results can do. Already closed profiles add no
+edges; endpoints at the same Z close directly without overlapping axis spurs.
+In the plotted lathe view, Z is horizontal and positive X increases downward
+from the centreline. Operations need:
 
 - an outward offset by a step-over or stock-to-leave distance;
 - a small inward offset, used to check toolpaths against the part;
@@ -24,14 +29,25 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
    step, search X for the first position where the tool does not intersect the
    part.
 2. **Offset:**
-   - Evaluate a signed distance field (distance to the nearest segment, sign from
-     a ray-crossing test against the profile closed along the axis).
+   - Evaluate a signed distance field against that complete boundary: negative
+     inside, zero on it, positive outside. Sign uses half-open ray crossings;
+     distance and projection use the nearest finite line or arc, including the
+     artificial closing edges.
    - Subdivide a quadtree where `|distance - offset|` is within the cell's
      half-diagonal, down to 0.2 cell width.
-   - Project each leaf centre onto the nearest profile point and push it out by
-     the offset.
+   - Project each leaf centre onto its nearest boundary point and move it
+     towards the centre by the offset's magnitude. Exclude candidates owned by
+     artificial closing edges, including when closure becomes nearer after
+     projection. Original geometry wins exact ties, so explicitly supplied
+     faces remain eligible. Retain the first segment's start-Z clip.
    - Order the points by greedy nearest neighbour, then simplify with
      Ramer-Douglas-Peucker (tolerance 0.01).
+
+The distance-field domain and the extracted machining profile are deliberately
+different: the field includes the complete closed boundary, but output omits
+artificial-closure candidates. Closure can therefore change where inward
+offsets terminate. This does not yet validate all connecting segments or
+guarantee contour accuracy after ordering and simplification.
 
 On the example part this measured about 550 points with a distance error of at
 most 0.005, no dropped points and consecutive spacing of about 0.15.

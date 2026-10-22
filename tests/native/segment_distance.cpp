@@ -21,8 +21,39 @@ void check(Segment segment, Point query, Point expected, float expectedDistance)
         throw std::runtime_error("Finite segment distance or closest point is incorrect");
 }
 
+void checkBoundary(SegmentGroup &group, Point query, Point expected,
+                   bool expectedOnProfile, float expectedDistance)
+{
+    bool onProfile;
+    Point closest = group.closestPoint(query, &onProfile);
+    if (closest.distanceTo(expected) > 0.00001f ||
+        onProfile != expectedOnProfile ||
+        std::abs(group.sdv(query) - expectedDistance) > 0.00001f ||
+        std::abs(std::abs(group.sdv(query)) - closest.distanceTo(query)) > 0.00001f)
+        throw std::runtime_error("Boundary distance or original-edge ownership is incorrect");
+}
+
 int main()
 {
+    SegmentGroup open;
+    open.addSegment(Segment(Point(10, 0), Point(10, -10)));
+    checkBoundary(open, Point(5, 0.0001f), Point(5, 0), false, 0.0001f);
+    checkBoundary(open, Point(5, -0.0001f), Point(5, 0), false, -0.0001f);
+    checkBoundary(open, Point(-1, -5), Point(0, -5), false, 1);
+    checkBoundary(open, Point(5, -11), Point(5, -10), false, 1);
+    checkBoundary(open, Point(9, -5), Point(10, -5), true, -1);
+    checkBoundary(open, Point(10, -11), Point(10, -10), true, 1);
+    checkBoundary(open, Point(10, -10), Point(10, -10), true, 0);
+    checkBoundary(open, Point(5, -5), Point(10, -5), true, -5);
+    open.addSegment(Segment(Point(10, -10), Point(0, -10)));
+    checkBoundary(open, Point(5, -11), Point(5, -10), true, 1);
+
+    SegmentGroup closed;
+    closed.addSegment(Segment(Point(2, 0), Point(4, 0)));
+    closed.addSegment(Segment(Point(4, 0), Point(3, 2)));
+    closed.addSegment(Segment(Point(3, 2), Point(2, 0)));
+    checkBoundary(closed, Point(1, 0), Point(2, 0), true, 1);
+
     for (float direction : {-1.0f, 1.0f})
     {
         SegmentGroup group;
@@ -62,5 +93,5 @@ int main()
     for (float bulge : {0.0f, -1.0f, 1.0f})
         check(Segment(Point(1, 2), Point(1, 2), bulge),
               Point(4, 6), Point(1, 2), 5);
-    std::cout << "Finite line and arc distances and closest points passed\n";
+    std::cout << "Finite line/arc and closed-boundary distances and ownership passed\n";
 }

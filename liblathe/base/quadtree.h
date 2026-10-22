@@ -36,6 +36,8 @@ public:
     void initialise(SegmentGroup *segmentgroup, Point center, float width, float height);
     // Throws runtime_error before initialisation, invalid_argument for empty geometry
     // or nonfinite offsets. A valid request with no contour returns an empty vector.
+    // Uses the axis-closed field, but excludes artificial-closure candidates.
+    // Original faces remain eligible; the first segment's start-Z clip is retained.
     std::vector<Point> getOffset(float offsetValue);
     std::vector<Node> getNodes();
 

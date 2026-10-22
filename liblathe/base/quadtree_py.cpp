@@ -22,6 +22,8 @@ PYBIND11_MODULE(quadtree, m)
              "pointers or root bounds raise ValueError without changing configuration.")
         .def("getOffset", &Quadtree::getOffset,
              "Return offset points, or an empty list when no contour is found. "
+             "Use the axis-closed distance field but exclude artificial-closure "
+             "candidates, retaining original geometry on exact ties and the start-Z clip. "
              "Raise RuntimeError before initialisation, or ValueError for empty "
              "geometry or nonfinite offsets.")
         .def("getNodes", &Quadtree::getNodes);

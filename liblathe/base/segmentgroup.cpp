@@ -341,54 +341,63 @@ void SegmentGroup::validate()
     // check that the start and end points are at x = 0 (only valid for the primary group / part shape)
 }
 
-Point SegmentGroup::closestPoint(Point point)
+std::array<Segment, 3> SegmentGroup::axisClosure()
 {
-    // get the closest point on the segment group to point //
-    Point clst_pnt;
-    float dist_clst_pnt = std::numeric_limits<float>::infinity();
+    if (this->segments.empty())
+        throw std::invalid_argument("Cannot evaluate empty geometry");
 
-    for (auto &segment : this->segments)
-    {
+    const Point start = this->segments.front().start;
+    const Point end = this->segments.back().end;
+    // Radial closures at the same Z overlap; retain only their uncancelled part.
+    if (start.Z == end.Z)
+        return {Segment(end, start), Segment(start, start), Segment(start, start)};
+    return {
+        Segment(Point(0, start.Z), start),
+        Segment(end, Point(0, end.Z)),
+        Segment(Point(0, end.Z), Point(0, start.Z))
+    };
+}
+
+Point SegmentGroup::closestPoint(Point point, bool *onProfile)
+{
+    auto closure = this->axisClosure();
+    if (!std::isfinite(point.X) || !std::isfinite(point.Z))
+        throw std::invalid_argument("Query point must be finite");
+    Point closest = this->segments.front().start;
+    double closestDistance = std::numeric_limits<double>::infinity();
+    bool closestOnProfile = true;
+    auto consider = [&](Segment &segment, bool original) {
         Point pnt = segment.closestPoint(point);
-        float dist = pnt.distanceTo(point);
-        if (dist < dist_clst_pnt)
+        if (!std::isfinite(pnt.X) || !std::isfinite(pnt.Z))
+            throw std::runtime_error("Boundary closest point is not finite");
+        const double dx = double(pnt.X) - point.X;
+        const double dz = double(pnt.Z) - point.Z;
+        const double distance = dx * dx + dz * dz;
+        if (distance < closestDistance)
         {
-            clst_pnt = pnt;
-            dist_clst_pnt = dist;
+            closest = pnt;
+            closestDistance = distance;
+            closestOnProfile = original;
         }
-    }
-
-    return clst_pnt;
+    };
+    for (auto &segment : this->segments)
+        consider(segment, true);
+    for (auto &segment : closure)
+        consider(segment, false);
+    if (onProfile != nullptr)
+        *onProfile = closestOnProfile;
+    return closest;
 }
 
 float SegmentGroup::sdv(Point point)
 {
-    // return a signed distance value to the closest point on the segments //
-    float sdv;
-
-    bool inside = this->isInside(point);
-    float dist_clst_pnt = std::numeric_limits<float>::infinity();
-
-    // find closest point on the segments
-    for (auto &segment : this->segments)
-    {
-        float clst_dist = segment.distanceToPoint(point);
-        dist_clst_pnt = std::min(clst_dist, dist_clst_pnt);
-    }
-
-    sdv = abs(dist_clst_pnt);
-    if (inside)
-    {
-        sdv = -sdv;
-    }
-
-    return sdv;
+    const float distance = this->closestPoint(point).distanceTo(point);
+    return this->isInside(point) ? -distance : distance;
 }
 
 bool SegmentGroup::isInside(Point point)
 {
-    if (this->segments.empty())
-        throw std::invalid_argument("Cannot classify empty geometry");
+    auto closure = this->axisClosure();
 
     // Return -1 on the boundary; otherwise count crossings above the query.
     auto crossings = [&](Segment &segment) -> int {
@@ -470,13 +479,6 @@ bool SegmentGroup::isInside(Point point)
             return true;
         intersections += count;
     }
-    const Point start = this->segments.front().start;
-    const Point end = this->segments.back().end;
-    std::array<Segment, 3> closure = {
-        Segment(Point(0, start.Z), start),
-        Segment(end, Point(0, end.Z)),
-        Segment(Point(0, end.Z), Point(0, start.Z))
-    };
     for (auto &segment : closure)
     {
         const int count = crossings(segment);

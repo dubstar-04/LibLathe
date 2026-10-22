@@ -26,8 +26,12 @@ PYBIND11_MODULE(segmentgroup, m)
         .def("validate", &SegmentGroup::validate)
         .def("fromPoints", &SegmentGroup::fromPoints)
         .def("reduce", &SegmentGroup::reduce)
-        .def("sdv", &SegmentGroup::sdv)
+        .def("sdv", &SegmentGroup::sdv,
+             "Signed distance to the profile and its axis closure: negative inside, "
+             "zero on the boundary, positive outside. Empty geometry and nonfinite "
+             "query points raise ValueError.")
         .def("isInside", &SegmentGroup::isInside,
              "Classify a point against the profile closed along the axis. "
+             "Closed profiles add no edges; endpoints at the same Z close directly. "
              "Boundary points count as inside; empty geometry raises ValueError.");
 }

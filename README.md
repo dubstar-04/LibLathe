@@ -43,6 +43,12 @@ Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts
 
 The operations (face, rough, profile and part-off) combine these steps into toolpaths and gcode. The geometry core is C++ exposed to Python with pybind11.
 
+The SDF uses the profile closed back to X = 0: sign and distance include the
+same boundary. Artificial closing edges do not generate offset candidates;
+faces explicitly included in the profile remain eligible. The existing
+start-Z clip is retained. In LibLathe's plotted view, Z is horizontal and X
+increases downward from the centreline.
+
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approaches.
 
 ## Examples
@@ -63,4 +69,3 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approa
 * CNC: https://en.wikipedia.org/wiki/Numerical_control
 * GCode: https://en.wikipedia.org/wiki/G-code
 * PyPi: https://pypi.org/project/liblathe/
-
