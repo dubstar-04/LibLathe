@@ -35,6 +35,16 @@ Local testing
 python3 ./examples/defeature_example.py
 ```
 
+## Design
+Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts in two geometry steps:
+
+1. **Defeature:** the tool is moved along the part and only the area it can actually reach is kept, removing features that can't be turned, such as undercuts.
+2. **Offset:** a signed distance field (SDF) gives the distance from any point to the profile. A quadtree samples it, refining only near the target distance. Points at that distance are collected, ordered and simplified with the Ramer-Douglas-Peucker (RDP) algorithm into the offset path.
+
+The operations (face, rough, profile and part-off) combine these steps into toolpaths and gcode. The geometry core is C++ exposed to Python with pybind11.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approaches.
+
 ## Examples
 ### Facing:
 ![Facing Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/FacingOp.jpeg)
