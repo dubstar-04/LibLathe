@@ -270,6 +270,21 @@ class test_segmentGroup(unittest.TestCase):
         self.assertEqual(sg.sdv(Point(10, -10)), -5)
         self.assertEqual(sg.sdv(Point(20, -10)), 5)
 
+    def test_sdv_measures_finite_arcs(self):
+        for direction in (1, -1):
+            group = SegmentGroup()
+            group.addSegment(Segment(Point(0, 0), Point(2, 0), direction))
+            group.addSegment(Segment(Point(2, 0), Point(0, 0)))
+            for query, signed_distance in (
+                (Point(1, -direction), 1),
+                (Point(1, 0.75 * direction), -0.25),
+                (Point(1, 2 * direction), 1),
+                (Point(0, 0), 0),
+            ):
+                with self.subTest(direction=direction, query=(query.X, query.Z)):
+                    self.assertAlmostEqual(group.sdv(query), signed_distance,
+                                           places=6)
+
     def test_isInside(self):
         PartPt1 = Point(0, 0)
         PartPt2 = Point(15, -5)

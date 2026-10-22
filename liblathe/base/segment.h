@@ -37,7 +37,9 @@ public:
     bool isSame(Segment seg);
     std::vector<Point> intersect(Segment seg, bool extend);
     bool pointOnSegment(Point point);
+    // Distance to the finite line or arc, including its endpoints.
     float distanceToPoint(Point point);
+    // Arc-centre queries and equal-distance endpoints return the start point.
     Point closestPoint(Point point);
 
 private:
