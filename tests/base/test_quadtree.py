@@ -1,4 +1,5 @@
 import os
+import math
 import subprocess
 import sys
 import textwrap
@@ -58,6 +59,52 @@ class test_quadtree(unittest.TestCase):
 
     def coordinates(self, points):
         return [(point.X, point.Z) for point in points]
+
+    def node_values(self, nodes):
+        return [(n.center.X, n.center.Z, n.width, n.height, n.sdv) for n in nodes]
+
+    def test_node_snapshots_preserve_preorder_and_values(self):
+        rectangle = SegmentGroup()
+        for start, end in (
+            ((0, 0), (2, 0)), ((2, 0), (2, -4)), ((2, -4), (0, -4)),
+        ):
+            rectangle.addSegment(Segment(Point(*start), Point(*end)))
+        arc = SegmentGroup()
+        arc.addSegment(Segment(Point(0, 0), Point(2, -2), math.tan(math.pi / 8)))
+        for group in (rectangle, arc):
+            for offset in (0, 0.5):
+                with self.subTest(group=group, offset=offset):
+                    tree = Quadtree()
+                    tree.initialise(group, Point(4, -2), 8, 8)
+                    tree.getOffset(offset)
+                    expected = []
+
+                    def visit(x, z, width):
+                        value = group.sdv(Point(x, z))
+                        expected.append((x, z, width, width, value))
+                        radius = width * math.sqrt(2) / 2
+                        if width <= 0.05 or not value - radius <= offset <= value + radius:
+                            return
+                        for dx, dz in ((-1, 1), (1, 1), (1, -1), (-1, -1)):
+                            visit(x + dx * width / 4, z + dz * width / 4, width / 2)
+
+                    visit(4, -2, 8)
+                    self.assertEqual(self.node_values(tree.getNodes()), expected)
+
+    def test_node_snapshots_are_independent_of_tree_state(self):
+        self.qt.getOffset(1)
+        nodes = self.qt.getNodes()
+        expected = self.node_values(nodes)
+        nodes[0].center.X = -999
+        nodes[0].width = -1
+        nodes[0].sdv = 123
+        self.assertEqual(self.node_values(self.qt.getNodes()), expected)
+        modified = self.node_values(nodes)
+        self.qt.getOffset(3)
+        self.assertEqual(self.node_values(nodes), modified)
+        self.qt.initialise(self.sg, Point(16, -6), 32, 32)
+        self.assertEqual(self.node_values(self.qt.getNodes()), [(16, -6, 32, 32, 0)])
+        self.assertEqual(self.node_values(nodes), modified)
 
     def test_repeated_offsets_match_fresh_tree(self):
         for offset in (1, 3, 1):

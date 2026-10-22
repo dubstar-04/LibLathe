@@ -24,8 +24,7 @@ void require(bool condition, const char *message)
 
 void checkNode(const Node &node)
 {
-    require(!node.divided && node.sdv == 0 && node.child_nodes.empty(),
-            "Node transient state is not initialised");
+    require(node.sdv == 0, "Node distance is not initialised");
 }
 
 int main(int argc, char **argv)

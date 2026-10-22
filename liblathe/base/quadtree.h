@@ -14,9 +14,7 @@ struct Node
     float width = 0;
     float height = 0;
     int depth = 0;
-    bool divided = false;
     float sdv = 0;
-    std::vector<Node> child_nodes;
     Node(Point center, float width, float height, int depth) : center(center), width(width), height(height), depth(depth) {}
     Node() {}
 };
@@ -45,6 +43,8 @@ public:
     // must satisfy SegmentGroup::offsetTolerance; detected collapsed branches
     // and uncertifiable chords throw runtime_error. Completeness is not guaranteed.
     std::vector<Point> getOffset(float offsetValue);
+    // Independent flat snapshots in root-first depth-first traversal order.
+    // Before extraction (including after initialise), returns only the root.
     std::vector<Node> getNodes();
 
 private:
@@ -56,14 +56,13 @@ private:
     SegmentGroup *segmentGroup = nullptr;
     bool initialised = false;
     Node basenode;
+    std::vector<Node> nodes;
 
     std::vector<Point> offsetBoundaryPoints;
 
     void divide(Node &);
     void conquer(Node &);
     bool projectToOffset(Point query, float value, Point &point);
-    std::vector<Point> query(Node &node, std::vector<Point> &offsetBoundaryPoints);
-    std::vector<Node> queryNodes(Node &node, std::vector<Node> &nodes);
     bool nodeCouldContain(float offset, Node &node);
     bool insideNode(Point &point, Node &node);
     std::vector<Point> sortPoints(Point datum, std::vector<Point> &points);

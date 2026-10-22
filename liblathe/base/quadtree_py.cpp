@@ -28,7 +28,10 @@ PYBIND11_MODULE(quadtree, m)
              "against the requested signed distance. "
              "Raise RuntimeError before initialisation, or ValueError for empty "
              "geometry or nonfinite offsets.")
-        .def("getNodes", &Quadtree::getNodes);
+        .def("getNodes", &Quadtree::getNodes,
+             "Return independent flat node snapshots in root-first depth-first order. "
+             "Before extraction, including after initialise, return only the root. "
+             "Mutating a snapshot does not change this tree.");
 
     py::class_<Node>(m, "Node")
         .def(py::init<>())

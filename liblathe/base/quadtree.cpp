@@ -40,6 +40,7 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     int depth = 0;
     Node bn = {center, width, height, depth};
     this->basenode = bn;
+    this->nodes.clear();
     this->segmentGroup = segmentgroup;
     this->initialised = true;
 
@@ -63,8 +64,7 @@ std::vector<Point> Quadtree::getOffset(float offsetValue)
         throw std::invalid_argument("Offset must be finite");
     }
     this->offsetBoundaryPoints.clear();
-    this->basenode.child_nodes.clear();
-    this->basenode.divided = false;
+    this->nodes.clear();
     this->offset = offsetValue;
     // start to process the quadtree, populating the offsetBoundaryPoints
     this->conquer(this->basenode);
@@ -84,6 +84,7 @@ void Quadtree::conquer(Node &node)
     // negative values are inside the segmentGroup
     // positive values are outside the segmentGroup
     node.sdv = this->segmentGroup->sdv(node.center);
+    this->nodes.push_back(node);
 
     // check if it is possible that this node contains the target offset
     if (this->nodeCouldContain(this->offset, node))
@@ -189,14 +190,8 @@ void Quadtree::divide(Node &node)
     Point pnw = Point(x, z);
     Node nw = {pnw, w, h, depth};
 
-    node.child_nodes.push_back(ne);
-    node.child_nodes.push_back(se);
-    node.child_nodes.push_back(sw);
-    node.child_nodes.push_back(nw);
-
-    node.divided = true;
-
-    for (auto &child : node.child_nodes)
+    std::array<Node, 4> children = {ne, se, sw, nw};
+    for (auto &child : children)
     {
         this->conquer(child);
     }
@@ -295,46 +290,9 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
     return sorted_points;
 }
 
-std::vector<Point> Quadtree::query(Node &node, std::vector<Point> &offsetBoundaryPoints)
-{
-    // Find the points in the quadtree that are close to target value //
-
-    float dist = node.sdv;
-    if (dist - this->precision * 0.5 >= this->offset && dist + this->precision * 0.5 <= this->offset)
-    {
-        offsetBoundaryPoints.push_back(node.center);
-    }
-
-    if (node.divided)
-    {
-        for (auto &child : node.child_nodes)
-        {
-            this->query(child, offsetBoundaryPoints);
-        }
-    }
-
-    return offsetBoundaryPoints;
-}
-
 std::vector<Node> Quadtree::getNodes()
 {
-    // return list of nodes //
-    std::vector<Node> nodes;
-    return this->queryNodes(this->basenode, nodes);
-}
-
-std::vector<Node> Quadtree::queryNodes(Node &node, std::vector<Node> &nodes)
-{
-    // build list of nodes //
-    nodes.push_back(node);
-
-    if (node.divided)
-    {
-        for (auto &child : node.child_nodes)
-        {
-            this->queryNodes(child, nodes);
-        }
-    }
-
-    return nodes;
+    if (this->nodes.empty())
+        return {this->basenode};
+    return this->nodes;
 }

@@ -68,6 +68,22 @@ offsets terminate. Chord validation bounds signed-distance error, but does not
 prove that every contour component is present or that ordering is topologically
 correct for every input.
 
+Debug nodes are recorded once as flat snapshots while visiting the quadtree.
+Subdivision recurses over local nodes rather than retaining child subtrees.
+`getNodes()` returns independent snapshots in the same root-first depth-first
+order, with unchanged `center`, `width`, `height` and `sdv` fields. Before
+extraction, including after reinitialisation, it returns just the root. This
+avoids recursively copying descendants and the growing output vector merely
+to draw the tree; offset accuracy and sampling are unchanged.
+
+On the quadtree example with 27,197 nodes and 11,167 offset points, a diagnostic
+run measured `getNodes()` at 258.938 seconds before flat storage and 0.005 seconds
+afterward. The complete headless example fell from 259.498 to 0.610 seconds.
+Rendering both debug images, with only external viewer launch disabled, completed
+in 0.690 seconds after the change. These are machine-specific single-run
+observations, not the repeatable performance baseline. The 0.05 accuracy budget
+and leaf width were unchanged.
+
 ### Extraction regression budgets
 
 The raw-candidate tests cover zero, inward and outward levels on lines, a
