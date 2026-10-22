@@ -30,6 +30,8 @@ public:
     Quadtree();
     ~Quadtree();
 
+    // C++ callers own the geometry; it must outlive its use by this tree.
+    // Python retains all groups supplied to initialise until the tree is destroyed.
     void initialise(SegmentGroup *segmentgroup, Point center, float width, float height);
     std::vector<Point> getOffset(float offsetValue);
     std::vector<Node> getNodes();

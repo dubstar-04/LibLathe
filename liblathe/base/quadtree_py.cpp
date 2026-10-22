@@ -16,7 +16,9 @@ PYBIND11_MODULE(quadtree, m)
     // bindings to Quadtree class
     py::class_<Quadtree>(m, "Quadtree")
         .def(py::init<>())
-        .def("initialise", &Quadtree::initialise)
+        .def("initialise", &Quadtree::initialise, py::keep_alive<1, 2>(),
+             "Retain source geometry until this tree is destroyed, including "
+             "geometry supplied by earlier initialise calls.")
         .def("getOffset", &Quadtree::getOffset)
         .def("getNodes", &Quadtree::getNodes);
 

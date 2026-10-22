@@ -1,5 +1,7 @@
 import os
+import subprocess
 import sys
+import textwrap
 import unittest
 
 thisFolder = os.path.dirname(os.path.abspath(__file__))
@@ -90,6 +92,51 @@ class test_quadtree(unittest.TestCase):
         root, = self.qt.getNodes()
         self.assertEqual((root.center.X, root.center.Z), (15, -5))
         self.assertEqual((root.width, root.height, root.sdv), (30, 30, 0))
+
+    def test_source_geometry_lifetime(self):
+        script = textwrap.dedent("""
+            import gc
+            import unittest
+            import weakref
+
+            from liblathe.base.point import Point
+            from liblathe.base.quadtree import Quadtree
+            from liblathe.base.segment import Segment
+            from liblathe.base.segmentgroup import SegmentGroup
+
+            check = unittest.TestCase()
+            tree = Quadtree()
+            references = []
+            for width in (2, 3):
+                group = SegmentGroup()
+                group.addSegment(Segment(Point(0, 0), Point(width, 0)))
+                group.addSegment(Segment(Point(width, 0), Point(width, -4)))
+                group.addSegment(Segment(Point(width, -4), Point(0, -4)))
+                references.append(weakref.ref(group))
+                tree.initialise(group, Point(4, 0), 8, 8)
+                expected = [(p.X, p.Z) for p in tree.getOffset(1)]
+                check.assertTrue(expected)
+                del group
+                gc.collect()
+                for reference in references:
+                    check.assertIsNotNone(reference())
+                check.assertEqual(
+                    [(p.X, p.Z) for p in tree.getOffset(1)], expected
+                )
+
+            del tree
+            gc.collect()
+            for reference in references:
+                check.assertIsNone(reference())
+        """)
+        result = subprocess.run(
+            [sys.executable, '-c', script],
+            cwd=parentFolder,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == '__main__':
