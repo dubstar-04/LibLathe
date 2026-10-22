@@ -33,6 +33,10 @@ Outputs must be connected, ordered paths suitable for gcode. Inputs are small
      inside, zero on it, positive outside. Sign uses half-open ray crossings;
      distance and projection use the nearest finite line or arc, including the
      artificial closing edges.
+   - Expand the search root by the offset magnitude plus one leaf-width margin,
+     so its half-open maximum edges do not clip the contour. Keep its lower X
+     bound at the axis (or the profile's X minimum if negative); the start-Z
+     output clip is independent of the root.
    - Subdivide a quadtree where `|distance - offset|` is within the cell's
      half-diagonal, down to 0.2 cell width.
    - Project each leaf centre onto its nearest boundary point and move it
@@ -65,6 +69,14 @@ rectangle corners also keep their connecting segments within `1e-4`.
 These are fixture-specific regression budgets, not a global accuracy guarantee.
 Zero-offset corners can still have larger chord errors at the current cell
 size; broader connectivity and accuracy work remains necessary.
+
+For the rectangular and curved end-face bounds fixtures at offsets 1 and 5,
+samples at endpoints and eighths of each padded-tree raw connecting chord have
+residual at most 0.01. Public simplified chords must stay within 0.02 and within
+the measured reference raw error plus the existing 0.01 RDP tolerance (with
+`1e-4` numerical slack). Raw curved extrema are checked against analytic values;
+simplified extrema may differ by the existing RDP tolerance, rather than being
+required to match a different sampled grid to four decimal places.
 
 Earlier example measurements reported about 550 points and consecutive spacing
 of about 0.15. Those observations did not establish a global error bound or

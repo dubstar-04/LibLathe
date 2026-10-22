@@ -27,6 +27,8 @@ class SegmentGroup;
 class Quadtree
 {
 public:
+    static constexpr float defaultPrecision = 0.2f;
+
     Quadtree();
     ~Quadtree();
 
@@ -47,7 +49,7 @@ private:
     // value to offset the segmentgroup by
     float offset = 0;
     // precision of the quadtree
-    float precision = 0.2;
+    float precision = defaultPrecision;
 
     SegmentGroup *segmentGroup = nullptr;
     bool initialised = false;

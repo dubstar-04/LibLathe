@@ -44,7 +44,7 @@ void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width,
     this->initialised = true;
 
     // set the precision
-    this->precision = 0.2;
+    this->precision = defaultPrecision;
 }
 
 std::vector<Point> Quadtree::getOffset(float offsetValue)

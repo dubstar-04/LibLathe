@@ -107,19 +107,13 @@ SegmentGroup SegmentGroup::offset(float step_over)
         throw std::invalid_argument("Offset must be finite");
     }
 
-    // TODO: investigate:
-    // 1. using a square node - will this affect precision / performance
-    // 2. optimise the size only needs to be slightly bigger than the part + the offset
-    // 3. remove unused nodes
-    // 4. store the points as nodes are being evaluated rather than searching the nodes later
-    // 5. effects of scaling the segment group and quadtree
-
     BoundBox bb = this->boundbox();
-    float height = bb.XLength();
-    float width = bb.ZLength();
-
-    float size = std::max(height, width);
-    Point center = Point(size / 2, bb.ZMin + size / 2);
+    // Pad the half-open root without extending the search past the axis.
+    float padding = std::abs(step_over) + Quadtree::defaultPrecision;
+    float xmin = std::min(0.0f, bb.XMin);
+    float zmin = bb.ZMin - padding;
+    float size = std::max(bb.XMax + padding - xmin, bb.ZLength() + 2 * padding);
+    Point center = Point(xmin + size / 2, zmin + size / 2);
 
     Quadtree qt = Quadtree();
     qt.initialise(this, center, size, size);
