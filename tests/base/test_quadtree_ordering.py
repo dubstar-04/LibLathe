@@ -37,16 +37,27 @@ class TestQuadtreeOrdering(unittest.TestCase):
             result.append([target.X, target.Z])
         return result
 
+    def assert_contour_close(self, actual, expected):
+        self.assertEqual(len(actual), len(expected))
+        for row, (actual_values, expected_values) in enumerate(zip(actual, expected)):
+            self.assertEqual(len(actual_values), len(expected_values))
+            for component, (value, reference) in enumerate(
+                    zip(actual_values, expected_values)):
+                # Float32 snapshots can differ in the last bits across builds.
+                self.assertAlmostEqual(
+                    value, reference, delta=max(1e-7, abs(reference) * 2e-7),
+                    msg=f'Row {row}, component {component}')
+
     def test_ordering_matches_pre_index_contours(self):
         for case in self.cases:
             with self.subTest(profile=case['name'], offset=case['offset']):
                 group, points = self.extract(case)
                 actual = [[point.X, point.Z] for point in points]
-                self.assertEqual(actual, case['expected_points'])
+                self.assert_contour_close(actual, case['expected_points'])
                 self.assertEqual(len(actual), len({tuple(point) for point in actual}))
                 if case['expected_segments'] is not None:
                     result = group.offset(case['offset'])
-                    self.assertEqual(
+                    self.assert_contour_close(
                         [[s.start.X, s.start.Z, s.end.X, s.end.Z, s.bulge]
                          for s in result.getSegments()],
                         case['expected_segments'])
