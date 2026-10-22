@@ -264,6 +264,19 @@ class test_quadtree(unittest.TestCase):
                 self.assertTrue(expected)
                 self.assertEqual(self.coordinates(self.qt.getOffset(offset)), expected)
 
+    def test_start_point_is_refreshed_after_source_changes(self):
+        group = SegmentGroup()
+        group.addSegment(Segment(Point(10, 0), Point(10, -10)))
+        tree = Quadtree()
+        tree.initialise(group, Point(8, -4), 16, 16)
+        self.assertLessEqual(max(p.Z for p in tree.getOffset(1)), 0)
+        group.insertSegment(Segment(Point(0, 2), Point(10, 0)), 0)
+        actual = tree.getOffset(1)
+        self.assertGreater(max(p.Z for p in actual), 1)
+        fresh = Quadtree()
+        fresh.initialise(group, Point(8, -4), 16, 16)
+        self.assertEqual(self.coordinates(actual), self.coordinates(fresh.getOffset(1)))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -66,11 +66,12 @@ std::vector<Point> Quadtree::getOffset(float offsetValue)
     this->offsetBoundaryPoints.clear();
     this->nodes.clear();
     this->offset = offsetValue;
+    this->segmentStart = this->segmentGroup->getStartPoint();
     // start to process the quadtree, populating the offsetBoundaryPoints
     this->conquer(this->basenode);
     // sort the points so they can be used to build a tool path
     std::vector<Point> points =
-        this->sortPoints(segmentGroup->getSegments()[0].start, this->offsetBoundaryPoints);
+        this->sortPoints(this->segmentStart, this->offsetBoundaryPoints);
     this->segmentGroup->validateOffsetContour(points, offsetValue);
     return points;
 }
@@ -110,8 +111,7 @@ void Quadtree::conquer(Node &node)
                 if (this->projectToOffset(seeds[i], value, projectedPoint) &&
                     this->insideNode(projectedPoint, node))
                 {
-                    Point segmentStart = segmentGroup->getSegments()[0].start;
-                    if (projectedPoint.Z <= segmentStart.Z)
+                    if (projectedPoint.Z <= this->segmentStart.Z)
                         this->offsetBoundaryPoints.push_back(projectedPoint);
                 }
             }
@@ -204,7 +204,8 @@ bool Quadtree::nodeCouldContain(float offset, Node &node)
     // get the distance from the node center to a corner of the node
     // Based on pythagoras theorem: A^2 + B^2 = C^2; assumes the node is square
     // This is a quick check and could include false positives
-    float cornerDistance = sqrt(pow(node.width, 2) * 2) * 0.5;
+    constexpr double halfDiagonalFactor = 0.7071067811865475244; // sqrt(2) / 2
+    float cornerDistance = node.width * halfDiagonalFactor;
 
     if (node.sdv - cornerDistance <= offset && node.sdv + cornerDistance >= offset)
     {
@@ -240,6 +241,7 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
                             [](Point first, Point second) { return first.isSame(second); }),
                  points.end());
     std::vector<Point> sorted_points;
+    sorted_points.reserve(points.size());
     int point_count = points.size();
     Point target = datum;
     int closest_index;

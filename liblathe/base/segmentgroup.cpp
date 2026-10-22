@@ -28,6 +28,13 @@ std::vector<Segment> SegmentGroup::getSegments()
     return this->segments;
 }
 
+const Point &SegmentGroup::getStartPoint() const
+{
+    if (this->segments.empty())
+        throw std::invalid_argument("Cannot get start point of empty geometry");
+    return this->segments.front().start;
+}
+
 void SegmentGroup::extend(SegmentGroup segmentgroup)
 {
     // Add segment group to this segmentgroup //

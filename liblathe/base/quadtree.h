@@ -52,6 +52,7 @@ private:
     float offset = 0;
     // precision of the quadtree
     float precision = defaultPrecision;
+    Point segmentStart = Point(0, 0);
 
     SegmentGroup *segmentGroup = nullptr;
     bool initialised = false;

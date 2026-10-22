@@ -116,6 +116,15 @@ class test_segmentGroup(unittest.TestCase):
         self.segmentGroup.extend(self.segmentGroup2)
         self.assertEqual(len(self.segmentGroup.getSegments()), 2)
 
+    def test_getSegments_returns_independent_copies(self):
+        self.segmentGroup.addSegment(self.lineSegment1)
+        expected = self.segmentGroup.getSegments()[0].start.Z
+        segments = self.segmentGroup.getSegments()
+        segments[0].start.Z = expected + 100
+        segments.clear()
+        self.assertEqual(self.segmentGroup.count(), 1)
+        self.assertEqual(self.segmentGroup.getSegments()[0].start.Z, expected)
+
     def test_count(self):
         self.segmentGroup.addSegment(self.lineSegment1)
         count = self.segmentGroup.count()
