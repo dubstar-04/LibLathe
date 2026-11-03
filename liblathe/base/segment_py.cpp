@@ -8,37 +8,39 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(segment, m)
 {
+     // Register the Segment class, geometry properties and operations with Python //
+     using namespace liblathe;
 
-    // optional module docstring
-    m.doc() = "segment Class";
+     // optional module docstring
+     m.doc() = "segment Class";
 
-    // bindings to segment class
-    py::class_<Segment>(m, "Segment")
-        .def(py::init<>())
-        .def(py::init<Point &, Point &>())
-        .def(py::init<Point &, Point &, float>())
-        .def_readwrite("start", &Segment::start)
-        .def_readwrite("end", &Segment::end)
-        .def_readwrite("bulge", &Segment::bulge)
-        .def("getAngle", &Segment::getAngle)
-        .def("setBulge", &Segment::setBulge)
-        .def("getCentrePoint", &Segment::getCentrePoint)
-        .def("getRadius", &Segment::getRadius)
-        .def("getRotation", &Segment::getRotation)
-        .def("Boundbox", &Segment::Boundbox)
-        .def("crossesAxis", &Segment::crossesAxis)
-        .def("getLength", &Segment::getLength)
-        .def("getSagitta", &Segment::getSagitta)
-        .def("getApothem", &Segment::getApothem)
-        .def("getEta", &Segment::getEta)
-        .def("getEpsilon", &Segment::getEpsilon)
-        .def("getPhi", &Segment::getPhi)
-        .def("isSame", &Segment::isSame)
-        .def("intersect", &Segment::intersect, "", py::arg(), py::arg("extend") = false)
-        .def("pointOnSegment", &Segment::pointOnSegment)
-        .def("distanceToPoint", &Segment::distanceToPoint,
-             "Return the distance to the closest point on the finite line or arc.")
-        .def("closestPoint", &Segment::closestPoint,
-             "Return the closest point on the finite line or arc, including endpoints. "
-             "Arc-centre queries and endpoint ties return the start point.");
+     // bindings to segment class
+     py::class_<Segment>(m, "Segment")
+         .def(py::init<>())
+         .def(py::init<Point &, Point &>())
+         .def(py::init<Point &, Point &, float>())
+         .def_readwrite("start", &Segment::start)
+         .def_readwrite("end", &Segment::end)
+         .def_readwrite("bulge", &Segment::bulge)
+         .def("getAngle", &Segment::getAngle)
+         .def("setBulge", &Segment::setBulge)
+         .def("getCentrePoint", &Segment::getCentrePoint)
+         .def("getRadius", &Segment::getRadius)
+         .def("getRotation", &Segment::getRotation)
+         .def("Boundbox", &Segment::Boundbox)
+         .def("crossesAxis", &Segment::crossesAxis)
+         .def("getLength", &Segment::getLength)
+         .def("getSagitta", &Segment::getSagitta)
+         .def("getApothem", &Segment::getApothem)
+         .def("getEta", &Segment::getEta)
+         .def("getEpsilon", &Segment::getEpsilon)
+         .def("getPhi", &Segment::getPhi)
+         .def("isSame", &Segment::isSame)
+         .def("intersect", &Segment::intersect, "", py::arg(), py::arg("extend") = false)
+         .def("pointOnSegment", &Segment::pointOnSegment)
+         .def("distanceToPoint", &Segment::distanceToPoint,
+              "Return the distance to the closest point on the finite line or arc.")
+         .def("closestPoint", &Segment::closestPoint,
+              "Return the closest point on the finite line or arc, including endpoints. "
+              "Arc-centre queries and endpoint ties return the start point.");
 }

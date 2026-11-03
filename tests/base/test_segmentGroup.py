@@ -250,6 +250,49 @@ class test_segmentGroup(unittest.TestCase):
         defeatured_group = sg.defeature(stock, tool, False)
 
         self.assertTrue(defeatured_group.count() > 0)
+        for move in defeatured_group.getSegments():
+            for step in range(41):
+                fraction = step / 40
+                radial = move.start.X + (move.end.X - move.start.X) * fraction
+                axial = move.start.Z + (move.end.Z - move.start.Z) * fraction
+                for edge in tool.getSegments():
+                    for sample in range(11):
+                        along = sample / 10
+                        point = Point(radial + edge.start.X + (edge.end.X - edge.start.X) * along,
+                                      axial + edge.start.Z + (edge.end.Z - edge.start.Z) * along)
+                        self.assertGreater(sg.sdv(point), 0)
+
+    def test_validateToolSweep_rejects_crossing_containment_and_contact(self):
+        part = SegmentGroup()
+        tool = SegmentGroup()
+        for group, vertices in (
+                (part, [(0, 0), (10, 0), (10, -20), (0, -20), (0, 0)]),
+                (tool, [(-0.4, -0.4), (-0.4, 2), (2, 2), (2, -0.4), (-0.4, -0.4)])):
+            for start, end in zip(vertices, vertices[1:]):
+                group.addSegment(Segment(Point(*start), Point(*end)))
+        part.validateToolSweep(tool, Point(13, 3), Point(13, -20))
+        for start, end in (((12, -10), (-3, -10)),
+                           ((5, -10), (5, -10)),
+                           ((10.4, -10), (10.4, -11))):
+            with self.subTest(start=start, end=end):
+                with self.assertRaises(RuntimeError):
+                    part.validateToolSweep(tool, Point(*start), Point(*end))
+
+    def test_isInside_rounded_square_tangent_roundoff(self):
+        vertices = [(8.725, -0.4), (-3.55e-14, -0.4), (-0.4, 1.16e-14),
+                    (-0.4, 8.725), (1.21e-14, 9.125), (8.725, 9.125),
+                    (9.125, 8.725), (9.125, 1.07e-14), (8.725, -0.4)]
+        group = SegmentGroup()
+        for index, (first, last) in enumerate(zip(vertices, vertices[1:])):
+            group.addSegment(Segment(Point(*first), Point(*last),
+                                     0.4142135679721832 if index % 2 else 0))
+        for axial in (-1, -0.43, -0.41, 9.2, 10):
+            with self.subTest(axial=axial):
+                self.assertFalse(group.isInside(Point(0, axial)))
+                self.assertGreater(group.sdv(Point(0, axial)), 0)
+        for axial in (0, 1, 8, 9):
+            with self.subTest(axial=axial):
+                self.assertTrue(group.isInside(Point(0, axial)))
 
     def test_fromPoints(self):
         points = [Point(100, 100), Point(0, 0), Point(100, -100)]

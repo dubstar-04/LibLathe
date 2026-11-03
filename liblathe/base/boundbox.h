@@ -3,18 +3,24 @@
 
 #include "point.h"
 
-class BoundBox
+namespace liblathe
 {
-  public:
-    BoundBox(Point pt1, Point pt2);
-    ~BoundBox() {};
-    float XLength();
-    float ZLength();
 
-    float XMin;
-    float ZMin;
-    float XMax;
-    float ZMax;
-};
+    class BoundBox
+    {
+    public:
+        BoundBox(Point pt1, Point pt2);
+        // Destroy the axis-aligned bounds //
+        ~BoundBox() {};
+        float XLength();
+        float ZLength();
+
+        float XMin;
+        float ZMin;
+        float XMax;
+        float ZMax;
+    };
+
+}
 
 #endif

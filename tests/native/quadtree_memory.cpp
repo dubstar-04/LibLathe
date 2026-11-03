@@ -16,19 +16,24 @@
 
 #include "quadtree.h"
 
+using namespace liblathe;
+
 void require(bool condition, const char *message)
 {
+    // Fail the native diagnostic when an invariant does not hold //
     if (!condition)
         throw std::runtime_error(message);
 }
 
 void checkNode(const Node &node)
 {
+    // Check that a newly constructed node has an initialised distance value //
     require(node.sdv == 0, "Node distance is not initialised");
 }
 
 int main(int argc, char **argv)
 {
+    // Exercise node initialisation and repeated offsets, optionally checking live heap stability //
     Node empty;
     checkNode(empty);
     require(empty.width == 0 && empty.height == 0 && empty.depth == 0,

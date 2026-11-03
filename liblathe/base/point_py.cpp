@@ -8,6 +8,8 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(point, m)
 {
+    // Register the Point class, coordinates and geometry methods with Python //
+    using namespace liblathe;
 
     // optional module docstring
     m.doc() = "Point Class";
