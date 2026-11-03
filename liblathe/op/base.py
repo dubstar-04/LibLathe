@@ -1,7 +1,17 @@
+from copy import copy
+
 from liblathe.base.segmentgroup import SegmentGroup
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
+from liblathe.base.segment import Segment
+from liblathe.gcode.command import Command
 import math
+
+
+def reflect_x_segments(segments):
+    return [Segment(Point(-segment.start.X, segment.start.Z),
+                    Point(-segment.end.X, segment.end.Z), -segment.bulge)
+            for segment in segments]
 
 
 class BaseOP:
@@ -46,6 +56,43 @@ class BaseOP:
 
         if self.tool is None:
             raise Warning("Tool is unset")
+
+        if self.tool.side == "Far":
+            self.tool_paths = []
+            if self.stock is None or self.stock.XMax > 1e-4 or self.stock.XMin >= 0:
+                raise ValueError("Far-side stock must use negative X coordinates")
+            if self.partSegmentGroup.boundbox().XMax > 1e-4:
+                raise ValueError("Far-side part geometry must use negative X coordinates")
+            planning = copy(self)
+            planning.tool_paths = []
+            planning.stock = BoundBox(Point(-self.stock.XMax, self.stock.ZMin),
+                                      Point(-self.stock.XMin, self.stock.ZMax))
+            planning.partSegmentGroup = SegmentGroup()
+            for segment in reflect_x_segments(self.partSegmentGroup.getSegments()):
+                planning.partSegmentGroup.addSegment(segment)
+            planning.tool = copy(self.tool)
+            planning.tool.segmentGroup = SegmentGroup()
+            for segment in reflect_x_segments(self.tool.get_segmentgroup().getSegments()):
+                planning.tool.segmentGroup.addSegment(segment)
+            planning.tool.tool_rotation = 0
+            planning.tool.side = "Near"
+            planning.generatePath()
+            commands = planning.generateGCode()
+            result = []
+            for command in commands:
+                parameters = dict(command.getParams())
+                for name in ("X", "I"):
+                    if name in parameters:
+                        parameters[name] = -parameters[name]
+                movement = {"G2": "G3", "G3": "G2", "G02": "G03", "G03": "G02"}.get(
+                    command.get_movement(), command.get_movement())
+                result.append(Command(movement, parameters))
+            for group in planning.tool_paths:
+                physical = SegmentGroup()
+                for segment in reflect_x_segments(group.getSegments()):
+                    physical.addSegment(segment)
+                self.tool_paths.append(physical)
+            return result
 
         self.generatePath()
         path = self.generateGCode()
