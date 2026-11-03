@@ -22,6 +22,7 @@ class Tool:
 
     Tool shape is stored as a SegmentGroup()
     """
+
     def __init__(self, tool_string=None):
         # tool_string                       # DCMT070204R
         self.shape = None                   # D
@@ -262,7 +263,6 @@ class Tool:
             rotated_segmentGroup.addSegment(Segment(start, end, segment.bulge))
 
         return rotated_segmentGroup
-
 
     def set_segmentgroup_from_string(self):
         """

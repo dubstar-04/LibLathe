@@ -17,7 +17,7 @@
 
 class Point
 {
-public:
+  public:
     Point() {};
     Point(float x, float z);
 

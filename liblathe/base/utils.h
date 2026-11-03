@@ -4,7 +4,7 @@
 
 class Utils
 {
-public:
+  public:
     Utils();
     ~Utils();
 

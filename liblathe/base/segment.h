@@ -10,7 +10,7 @@
 
 class Segment
 {
-public:
+  public:
     Segment() {};
     Segment(Point start, Point end);
     Segment(Point start, Point end, float bulge);
@@ -42,7 +42,7 @@ public:
     // Arc-centre queries and equal-distance endpoints return the start point.
     Point closestPoint(Point point);
 
-private:
+  private:
     friend class SegmentGroup;
     struct ArcGeometry
     {

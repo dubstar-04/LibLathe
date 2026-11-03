@@ -6,8 +6,8 @@ ignore:
   - "tests"
   - "extern"
   - "examples"
-  - "setup.py" 
-  - "publish.py" 
+  - "setup.py"
+  - "publish.py"
 
 coverage:
   precision: 2
@@ -26,7 +26,7 @@ comment:
   layout: "reach,diff,flags,files,footer"
   behavior: default
   require_changes: no
-  
+
   status:
     project: # settings affecting project coverage
       enabled: yes

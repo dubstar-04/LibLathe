@@ -15,6 +15,7 @@ from liblathe.base.segmentgroup import SegmentGroup
 
 class test_tool(unittest.TestCase):
     """Test for tool.py"""
+
     def setUp(self):
         self.tool = Tool()
         self.tool.set_tool_from_string('DCMT070204R')

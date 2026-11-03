@@ -49,7 +49,7 @@ struct PointBucket
 
 class PointGrid
 {
-public:
+  public:
     PointGrid(const std::vector<Point> &points, float precision) : points(points)
     {
         float zmin = points.front().Z;
@@ -85,7 +85,8 @@ public:
     {
         size_t best = points.size();
         float distance = std::numeric_limits<float>::infinity();
-        auto consider = [&](const PointBucket &bucket) {
+        auto consider = [&](const PointBucket &bucket)
+        {
             if (bucket.lowerBound(target) > distance)
                 return;
             for (const size_t index : bucket.indices)
@@ -103,7 +104,8 @@ public:
         const PointCell centre = cellFor(target);
         const size_t budget = cells.size();
         size_t probes = 0;
-        auto visit = [&](int64_t x, int64_t z) {
+        auto visit = [&](int64_t x, int64_t z)
+        {
             if (probes == budget)
                 return false;
             ++probes;
@@ -153,7 +155,7 @@ public:
         return best;
     }
 
-private:
+  private:
     const std::vector<Point> &points;
     std::unordered_map<PointCell, PointBucket, PointCellHash> cells;
     double originX;
@@ -169,21 +171,21 @@ private:
 
     float outsideBound(const Point &target, PointCell centre, int64_t radius) const
     {
-        auto separation = [&](float coordinate, double edge, bool positive) {
+        auto separation = [&](float coordinate, double edge, bool positive)
+        {
             const float infinity = std::numeric_limits<float>::infinity();
             const float boundary = std::nextafter(
                 static_cast<float>(edge + (positive ? -roundingSlack : roundingSlack)),
                 positive ? -infinity : infinity);
             const float gap = std::max(0.0f, positive ? boundary - coordinate
-                                                    : coordinate - boundary);
+                                                      : coordinate - boundary);
             // Match float distance arithmetic, including rounded ties and underflow.
             return std::sqrt(gap * gap);
         };
-        return std::min({
-            separation(target.X, originX + (centre.x - radius) * width, false),
-            separation(target.X, originX + (centre.x + radius + 1) * width, true),
-            separation(target.Z, originZ + (centre.z - radius) * width, false),
-            separation(target.Z, originZ + (centre.z + radius + 1) * width, true)});
+        return std::min({separation(target.X, originX + (centre.x - radius) * width, false),
+                         separation(target.X, originX + (centre.x + radius + 1) * width, true),
+                         separation(target.Z, originZ + (centre.z - radius) * width, false),
+                         separation(target.Z, originZ + (centre.z + radius + 1) * width, true)});
     }
 };
 }
@@ -192,7 +194,9 @@ Quadtree::Quadtree()
 {
 }
 
-Quadtree::~Quadtree() {}
+Quadtree::~Quadtree()
+{
+}
 
 void Quadtree::initialise(SegmentGroup *segmentgroup, Point center, float width, float height)
 {
@@ -311,7 +315,7 @@ void Quadtree::conquer(Node &node, const SegmentGroup::PreparedGeometry &geometr
 }
 
 bool Quadtree::projectToOffset(Point query, float value, Point &point,
-                              const SegmentGroup::PreparedGeometry &geometry)
+                               const SegmentGroup::PreparedGeometry &geometry)
 {
     // Re-evaluate the nearest feature after each signed-distance projection.
     for (int iteration = 0; iteration < 8; ++iteration)
@@ -332,10 +336,10 @@ bool Quadtree::projectToOffset(Point query, float value, Point &point,
                       closest.Z + (double(query.Z) - closest.Z) * scale);
         value = geometry.sdv(point);
         const float magnitude = std::max({1.0f, std::abs(point.X), std::abs(point.Z),
-                                         std::abs(this->offset)});
+                                          std::abs(this->offset)});
         // Arc centres are rounded to five decimals; coordinates are floats.
         const float tolerance = 1e-5f +
-            4 * std::numeric_limits<float>::epsilon() * magnitude;
+                                4 * std::numeric_limits<float>::epsilon() * magnitude;
         if (std::abs(value - this->offset) <= tolerance)
         {
             geometry.closestPoint(point, &onProfile);
@@ -411,7 +415,7 @@ bool Quadtree::insideNode(Point &point, Node &node)
 
     // Rounded child centres can leave gaps between nominally shared edges.
     const float magnitude = std::max({1.0f, std::abs(node.center.X),
-                                     std::abs(node.center.Z), node.width});
+                                      std::abs(node.center.Z), node.width});
     const float tolerance = 4 * std::numeric_limits<float>::epsilon() * magnitude;
     return point.X >= nodeXMin - tolerance && point.X < nodeXMax + tolerance &&
            point.Z >= nodeZMin - tolerance && point.Z < nodeZMax + tolerance;
@@ -422,11 +426,11 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
     for (const auto &point : points)
         if (!std::isfinite(point.X) || !std::isfinite(point.Z))
             throw std::runtime_error(orderingError);
-    std::sort(points.begin(), points.end(), [](const Point &first, const Point &second) {
-        return first.X < second.X || (first.X == second.X && first.Z < second.Z);
-    });
+    std::sort(points.begin(), points.end(), [](const Point &first, const Point &second)
+              { return first.X < second.X || (first.X == second.X && first.Z < second.Z); });
     points.erase(std::unique(points.begin(), points.end(),
-                            [](Point first, Point second) { return first.isSame(second); }),
+                             [](Point first, Point second)
+                             { return first.isSame(second); }),
                  points.end());
     std::vector<Point> sorted_points;
     sorted_points.reserve(points.size());
@@ -437,11 +441,12 @@ std::vector<Point> Quadtree::sortPoints(Point datum, std::vector<Point> &points)
     {
         // Start at the retained front plane, not at a closer interior groove.
         auto start = std::max_element(points.begin(), points.end(),
-            [&datum](const Point &first, const Point &second) {
-                if (first.Z != second.Z)
-                    return first.Z < second.Z;
-                return datum.distanceTo(first) > datum.distanceTo(second);
-            });
+                                      [&datum](const Point &first, const Point &second)
+                                      {
+                                          if (first.Z != second.Z)
+                                              return first.Z < second.Z;
+                                          return datum.distanceTo(first) > datum.distanceTo(second);
+                                      });
         target = *start;
     }
 

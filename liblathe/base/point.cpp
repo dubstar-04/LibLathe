@@ -7,7 +7,9 @@ Point::Point(float x, float z) : X(x), Z(z)
 {
 }
 
-Point::~Point() {}
+Point::~Point()
+{
+}
 
 float Point::distanceTo(Point pt)
 {

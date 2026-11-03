@@ -440,7 +440,7 @@ Segment::ArcGeometry Segment::prepareArc()
         arc.radius = this->getRadius();
         arc.direction = this->bulge > 0 ? -1 : 1;
         arc.startAngle = std::atan2(double(start.Z) - arc.centre.Z,
-                                   double(start.X) - arc.centre.X);
+                                    double(start.X) - arc.centre.X);
         arc.sweep = 4 * std::atan(std::abs(double(this->bulge)));
     }
     return arc;

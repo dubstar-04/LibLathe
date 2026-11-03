@@ -13,6 +13,7 @@ from liblathe.base.point import Point
 
 class test_point(unittest.TestCase):
     """Test for point.py"""
+
     def setUp(self):
         self.pt1 = Point(0, 0)
         self.pt2 = Point(100, 100)
@@ -58,7 +59,6 @@ class test_point(unittest.TestCase):
         angle = self.pt1.angleTo(Point(-100, -100))
         self.assertAlmostEqual(angle, math.radians(135), 5)
 
-
     def test_nearest(self):
         pts = [self.pt2, self.pt3]
         nearest = self.pt1.nearest(pts)
@@ -76,51 +76,51 @@ class test_point(unittest.TestCase):
     def test_sub(self):
         sub = self.pt4.sub(self.pt2)
         self.assertEqual(sub.X, self.pt2.X)
-        #self.assertEqual(sub.Y, self.pt2.Y)
+        # self.assertEqual(sub.Y, self.pt2.Y)
         self.assertEqual(sub.Z, self.pt2.Z)
 
         subNegative = self.pt7.add(self.pt7)
         self.assertEqual(subNegative.X, self.pt8.X)
-        #self.assertEqual(subNegative.Y, self.pt8.Y)
+        # self.assertEqual(subNegative.Y, self.pt8.Y)
         self.assertEqual(subNegative.Z, self.pt8.Z)
 
     def test_add(self):
         add = self.pt2.add(self.pt2)
         self.assertEqual(add.X, self.pt4.X)
-        #self.assertEqual(add.Y, self.pt4.Y)
+        # self.assertEqual(add.Y, self.pt4.Y)
         self.assertEqual(add.Z, self.pt4.Z)
 
         addNegative = self.pt5.add(self.pt2)
         self.assertEqual(addNegative.X, self.pt6.X)
-        #self.assertEqual(addNegative.Y, self.pt6.Y)
+        # self.assertEqual(addNegative.Y, self.pt6.Y)
         self.assertEqual(addNegative.Z, self.pt6.Z)
 
     def test_multiply(self):
         multiply = self.pt2.multiply(0)
         self.assertEqual(multiply.X, self.pt1.X)
-        #self.assertEqual(multiply.Y, self.pt1.Y)
+        # self.assertEqual(multiply.Y, self.pt1.Y)
         self.assertEqual(multiply.Z, self.pt1.Z)
 
         multiplyNegative = self.pt7.multiply(1)
         self.assertEqual(multiplyNegative.X, self.pt7.X)
-        #self.assertEqual(multiplyNegative.Y, self.pt7.Y)
+        # self.assertEqual(multiplyNegative.Y, self.pt7.Y)
         self.assertEqual(multiplyNegative.Z, self.pt7.Z)
 
     def test_lerp(self):
         lerp = self.pt1.lerp(self.pt2, 0.5)
         self.assertEqual(lerp.X, 50)
-        #self.assertEqual(lerp.Y, 50)
+        # self.assertEqual(lerp.Y, 50)
         self.assertEqual(lerp.Z, 50)
 
     def test_normaliseTo(self):
         normal = self.pt1.normaliseTo(Point(100, 100))
         self.assertAlmostEqual(normal.X, 0.7071067811865475, 5)
-        #self.assertEqual(normal.Y, 0)
+        # self.assertEqual(normal.Y, 0)
         self.assertAlmostEqual(normal.Z, 0.7071067811865475, 5)
 
         normal = self.pt1.normaliseTo(self.pt1)
         self.assertEqual(normal.X, 0)
-        #self.assertEqual(normal.Y, 0)
+        # self.assertEqual(normal.Y, 0)
         self.assertEqual(normal.Z, 0)
 
     def test_rotate(self):

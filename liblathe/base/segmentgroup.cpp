@@ -9,68 +9,70 @@
 
 namespace
 {
-    BoundBox intersectionBounds(Segment segment)
+BoundBox intersectionBounds(Segment segment)
+{
+    BoundBox bounds = segment.Boundbox();
+    const float scale = std::max({1.0f, std::abs(bounds.XMin), std::abs(bounds.XMax),
+                                  std::abs(bounds.ZMin), std::abs(bounds.ZMax)});
+    // The arc narrow phase rounds radial membership to two decimals.
+    const float padding = 1e-4f + (segment.bulge != 0 ? 0.01f : 0.0f) +
+                          4 * std::numeric_limits<float>::epsilon() * scale;
+    bounds.XMin -= padding;
+    bounds.XMax += padding;
+    bounds.ZMin -= padding;
+    bounds.ZMax += padding;
+    return bounds;
+}
+
+struct IntersectionSegment
+{
+    Segment segment;
+    BoundBox bounds;
+    explicit IntersectionSegment(Segment source)
+        : segment(source), bounds(intersectionBounds(source))
     {
-        BoundBox bounds = segment.Boundbox();
-        const float scale = std::max({1.0f, std::abs(bounds.XMin), std::abs(bounds.XMax),
-                                      std::abs(bounds.ZMin), std::abs(bounds.ZMax)});
-        // The arc narrow phase rounds radial membership to two decimals.
-        const float padding = 1e-4f + (segment.bulge != 0 ? 0.01f : 0.0f) +
-                              4 * std::numeric_limits<float>::epsilon() * scale;
-        bounds.XMin -= padding;
-        bounds.XMax += padding;
-        bounds.ZMin -= padding;
-        bounds.ZMax += padding;
-        return bounds;
     }
+};
 
-    struct IntersectionSegment
-    {
-        Segment segment;
-        BoundBox bounds;
-        explicit IntersectionSegment(Segment source)
-            : segment(source), bounds(intersectionBounds(source)) {}
-    };
+std::vector<IntersectionSegment> prepareIntersections(const std::vector<Segment> &segments)
+{
+    std::vector<IntersectionSegment> prepared;
+    prepared.reserve(segments.size());
+    for (const auto &segment : segments)
+        prepared.emplace_back(segment);
+    return prepared;
+}
 
-    std::vector<IntersectionSegment> prepareIntersections(const std::vector<Segment> &segments)
-    {
-        std::vector<IntersectionSegment> prepared;
-        prepared.reserve(segments.size());
-        for (const auto &segment : segments)
-            prepared.emplace_back(segment);
-        return prepared;
-    }
+bool boundsOverlap(const BoundBox &first, const BoundBox &second)
+{
+    return !(first.XMax < second.XMin || first.XMin > second.XMax ||
+             first.ZMax < second.ZMin || first.ZMin > second.ZMax);
+}
 
-    bool boundsOverlap(const BoundBox &first, const BoundBox &second)
+bool intersectsAt(const std::vector<IntersectionSegment> &part,
+                  const std::vector<IntersectionSegment> &tool, const Point &position)
+{
+    for (const auto &edge : tool)
     {
-        return !(first.XMax < second.XMin || first.XMin > second.XMax ||
-                 first.ZMax < second.ZMin || first.ZMin > second.ZMax);
-    }
-
-    bool intersectsAt(const std::vector<IntersectionSegment> &part,
-                      const std::vector<IntersectionSegment> &tool, const Point &position)
-    {
-        for (const auto &edge : tool)
+        BoundBox bounds = edge.bounds;
+        bounds.XMin += position.X;
+        bounds.XMax += position.X;
+        bounds.ZMin += position.Z;
+        bounds.ZMax += position.Z;
+        for (const auto &target : part)
         {
-            BoundBox bounds = edge.bounds;
-            bounds.XMin += position.X;
-            bounds.XMax += position.X;
-            bounds.ZMin += position.Z;
-            bounds.ZMax += position.Z;
-            for (const auto &target : part)
-            {
-                if (!boundsOverlap(bounds, target.bounds))
-                    continue;
-                Segment translated(
-                    Point(edge.segment.start.X + position.X, edge.segment.start.Z + position.Z),
-                    Point(edge.segment.end.X + position.X, edge.segment.end.Z + position.Z),
-                    edge.segment.bulge);
-                if (!translated.intersect(target.segment, false).empty())
-                    return true;
-            }
+            if (!boundsOverlap(bounds, target.bounds))
+                continue;
+            Segment translated(
+                Point(edge.segment.start.X + position.X, edge.segment.start.Z + position.Z),
+                Point(edge.segment.end.X + position.X, edge.segment.end.Z + position.Z),
+                edge.segment.bulge);
+            if (!translated.intersect(target.segment, false).empty())
+                return true;
         }
-        return false;
     }
+    return false;
+}
 }
 
 SegmentGroup::SegmentGroup()

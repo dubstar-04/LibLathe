@@ -27,7 +27,7 @@ class test_OffsetAccuracy(unittest.TestCase):
                    bounds.ZLength() + 2 * padding)
         tree = Quadtree()
         tree.initialise(group, Point(xmin + size / 2,
-                                    bounds.ZMin - padding + size / 2),
+                                     bounds.ZMin - padding + size / 2),
                         size, size)
         return tree.getOffset(offset)
 

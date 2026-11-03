@@ -12,6 +12,7 @@ from liblathe.gcode.command import Command
 
 class test_command(unittest.TestCase):
     """Test for command.py"""
+
     def setUp(self):
         self.params = {'X': -20, 'Y': 0, 'Z': 6, 'F': 10}
 

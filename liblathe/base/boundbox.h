@@ -5,7 +5,7 @@
 
 class BoundBox
 {
-public:
+  public:
     BoundBox(Point pt1, Point pt2);
     ~BoundBox() {};
     float XLength();

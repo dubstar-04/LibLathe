@@ -13,6 +13,7 @@ from liblathe.base.boundbox import BoundBox
 
 class test_boundbox(unittest.TestCase):
     """Test for boundbox.py"""
+
     def setUp(self):
         self.pt1 = Point(0, 0)
         self.pt2 = Point(100, 100)

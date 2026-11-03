@@ -15,6 +15,7 @@ from liblathe.base.boundbox import BoundBox
 
 class test_segmentGroup(unittest.TestCase):
     """Test for segmentgroup.py"""
+
     def setUp(self):
         self.segmentGroup = SegmentGroup()
         self.segmentGroup2 = SegmentGroup()
@@ -321,7 +322,6 @@ class test_segmentGroup(unittest.TestCase):
         self.assertFalse(sg.isInside(Point(10, 10)))
         self.assertFalse(sg.isInside(Point(16, -10)))
         self.assertFalse(sg.isInside(Point(10, -30)))
-
 
 
 if __name__ == '__main__':

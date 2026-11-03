@@ -16,8 +16,12 @@ struct Node
     int depth = 0;
     float sdv = 0;
     bool distanceSigned = true;
-    Node(Point center, float width, float height, int depth) : center(center), width(width), height(height), depth(depth) {}
-    Node() {}
+    Node(Point center, float width, float height, int depth) : center(center), width(width), height(height), depth(depth)
+    {
+    }
+    Node()
+    {
+    }
 };
 
 // forward declaration for segment group
@@ -25,7 +29,7 @@ class SegmentGroup;
 
 class Quadtree
 {
-public:
+  public:
     static constexpr float defaultPrecision = 0.05f;
 
     Quadtree();
@@ -49,7 +53,7 @@ public:
     // Deferred signs are resolved against the geometry from the latest extraction.
     std::vector<Node> getNodes();
 
-private:
+  private:
     friend class SegmentGroup;
     // value to offset the segmentgroup by
     float offset = 0;

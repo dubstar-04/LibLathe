@@ -67,7 +67,7 @@ class test_ProfileOP(unittest.TestCase):
         self.op.addPartSegments(partSegments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
-        #tool.set_rotation(45)
+        # tool.set_rotation(45)
         self.op.add_tool(tool)
 
     def test_getGCode(self):

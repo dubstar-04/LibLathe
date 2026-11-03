@@ -12,6 +12,7 @@ sys.path.append(parentFolder)
 from liblathe.base.point import Point
 from liblathe.base.boundbox import BoundBox
 
+
 class Debug:
 
     def draw(self, segmentgroups):
@@ -45,42 +46,41 @@ class Debug:
 
         return img
 
-
     def drawSegmentGroup(self, img, segmentgroup, offset, scale):
 
-            colour = self.get_random_colour()
-            lineWidth = 3
+        colour = self.get_random_colour()
+        lineWidth = 3
 
-            for seg in segmentgroup.getSegments():
-                if seg.bulge != 0:
-                    radius = seg.getRadius()
-                    center = seg.getCentrePoint()
+        for seg in segmentgroup.getSegments():
+            if seg.bulge != 0:
+                radius = seg.getRadius()
+                center = seg.getCentrePoint()
 
-                    z = (center.Z - radius + offset) * scale
-                    z1 = (center.Z + radius + offset) * scale
-                    x = (center.X - radius) * scale
-                    x1 = (center.X + radius) * scale
+                z = (center.Z - radius + offset) * scale
+                z1 = (center.Z + radius + offset) * scale
+                x = (center.X - radius) * scale
+                x1 = (center.X + radius) * scale
 
-                    shape = [(z, x), (z1, x1)]
+                shape = [(z, x), (z1, x1)]
 
-                    start_point = Point(seg.start.Z, seg.start.X)
-                    end_point = Point(seg.end.Z, seg.end.X)
-                    center_point = Point(center.Z, center.X)
+                start_point = Point(seg.start.Z, seg.start.X)
+                end_point = Point(seg.end.Z, seg.end.X)
+                center_point = Point(center.Z, center.X)
 
-                    dx = start_point.X - center_point.X
-                    dz = start_point.Z - center_point.Z
-                    start_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
+                dx = start_point.X - center_point.X
+                dz = start_point.Z - center_point.Z
+                start_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
 
-                    dx = end_point.X - center_point.X
-                    dz = end_point.Z - center_point.Z
-                    end_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
-                    if seg.bulge > 0:
-                        img.arc(shape, start=start_angle, end=end_angle, fill=colour, width=lineWidth)
-                    if seg.bulge < 0:
-                        img.arc(shape, start=end_angle, end=start_angle, fill=colour, width=lineWidth)
-                else:
-                    img.line([(seg.start.Z + offset) * scale, seg.start.X * scale, (seg.end.Z + offset) * scale, seg.end.X * scale], fill=colour, width=lineWidth)
-
+                dx = end_point.X - center_point.X
+                dz = end_point.Z - center_point.Z
+                end_angle = (math.degrees(math.atan2(dz, dx)) + 360) % 360
+                if seg.bulge > 0:
+                    img.arc(shape, start=start_angle, end=end_angle, fill=colour, width=lineWidth)
+                if seg.bulge < 0:
+                    img.arc(shape, start=end_angle, end=start_angle, fill=colour, width=lineWidth)
+            else:
+                img.line([(seg.start.Z + offset) * scale, seg.start.X * scale, (seg.end.Z + offset)
+                         * scale, seg.end.X * scale], fill=colour, width=lineWidth)
 
     def drawQuadtree(self, nodes, segmentGroup):
 
@@ -91,7 +91,7 @@ class Debug:
         scale = 50
 
         # creating new Image object
-        img = Image.new("RGB", (int(width*scale), int(height*scale)))
+        img = Image.new("RGB", (int(width * scale), int(height * scale)))
 
         # create rectangle image
         img1 = ImageDraw.Draw(img)
@@ -102,10 +102,9 @@ class Debug:
 
         for idx, node in enumerate(nodes):
             x = int((node.center.Z - node.width / 2 + image_offset) * scale)
-            x1 = int((node.center.Z + node.width / 2 +  image_offset) * scale)
+            x1 = int((node.center.Z + node.width / 2 + image_offset) * scale)
             y = int((node.center.X - node.height / 2) * scale)
             y1 = int((node.center.X + node.height / 2) * scale)
-
 
             shape = (x, y, x1, y1)
             color = "red" if node.sdv < 0 else "green"

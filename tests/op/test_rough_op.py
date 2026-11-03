@@ -78,7 +78,7 @@ class test_RoughOP(unittest.TestCase):
 
         for command in gcode:
 
-            #print(command.get_movement(), command.getParams())
+            # print(command.get_movement(), command.getParams())
 
             # check the command is a liblathe.command.Command
             self.assertTrue(isinstance(command, Command))

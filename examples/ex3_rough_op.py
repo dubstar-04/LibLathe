@@ -21,11 +21,11 @@ from liblathe.tool.tool import Tool
 
 # Define Part Geometry
 partSegments = []
-partSegments.append(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
-partSegments.append(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
-partSegments.append(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
-partSegments.append(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
-partSegments.append(Segment(Point(14, -15) ,Point(0, 0), -0.3))
+partSegments.append(Segment(Point(0.0, -100.0), Point(27.5, -100.0), 0.000000))
+partSegments.append(Segment(Point(27.5, -100.0), Point(27.5, -85), 0.000000))
+partSegments.append(Segment(Point(27.5, -85), Point(14, -75), 0.000000))
+partSegments.append(Segment(Point(14, -75), Point(14, -15), 0.000000))
+partSegments.append(Segment(Point(14, -15), Point(0, 0), -0.3))
 
 # Define stock bounds
 stockPt1 = Point(0, -105)

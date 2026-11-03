@@ -11,7 +11,7 @@
 
 class SegmentGroup
 {
-public:
+  public:
     static constexpr float offsetTolerance = 0.05f;
 
     SegmentGroup();
@@ -49,7 +49,7 @@ public:
     // If supplied, onProfile distinguishes original from artificial edges.
     Point closestPoint(Point point, bool *onProfile = nullptr);
 
-private:
+  private:
     friend class Quadtree;
     struct PreparedSegment
     {

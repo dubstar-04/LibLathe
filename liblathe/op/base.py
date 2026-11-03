@@ -38,8 +38,8 @@ class BaseOP:
     def getParams(self):
         """Return operations parameters"""
         return {'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
-            'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
-            'vfeed': self.vfeed, 'clearance': self.clearance}
+                'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
+                'vfeed': self.vfeed, 'clearance': self.clearance}
 
     def getGCode(self):
         """Base function for all turning operations"""

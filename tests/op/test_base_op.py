@@ -15,8 +15,10 @@ class test_BaseOP(unittest.TestCase):
 
     def setUp(self):
         self.baseop = BaseOP()
-        self.setProps = {'allow_grooving': False, 'step_over': 1, 'finish_passes': 1, 'stock_to_leave': 0.25, 'hfeed': 10, 'vfeed': 10, 'clearance': 4}
-        self.getProps = {'allow_grooving': False, 'step_over': 1.5, 'finish_passes': 1, 'stock_to_leave': 0, 'hfeed': 100, 'vfeed': 50, 'clearance': 3}
+        self.setProps = {'allow_grooving': False, 'step_over': 1, 'finish_passes': 1,
+                         'stock_to_leave': 0.25, 'hfeed': 10, 'vfeed': 10, 'clearance': 4}
+        self.getProps = {'allow_grooving': False, 'step_over': 1.5, 'finish_passes': 1,
+                         'stock_to_leave': 0, 'hfeed': 100, 'vfeed': 50, 'clearance': 3}
 
     def test_setParams(self):
         self.baseop.setParams(self.setProps)
