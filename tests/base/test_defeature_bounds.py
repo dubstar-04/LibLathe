@@ -132,6 +132,26 @@ class TestDefeatureBounds(unittest.TestCase):
             self.assertEqual(self.coordinates(source.defeature(stock, curved, grooving)),
                              self.coordinates(source.defeature(stock, linear, grooving)))
 
+    def test_defeature_search_reaches_tool_origin_clearance(self):
+        source = self.profile([(0, 0), (10, 0), (10, -18), (0, -18)])
+        stock = BoundBox(Point(0, 2), Point(12, -20))
+        original_source = self.coordinates(source)
+        for reference_x in (0, 0.4, 1.0):
+            tool = self.profile([(radial - reference_x, axial) for radial, axial in
+                                 ((0, -1), (0, 1), (2, 1), (2, -1), (0, -1))])
+            original_tool = self.coordinates(tool)
+            with self.subTest(reference_x=reference_x):
+                result = source.defeature(stock, tool, False)
+                cuts = [segment for segment in result.getSegments()
+                        if abs(segment.start.X - segment.end.X) < 0.02
+                        and abs(segment.start.Z - segment.end.Z) > 5]
+                self.assertTrue(cuts)
+                for segment in cuts:
+                    self.assertAlmostEqual(segment.start.X, 10 + reference_x, delta=0.02)
+                    self.assertAlmostEqual(segment.end.X, 10 + reference_x, delta=0.02)
+                self.assertEqual(self.coordinates(source), original_source)
+                self.assertEqual(self.coordinates(tool), original_tool)
+
 
 if __name__ == '__main__':
     unittest.main()
