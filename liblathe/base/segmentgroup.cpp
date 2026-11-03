@@ -291,6 +291,8 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
     // Preserve the chord footprint used by the previous tool translation.
     for (const auto &segment : tool.segments)
         toolEdges.emplace_back(Segment(segment.start, segment.end));
+    // Extra radial search distance required for tool compensation when geometry extends into local -X.
+    const float radialClearance = std::max(0.0f, -tool.boundbox().XMin);
     Point start = Point(0, partBounds.ZMax);
 
     if (start.X > 0)
@@ -323,7 +325,8 @@ SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool all
             if (pts.size() > 0)
             {
                 float x_pos = pts[0].X - resolution;
-                while (x_pos < (pts[0].X + resolution))
+                const float x_limit = pts[0].X + resolution + radialClearance;
+                while (x_pos < x_limit)
                 {
                     Point iteration_position = Point(x_pos, z_pos);
                     if (!intersectsAt(part, toolEdges, iteration_position))
