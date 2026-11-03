@@ -9,68 +9,68 @@
 
 namespace
 {
-BoundBox intersectionBounds(Segment segment)
-{
-    BoundBox bounds = segment.Boundbox();
-    const float scale = std::max({1.0f, std::abs(bounds.XMin), std::abs(bounds.XMax),
-                                 std::abs(bounds.ZMin), std::abs(bounds.ZMax)});
-    // The arc narrow phase rounds radial membership to two decimals.
-    const float padding = 1e-4f + (segment.bulge != 0 ? 0.01f : 0.0f) +
-                          4 * std::numeric_limits<float>::epsilon() * scale;
-    bounds.XMin -= padding;
-    bounds.XMax += padding;
-    bounds.ZMin -= padding;
-    bounds.ZMax += padding;
-    return bounds;
-}
-
-struct IntersectionSegment
-{
-    Segment segment;
-    BoundBox bounds;
-    explicit IntersectionSegment(Segment source)
-        : segment(source), bounds(intersectionBounds(source)) {}
-};
-
-std::vector<IntersectionSegment> prepareIntersections(const std::vector<Segment> &segments)
-{
-    std::vector<IntersectionSegment> prepared;
-    prepared.reserve(segments.size());
-    for (const auto &segment : segments)
-        prepared.emplace_back(segment);
-    return prepared;
-}
-
-bool boundsOverlap(const BoundBox &first, const BoundBox &second)
-{
-    return !(first.XMax < second.XMin || first.XMin > second.XMax ||
-             first.ZMax < second.ZMin || first.ZMin > second.ZMax);
-}
-
-bool intersectsAt(const std::vector<IntersectionSegment> &part,
-                  const std::vector<IntersectionSegment> &tool, const Point &position)
-{
-    for (const auto &edge : tool)
+    BoundBox intersectionBounds(Segment segment)
     {
-        BoundBox bounds = edge.bounds;
-        bounds.XMin += position.X;
-        bounds.XMax += position.X;
-        bounds.ZMin += position.Z;
-        bounds.ZMax += position.Z;
-        for (const auto &target : part)
-        {
-            if (!boundsOverlap(bounds, target.bounds))
-                continue;
-            Segment translated(
-                Point(edge.segment.start.X + position.X, edge.segment.start.Z + position.Z),
-                Point(edge.segment.end.X + position.X, edge.segment.end.Z + position.Z),
-                edge.segment.bulge);
-            if (!translated.intersect(target.segment, false).empty())
-                return true;
-        }
+        BoundBox bounds = segment.Boundbox();
+        const float scale = std::max({1.0f, std::abs(bounds.XMin), std::abs(bounds.XMax),
+                                      std::abs(bounds.ZMin), std::abs(bounds.ZMax)});
+        // The arc narrow phase rounds radial membership to two decimals.
+        const float padding = 1e-4f + (segment.bulge != 0 ? 0.01f : 0.0f) +
+                              4 * std::numeric_limits<float>::epsilon() * scale;
+        bounds.XMin -= padding;
+        bounds.XMax += padding;
+        bounds.ZMin -= padding;
+        bounds.ZMax += padding;
+        return bounds;
     }
-    return false;
-}
+
+    struct IntersectionSegment
+    {
+        Segment segment;
+        BoundBox bounds;
+        explicit IntersectionSegment(Segment source)
+            : segment(source), bounds(intersectionBounds(source)) {}
+    };
+
+    std::vector<IntersectionSegment> prepareIntersections(const std::vector<Segment> &segments)
+    {
+        std::vector<IntersectionSegment> prepared;
+        prepared.reserve(segments.size());
+        for (const auto &segment : segments)
+            prepared.emplace_back(segment);
+        return prepared;
+    }
+
+    bool boundsOverlap(const BoundBox &first, const BoundBox &second)
+    {
+        return !(first.XMax < second.XMin || first.XMin > second.XMax ||
+                 first.ZMax < second.ZMin || first.ZMin > second.ZMax);
+    }
+
+    bool intersectsAt(const std::vector<IntersectionSegment> &part,
+                      const std::vector<IntersectionSegment> &tool, const Point &position)
+    {
+        for (const auto &edge : tool)
+        {
+            BoundBox bounds = edge.bounds;
+            bounds.XMin += position.X;
+            bounds.XMax += position.X;
+            bounds.ZMin += position.Z;
+            bounds.ZMax += position.Z;
+            for (const auto &target : part)
+            {
+                if (!boundsOverlap(bounds, target.bounds))
+                    continue;
+                Segment translated(
+                    Point(edge.segment.start.X + position.X, edge.segment.start.Z + position.Z),
+                    Point(edge.segment.end.X + position.X, edge.segment.end.Z + position.Z),
+                    edge.segment.bulge);
+                if (!translated.intersect(target.segment, false).empty())
+                    return true;
+            }
+        }
+        return false;
+    }
 }
 
 SegmentGroup::SegmentGroup()
@@ -181,7 +181,8 @@ SegmentGroup SegmentGroup::offset(float step_over)
     qt.initialise(this, center, size, size);
     std::vector<Point> offset = qt.getOffset(step_over);
     offset.erase(std::unique(offset.begin(), offset.end(),
-                             [](Point first, Point second) { return first.isSame(second); }),
+                             [](Point first, Point second)
+                             { return first.isSame(second); }),
                  offset.end());
     if (offset.empty())
     {
@@ -215,7 +216,7 @@ void SegmentGroup::PreparedGeometry::validateContour(
         for (const Point &point : points)
         {
             const double magnitude = std::max({1.0, std::abs(double(point.X)),
-                                              std::abs(double(point.Z)), std::abs(double(offset))});
+                                               std::abs(double(point.Z)), std::abs(double(offset))});
             const double numerical = 1e-5 + 4 * std::numeric_limits<float>::epsilon() * magnitude;
             if (std::abs(offset) <= numerical)
                 continue;
@@ -250,7 +251,7 @@ void SegmentGroup::PreparedGeometry::validateChord(Point start, Point end, float
     Point midpoint = start.mid(end);
     const double residual = std::abs(double(this->sdv(midpoint)) - offset);
     const double magnitude = std::max({1.0, std::abs(double(midpoint.X)),
-                                      std::abs(double(midpoint.Z)), std::abs(double(offset))});
+                                       std::abs(double(midpoint.Z)), std::abs(double(offset))});
     const double numerical = 1e-5 + 4 * std::numeric_limits<float>::epsilon() * magnitude;
     if (residual > offsetTolerance)
         throw std::runtime_error(
@@ -477,8 +478,7 @@ std::array<Segment, 3> SegmentGroup::axisClosure()
     return {
         Segment(Point(0, start.Z), start),
         Segment(end, Point(0, end.Z)),
-        Segment(Point(0, end.Z), Point(0, start.Z))
-    };
+        Segment(Point(0, end.Z), Point(0, start.Z))};
 }
 
 Point SegmentGroup::closestPoint(Point point, bool *onProfile)
@@ -506,7 +506,8 @@ Point SegmentGroup::PreparedGeometry::closestPoint(Point point, bool *onProfile)
     Point closest = this->boundary.front().segment.start;
     double closestDistance = std::numeric_limits<double>::infinity();
     bool closestOnProfile = true;
-    auto consider = [&](const PreparedSegment &prepared, bool original) {
+    auto consider = [&](const PreparedSegment &prepared, bool original)
+    {
         Point pnt = prepared.segment.closestPointPrepared(point, prepared.arc);
         if (!std::isfinite(pnt.X) || !std::isfinite(pnt.Z))
             throw std::runtime_error("Boundary closest point is not finite");
@@ -570,7 +571,7 @@ SegmentGroup::PreparedSegment::PreparedSegment(Segment source)
     for (size_t i = 1; i < count; ++i)
     {
         const double middle = arc.startAngle + arc.direction *
-                              (breaks[i - 1].first + breaks[i].first) / 2;
+                                                   (breaks[i - 1].first + breaks[i].first) / 2;
         intervals[intervalCount++] = {
             breaks[i - 1].second, breaks[i].second, std::sin(middle) > 0};
     }
@@ -607,7 +608,8 @@ int SegmentGroup::PreparedSegment::crossings(const Point &point) const
     const double direction = arc.direction;
     const double sweep = arc.sweep;
     const double startAngle = arc.startAngle;
-    auto progress = [&](double angle) {
+    auto progress = [&](double angle)
+    {
         return std::fmod(direction * (angle - startAngle) + 2 * pi, 2 * pi);
     };
     const double px = double(point.X) - centre.X;
