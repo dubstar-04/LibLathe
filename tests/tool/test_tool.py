@@ -9,6 +9,7 @@ sys.path.append(parentFolder)
 
 from liblathe.tool.tool import Tool
 from liblathe.tool.tool import ToolOri
+from liblathe.tool.tool import ToolSide
 
 from liblathe.base.segmentgroup import SegmentGroup
 
@@ -38,6 +39,15 @@ class test_tool(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             Tool('xyz')
+
+    def test_side_requires_enum(self):
+        self.assertIs(self.tool.side, ToolSide.NEAR)
+        self.tool.side = ToolSide.FAR
+        self.assertIs(self.tool.side, ToolSide.FAR)
+        for value in ("Near", "Far", "Rear", None, 1, ToolOri.X):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.tool.side = value
+        self.assertIs(self.tool.side, ToolSide.FAR)
 
     def test_getToolShape(self):
         shape = self.tool.getToolShape()

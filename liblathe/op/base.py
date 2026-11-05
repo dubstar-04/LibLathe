@@ -5,6 +5,7 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.gcode.command import Command
+from liblathe.tool.tool import ToolSide
 import math
 
 
@@ -57,7 +58,7 @@ class BaseOP:
         if self.tool is None:
             raise Warning("Tool is unset")
 
-        if self.tool.side == "Far":
+        if self.tool.side == ToolSide.FAR:
             self.tool_paths = []
             if self.stock is None or self.stock.XMax > 1e-4 or self.stock.XMin >= 0:
                 raise ValueError("Far-side stock must use negative X coordinates")
@@ -75,7 +76,7 @@ class BaseOP:
             for segment in reflect_x_segments(self.tool.get_segmentgroup().getSegments()):
                 planning.tool.segmentGroup.addSegment(segment)
             planning.tool.tool_rotation = 0
-            planning.tool.side = "Near"
+            planning.tool.side = ToolSide.NEAR
             planning.generatePath()
             commands = planning.generateGCode()
             result = []

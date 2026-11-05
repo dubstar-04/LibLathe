@@ -105,7 +105,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approa
 
 ## Spindle Side
 
-`Tool.side` accepts `"Near"` (default, positive X) or `"Far"` (negative X).
+`Tool.side` requires a `ToolSide` enumeration member from
+`liblathe.tool.tool`: `ToolSide.NEAR` (default, positive X) or
+`ToolSide.FAR` (negative X). Strings are rejected. This development API
+requires an updated build; an older package reporting 0.0.8 may lack the enum.
 Supply the tool outline in its actual physical orientation. For Far, supply
 negative-X part and stock geometry too; positive-X stock or part inputs are
 rejected. `BaseOP.getGCode()` plans on reflected copies of all three inputs,
@@ -113,10 +116,31 @@ then returns physical signed commands and `tool_paths`. Reflection reverses
 segment bulges, G2/G3 and I offsets, including rapid and retract X positions.
 Original inputs are not modified, and near-side behavior is unchanged.
 
+The returned Far-side commands remain negative X. X positions and I arc-centre
+offsets are negated; G2/G3 are swapped. Z, K and feed values are unchanged.
+Side does not choose spindle speed, M3/M4, tool handedness or controller G41/G42.
+The machine integration must match this signed-X contract to its controller.
+
 This selects the spindle side, not inside/outside machining. Internal boring
 requires separate operation support. Full operation-path safety and native-tool
 precision sensitivity remain unresolved; signed-side output is experimental
 and is not machining approval.
+
+## Native Tool Geometry
+
+`Tool.set_tool_from_segments()` accepts the actual XZ insert outline, including
+rounded nose arcs. Outline coordinates are relative to the selected tool origin;
+returned paths position that origin, not a separately calculated contact point.
+The caller supplies the physical pose and datum. LibLathe does not have a
+Compensation selector or automatically recenter an imported insert.
+
+Leave `tool_rotation` at zero for geometry that is already rotated. Its optional
+rotation acts around the supplied origin; it is not the add-on's absolute insert
+angle or a controller Q orientation. Changing `side` does not rotate the stored
+insert or select its active nose.
+
+See the [tooling manual](docs/source/pages/liblathe_tooling.rst) for the API,
+coordinate conventions and side-planning details.
 
 ## Examples
 ### Facing:

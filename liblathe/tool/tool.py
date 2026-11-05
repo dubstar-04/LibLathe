@@ -13,6 +13,12 @@ class ToolOri(Enum):
     Z = 90
 
 
+class ToolSide(Enum):
+    """Signed radial side used for planning and output."""
+    NEAR = "Near"
+    FAR = "Far"
+
+
 class Tool:
     """
     Class to hold a lathe tool definition
@@ -34,7 +40,7 @@ class Tool:
         # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
-        self.side = "Near"
+        self.side = ToolSide.NEAR
         self.orientation = ToolOri.X        # orientation of the tool X or Z
         self.tool_rotation = 0              # tool rotation about tool tip
         self.segmentGroup = SegmentGroup()  # tool shape
@@ -48,8 +54,8 @@ class Tool:
 
     @side.setter
     def side(self, value):
-        if value not in ("Near", "Far"):
-            raise ValueError("Tool side must be Near or Far")
+        if not isinstance(value, ToolSide):
+            raise ValueError("Tool side must be a ToolSide enumeration member")
         self._side = value
 
     def set_tool_from_string(self, tool_string):
