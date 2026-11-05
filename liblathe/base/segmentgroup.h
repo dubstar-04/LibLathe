@@ -76,8 +76,10 @@ namespace liblathe
         struct PreparedGeometry
         {
             std::vector<PreparedSegment> boundary;
+            std::vector<BoundBox> boundaryBounds;
             size_t originalCount = 0;
             BoundBox bounds{Point(0, 0), Point(0, 0)};
+            float containmentMargin = 0;
             Point closestPoint(Point point, bool *onProfile = nullptr) const;
             float unsignedDistance(Point point) const;
             float sdv(Point point) const;

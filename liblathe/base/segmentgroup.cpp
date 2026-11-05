@@ -345,21 +345,47 @@ namespace liblathe
         const auto partGeometry = this->prepareGeometry();
         const auto toolGeometry = tool.prepareGeometry();
         const auto toolBounds = tool.boundbox();
+        double collisionRadius = 0;
+        const auto interiorRadius = [&](const PreparedGeometry &geometry, Point point, const Point &position)
+        {
+            const double numerical = 1e-5 + 4 * std::numeric_limits<float>::epsilon() *
+                                                std::max({1.0, std::abs(double(point.X)),
+                                                          std::abs(double(point.Z)),
+                                                          std::abs(double(position.X)), std::abs(double(position.Z)),
+                                                          std::abs(double(partBounds.XMin)), std::abs(double(partBounds.XMax)),
+                                                          std::abs(double(partBounds.ZMin)), std::abs(double(partBounds.ZMax)),
+                                                          std::abs(double(toolBounds.XMin)), std::abs(double(toolBounds.XMax)),
+                                                          std::abs(double(toolBounds.ZMin)), std::abs(double(toolBounds.ZMax))});
+            return std::max(0.0, double(geometry.unsignedDistance(point)) - numerical);
+        };
         const auto collides = [&](const Point &position)
         {
+            collisionRadius = 0;
             if (toolBounds.XMin + position.X > partBounds.XMax + resolution ||
                 toolBounds.XMax + position.X < std::min(0.0f, partBounds.XMin) - resolution ||
                 toolBounds.ZMin + position.Z > partBounds.ZMax + resolution ||
                 toolBounds.ZMax + position.Z < partBounds.ZMin - resolution)
                 return false;
             for (const auto &edge : toolGeometry.boundary)
-                if (partGeometry.isInside(Point(edge.segment.start.X + position.X,
-                                                edge.segment.start.Z + position.Z)))
+            {
+                const Point witness(edge.segment.start.X + position.X,
+                                    edge.segment.start.Z + position.Z);
+                if (partGeometry.isInside(witness))
+                {
+                    collisionRadius = interiorRadius(partGeometry, witness, position);
                     return true;
+                }
+            }
             for (const auto &edge : partGeometry.boundary)
-                if (toolGeometry.isInside(Point(edge.segment.start.X - position.X,
-                                                edge.segment.start.Z - position.Z)))
+            {
+                const Point witness(edge.segment.start.X - position.X,
+                                    edge.segment.start.Z - position.Z);
+                if (toolGeometry.isInside(witness))
+                {
+                    collisionRadius = interiorRadius(toolGeometry, witness, position);
                     return true;
+                }
+            }
             try
             {
                 partGeometry.validateToolSweep(toolGeometry, position, position);
@@ -413,7 +439,11 @@ namespace liblathe
                     points.push_back(iteration_position);
                     break;
                 }
-                x_pos += resolution * 0.5;
+                const double previousX = x_pos;
+                do
+                {
+                    x_pos += resolution * 0.5;
+                } while (x_pos < x_limit && double(x_pos) - previousX < collisionRadius);
             }
 
             z_pos -= resolution;
@@ -520,10 +550,7 @@ namespace liblathe
         const PreparedGeometry &tool, Point start, Point end) const
     {
         // Certify insert clearance throughout a translation, rejecting collisions or unresolved sweeps //
-        std::vector<BoundBox> boundaryBounds;
-        boundaryBounds.reserve(this->boundary.size());
-        for (auto edge : this->boundary)
-            boundaryBounds.push_back(edge.segment.Boundbox());
+        const auto &boundaryBounds = this->boundaryBounds;
         for (const auto &edge : this->boundary)
             if (tool.isInside(Point(edge.segment.start.X - start.X,
                                     edge.segment.start.Z - start.Z)))
@@ -791,14 +818,19 @@ namespace liblathe
         for (const auto &segment : closure)
             prepared.boundary.emplace_back(segment);
         prepared.bounds = prepared.boundary.front().segment.Boundbox();
+        prepared.boundaryBounds.reserve(prepared.boundary.size());
         for (auto &edge : prepared.boundary)
         {
             const auto bounds = edge.segment.Boundbox();
+            prepared.boundaryBounds.push_back(bounds);
             prepared.bounds.XMin = std::min(prepared.bounds.XMin, bounds.XMin);
             prepared.bounds.XMax = std::max(prepared.bounds.XMax, bounds.XMax);
             prepared.bounds.ZMin = std::min(prepared.bounds.ZMin, bounds.ZMin);
             prepared.bounds.ZMax = std::max(prepared.bounds.ZMax, bounds.ZMax);
         }
+        prepared.containmentMargin = 4 * std::numeric_limits<float>::epsilon() *
+                                     std::max({1.0f, std::abs(prepared.bounds.XMin), std::abs(prepared.bounds.XMax),
+                                               std::abs(prepared.bounds.ZMin), std::abs(prepared.bounds.ZMax)});
         return prepared;
     }
 
@@ -949,9 +981,7 @@ namespace liblathe
     bool SegmentGroup::PreparedGeometry::isInside(Point point) const
     {
         // Reject points outside the bounds, then classify by ray parity with boundary inclusion //
-        const float margin = 4 * std::numeric_limits<float>::epsilon() *
-                             std::max({1.0f, std::abs(bounds.XMin), std::abs(bounds.XMax),
-                                       std::abs(bounds.ZMin), std::abs(bounds.ZMax)});
+        const float margin = this->containmentMargin;
         if (point.X < bounds.XMin - margin || point.X > bounds.XMax + margin ||
             point.Z < bounds.ZMin - margin || point.Z > bounds.ZMax + margin)
             return false;
