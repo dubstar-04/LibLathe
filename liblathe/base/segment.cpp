@@ -25,7 +25,7 @@ namespace liblathe
             return M_PIf;
         }
 
-        return atan(abs(this->bulge)) * 4;
+        return atan(std::abs(this->bulge)) * 4;
     }
 
     void Segment::setBulge(float angle)
@@ -69,7 +69,7 @@ namespace liblathe
             return 0.0;
         }
 
-        float rad = this->getLength() * (1 + pow(this->bulge, 2)) / (4 * abs(this->bulge));
+        float rad = this->getLength() * (1 + pow(this->bulge, 2)) / (4 * std::abs(this->bulge));
         return rad;
     }
 
@@ -167,7 +167,7 @@ namespace liblathe
             return 0;
         }
 
-        return abs(atan(this->bulge));
+        return std::abs(atan(this->bulge));
     }
 
     float Segment::getPhi()
@@ -179,7 +179,7 @@ namespace liblathe
             return 0;
         }
 
-        return abs((M_PIf - abs(this->getAngle()) / 2) / 2);
+        return std::abs((M_PIf - std::abs(this->getAngle()) / 2) / 2);
     }
 
     float Segment::get_gamma()
@@ -191,7 +191,7 @@ namespace liblathe
             return 0;
         }
 
-        return (M_PIf - abs(this->getAngle())) / 2;
+        return (M_PIf - std::abs(this->getAngle())) / 2;
     }
 
     bool Segment::isSame(Segment seg)
@@ -346,7 +346,7 @@ namespace liblathe
             return pts;
         }
 
-        if (c_dist < abs(r1 - r2))
+        if (c_dist < std::abs(r1 - r2))
         {
             //  inside each other
             return pts;

@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "boundbox.h"
 
 namespace liblathe
@@ -15,13 +17,13 @@ namespace liblathe
     float BoundBox::XLength()
     {
         // Return the extent of the bounds along X //
-        return abs(this->XMax - this->XMin);
+        return std::abs(this->XMax - this->XMin);
     }
 
     float BoundBox::ZLength()
     {
         // Return the extent of the bounds along Z //
-        return abs(this->ZMax - this->ZMin);
+        return std::abs(this->ZMax - this->ZMin);
     }
 
 }

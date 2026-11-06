@@ -12,9 +12,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.11']
 
     steps:
@@ -32,12 +34,14 @@ jobs:
         pip install Pillow
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Code Spell
+      if: runner.os == 'Linux'
       uses: codespell-project/actions-codespell@master
       with:
         check_filenames: true
         check_hidden: true
         only_warn: 1
     - name: Lint with flake8
+      if: runner.os == 'Linux'
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics

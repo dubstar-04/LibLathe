@@ -25,21 +25,26 @@ else:
 with open(os.path.join(__dir__, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
+# Use one language level so Linux, macOS and Windows compilers agree
+CXX_STD = 14
 
 point = Pybind11Extension('liblathe.base.point',
                           ['liblathe/base/point_py.cpp',
-                           'liblathe/base/point.cpp'])
+                           'liblathe/base/point.cpp'],
+                          cxx_std=CXX_STD)
 
 boundbox = Pybind11Extension('liblathe.base.boundbox',
                              ['liblathe/base/boundbox_py.cpp',
                               'liblathe/base/boundbox.cpp',
-                              'liblathe/base/point.cpp'])
+                              'liblathe/base/point.cpp'],
+                             cxx_std=CXX_STD)
 
 segment = Pybind11Extension('liblathe.base.segment',
                             ['liblathe/base/segment_py.cpp',
                              'liblathe/base/segment.cpp',
                              'liblathe/base/point.cpp',
-                             'liblathe/base/boundbox.cpp'])
+                             'liblathe/base/boundbox.cpp'],
+                            cxx_std=CXX_STD)
 
 segmentgroup = Pybind11Extension('liblathe.base.segmentgroup',
                                  ['liblathe/base/segmentgroup_py.cpp',
@@ -47,7 +52,8 @@ segmentgroup = Pybind11Extension('liblathe.base.segmentgroup',
                                   'liblathe/base/point.cpp',
                                   'liblathe/base/boundbox.cpp',
                                   'liblathe/base/segment.cpp',
-                                  'liblathe/base/quadtree.cpp'])
+                                  'liblathe/base/quadtree.cpp'],
+                                 cxx_std=CXX_STD)
 
 quadtree = Pybind11Extension('liblathe.base.quadtree',
                              ['liblathe/base/quadtree_py.cpp',
@@ -55,7 +61,8 @@ quadtree = Pybind11Extension('liblathe.base.quadtree',
                               'liblathe/base/boundbox.cpp',
                               'liblathe/base/point.cpp',
                               'liblathe/base/segment.cpp',
-                              'liblathe/base/segmentgroup.cpp'])
+                              'liblathe/base/segmentgroup.cpp'],
+                             cxx_std=CXX_STD)
 
 setup(
     name='liblathe',
@@ -77,6 +84,7 @@ setup(
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',
         'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',

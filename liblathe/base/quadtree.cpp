@@ -14,6 +14,8 @@ namespace liblathe
     namespace
     {
         constexpr const char *orderingError = "Quadtree error when ordering offset points";
+        // M_PI is not part of standard C++ and is absent on some toolchains //
+        constexpr double kPi = 3.14159265358979323846;
 
         struct PointCell
         {
@@ -547,8 +549,8 @@ namespace liblathe
                     const double angle = std::atan2(double(closest.Z) - arc.centre.Z,
                                                     double(closest.X) - arc.centre.X);
                     const double sweep = std::fmod(arc.direction * (angle - arc.startAngle) +
-                                                       2 * M_PI,
-                                                   2 * M_PI);
+                                                       2 * kPi,
+                                                   2 * kPi);
                     progress = sweep / arc.sweep;
                 }
                 progress = std::min(std::max(progress, 0.0), 1.0);
