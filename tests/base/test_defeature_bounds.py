@@ -1,6 +1,10 @@
 import math
 import random
+import subprocess
+import sys
+import textwrap
 import unittest
+from pathlib import Path
 
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
@@ -222,6 +226,40 @@ class TestDefeatureBounds(unittest.TestCase):
                     self.assertAlmostEqual(segment.end.X, 10 + reference_x, delta=0.02)
                 self.assertEqual(self.coordinates(source), original_source)
                 self.assertEqual(self.coordinates(tool), original_tool)
+
+    def test_radial_scan_reports_unrepresentable_step_instead_of_looping(self):
+        # At X = 2**17 the 0.005 float radial step rounds away; run isolated so a hang fails.
+        script = textwrap.dedent("""
+            from liblathe.base.boundbox import BoundBox
+            from liblathe.base.point import Point
+            from liblathe.base.segment import Segment
+            from liblathe.base.segmentgroup import SegmentGroup
+
+            def profile(vertices):
+                group = SegmentGroup()
+                points = [Point(*vertex) for vertex in vertices]
+                for start, end in zip(points, points[1:]):
+                    group.addSegment(Segment(start, end))
+                return group
+
+            part = profile([(0, 0), (10, 0), (10, -20), (0, -20)])
+            tool = profile([(radial - 131072, axial) for radial, axial in
+                            ((0, -1), (0, 1), (2, 1), (2, -1), (0, -1))])
+            try:
+                part.defeature(BoundBox(Point(0, 2), Point(12, -20)), tool, False)
+            except RuntimeError as error:
+                print(error)
+            else:
+                print("no error")
+        """)
+        root = Path(__file__).resolve().parents[2]
+        try:
+            result = subprocess.run([sys.executable, "-c", script], cwd=root, capture_output=True,
+                                    text=True, timeout=30)
+        except subprocess.TimeoutExpired:
+            self.fail("Radial defeature scan did not advance at coordinate precision")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Cannot advance radial defeature scan at coordinate precision", result.stdout)
 
 
 if __name__ == '__main__':

@@ -25,4 +25,8 @@ and chord sweeps, clearance tolerances and subdivision limits are unchanged.
 Uncertifiable paths continue to raise an error rather than emitting unchecked
 moves.
 
+If a tool origin's X coordinate is too large for the radial scan step to change
+it in floating point, defeaturing raises a coordinate-precision error. The step
+is not enlarged, because a coarser scan could skip thin features.
+
 

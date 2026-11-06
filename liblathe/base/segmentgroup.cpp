@@ -412,6 +412,17 @@ namespace liblathe
             points.push_back(start);
         }
 
+        // Reject steps lost to float rounding; a larger step could skip thin features //
+        const auto advanceRadial = [&](float &x, float z)
+        {
+            const float next = x + resolution * 0.5;
+            if (!(next > x))
+                throw std::runtime_error("Cannot advance radial defeature scan at coordinate precision: origin (" +
+                                         std::to_string(x) + ", " + std::to_string(z) +
+                                         "), step " + std::to_string(resolution * 0.5));
+            x = next;
+        };
+
         float z_pos = start.Z;
         while (z_pos > ZMin)
         {
@@ -433,7 +444,7 @@ namespace liblathe
 
                     if (collides(iteration_position))
                     {
-                        x_pos += resolution * 0.5;
+                        advanceRadial(x_pos, z_pos);
                         continue;
                     }
                     points.push_back(iteration_position);
@@ -442,7 +453,7 @@ namespace liblathe
                 const double previousX = x_pos;
                 do
                 {
-                    x_pos += resolution * 0.5;
+                    advanceRadial(x_pos, z_pos);
                 } while (x_pos < x_limit && double(x_pos) - previousX < collisionRadius);
             }
 
