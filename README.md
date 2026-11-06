@@ -112,7 +112,7 @@ requires an updated build; an older package reporting 0.0.8 may lack the enum.
 Supply the tool outline in its actual physical orientation. For Far, supply
 negative-X part and stock geometry too; positive-X stock or part inputs are
 rejected. `BaseOP.getGCode()` plans on reflected copies of all three inputs,
-then returns physical signed commands and `tool_paths`. Reflection reverses
+then returns physical signed commands, `tool_paths` and `clearing_paths`. Reflection reverses
 segment bulges, G2/G3 and I offsets, including rapid and retract X positions.
 Original inputs are not modified, and near-side behavior is unchanged.
 

@@ -56,7 +56,7 @@ part and stock in the matching physical coordinate frame.
 
 For Far, ``BaseOP.getGCode()`` reflects copies of the part, stock and posed
 insert into a positive-X planning frame. It then reflects the generated
-commands and ``tool_paths`` back to the physical negative-X frame. Original
+commands, ``tool_paths`` and ``clearing_paths`` back to the physical negative-X frame. Original
 inputs are not changed. Segment reflection negates X coordinates and bulges.
 
 Far-side output transformations:

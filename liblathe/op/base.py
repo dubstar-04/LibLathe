@@ -25,6 +25,7 @@ class BaseOP:
         self.partSegmentGroup = SegmentGroup()
 
         self.tool_paths = []
+        self.clearing_paths = []
 
         self.allow_grooving = False
         self.step_over = 1.5
@@ -60,12 +61,14 @@ class BaseOP:
 
         if self.tool.side == ToolSide.FAR:
             self.tool_paths = []
+            self.clearing_paths = []
             if self.stock is None or self.stock.XMax > 1e-4 or self.stock.XMin >= 0:
                 raise ValueError("Far-side stock must use negative X coordinates")
             if self.partSegmentGroup.boundbox().XMax > 1e-4:
                 raise ValueError("Far-side part geometry must use negative X coordinates")
             planning = copy(self)
             planning.tool_paths = []
+            planning.clearing_paths = []
             planning.stock = BoundBox(Point(-self.stock.XMax, self.stock.ZMin),
                                       Point(-self.stock.XMin, self.stock.ZMax))
             planning.partSegmentGroup = SegmentGroup()
@@ -88,11 +91,13 @@ class BaseOP:
                 movement = {"G2": "G3", "G3": "G2", "G02": "G03", "G03": "G02"}.get(
                     command.get_movement(), command.get_movement())
                 result.append(Command(movement, parameters))
-            for group in planning.tool_paths:
-                physical = SegmentGroup()
-                for segment in reflect_x_segments(group.getSegments()):
-                    physical.addSegment(segment)
-                self.tool_paths.append(physical)
+            for name in ("tool_paths", "clearing_paths"):
+                physical_paths = getattr(self, name)
+                for group in getattr(planning, name):
+                    physical = SegmentGroup()
+                    for segment in reflect_x_segments(group.getSegments()):
+                        physical.addSegment(segment)
+                    physical_paths.append(physical)
             return result
 
         self.generatePath()
