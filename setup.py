@@ -1,13 +1,7 @@
 import re
 from pybind11.setup_helpers import Pybind11Extension, build_ext
-from distutils.core import setup
-import warnings
-import sys
+from setuptools import setup
 import os
-
-if sys.version_info[:3] < (3, 10, 0):
-    warnings.warn("liblathe does not support versions below "
-                  "Python 3.10.0", RuntimeWarning)
 
 __dir__ = os.path.dirname(__file__)
 version_file = os.path.join(__dir__, "liblathe/version.py")
@@ -76,6 +70,7 @@ setup(
     license='GPL2',
     keywords="lathe turning CAD CAM CNC",
     packages=['liblathe', "liblathe/op", "liblathe/tool", "liblathe/gcode"],
+    python_requires='>=3.10',
     install_requires=['pillow'],
     ext_modules=[point, boundbox, segment, segmentgroup, quadtree],
 
@@ -90,5 +85,6 @@ setup(
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
     ],
 )
