@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <cmath>
@@ -550,7 +551,7 @@ namespace liblathe
                                                    2 * M_PI);
                     progress = sweep / arc.sweep;
                 }
-                progress = std::clamp(progress, 0.0, 1.0);
+                progress = std::min(std::max(progress, 0.0), 1.0);
                 candidate.position = positions[index] + progress * lengths[index];
                 candidate.turn = 0;
                 if (progress == 0 || progress == 1)
