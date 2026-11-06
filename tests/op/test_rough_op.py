@@ -1,11 +1,4 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-opFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(opFolder)
-sys.path.append(parentFolder)
 
 from liblathe.op.rough import RoughOP
 from liblathe.gcode.command import Command
@@ -66,6 +59,35 @@ class test_RoughOP(unittest.TestCase):
         # tool.set_rotation(45)
         self.op.add_tool(tool)
 
+    def test_cutting_limits_follow_tool_reference_translation(self):
+        limits = []
+        radial_passes = []
+        for radial_shift, axial_shift in ((0, 0), (0.6, 0.8)):
+            operation = RoughOP()
+            operation.stock_to_leave = 0.5
+            operation.add_stock(BoundBox(Point(0, -20), Point(14, 1)))
+            vertices = ((0, 0), (10, 0), (10, -20), (0, -20))
+            operation.addPartSegments([
+                Segment(Point(*start), Point(*end)) for start, end in zip(vertices, vertices[1:])])
+            vertices = ((0, -1), (0, 1), (2, 1), (2, -1), (0, -1))
+            tool = Tool()
+            tool.set_tool_from_segments([
+                Segment(Point(start[0] - radial_shift, start[1] - axial_shift),
+                        Point(end[0] - radial_shift, end[1] - axial_shift))
+                for start, end in zip(vertices, vertices[1:])])
+            operation.add_tool(tool)
+            operation.generatePath()
+            bounds = [group.boundbox() for group in operation.tool_paths]
+            self.assertTrue(bounds)
+            radial_passes.append(sorted({round(edge.start.X - radial_shift, 4)
+                                         for group in operation.tool_paths for edge in group.getSegments()
+                                         if abs(edge.start.X - edge.end.X) < 1e-5}))
+            limits.append((min(bound.ZMin for bound in bounds) - axial_shift,
+                           max(bound.ZMax for bound in bounds) - axial_shift))
+        self.assertEqual(*radial_passes)
+        for original, shifted in zip(*limits):
+            self.assertAlmostEqual(original, shifted, delta=0.02)
+
     def test_getGCode(self):
         """run the operation and evaluate the gcode"""
         gcode = self.op.getGCode()
@@ -78,7 +100,7 @@ class test_RoughOP(unittest.TestCase):
 
         for command in gcode:
 
-            #print(command.get_movement(), command.getParams())
+            # print(command.get_movement(), command.getParams())
 
             # check the command is a liblathe.command.Command
             self.assertTrue(isinstance(command, Command))

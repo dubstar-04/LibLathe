@@ -23,8 +23,9 @@ class RoughOP(liblathe.op.base.BaseOP):
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internalOffset = roughing_segmentGroup.offset(-0.1)
 
-        ZMax = self.stock.ZMax
-        ZMin = self.stock.ZMin
+        contact = self.tool.get_segmentgroup().getRadialContactPoint()
+        ZMax = self.stock.ZMax - contact.Z
+        ZMin = self.stock.ZMin - contact.Z
 
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
@@ -32,14 +33,12 @@ class RoughOP(liblathe.op.base.BaseOP):
         roughing_boundary = roughing_segmentGroup.offset(offset)
 
         # define the x limits for roughing
-        XMin = self.stock.XMin
-        XMax = math.ceil(self.stock.XMax)
+        XMin = self.stock.XMin - contact.X
+        XMax = math.ceil(self.stock.XMax) - contact.X
 
-        # The roughing boundary may have a small x delta from 0 due to being offset. consider it when calculating the XMin pos.
-        roughing_boundary_x = roughing_boundary.getSegments()[0].start.X
         # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
         # TODO: This is a bit hacky, is there a better way?
-        x_pos = max(1e-6, XMin, roughing_boundary_x)
+        x_pos = XMin + 1e-6
         # work from 0 to XMin creating roughing passes
         print('XMin:', XMin, 'XMax:', XMax, 'x_pos:', x_pos)
         while x_pos < XMax:
@@ -141,6 +140,6 @@ class RoughOP(liblathe.op.base.BaseOP):
         path = Path()
 
         for segmentgroup in reversed(self.tool_paths):
-            path.fromSegmentGroup(self, segmentgroup)
+            path.fromSegmentGroup(self, segmentgroup, protect_part=True)
 
         return path.commands

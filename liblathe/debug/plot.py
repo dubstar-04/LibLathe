@@ -206,8 +206,10 @@ class Plot:
 
         # size of the image (should be based on the max path point)
         self.scale = self._image_size()
-        # define the x and y offset required to translate input geometry to local coordinates - Centre in image for both x and y
-        self.X_offset = math.floor(self.image_size[0] - ((self.image_size[0] - (abs(self._max_x - self._min_x) * self.scale)) / 2))
+        # define the x and y offset required to translate input geometry to local coordinates
+        # Centre in image for both x and y
+        self.X_offset = math.floor(self.image_size[0] - ((self.image_size[0] -
+                                   (abs(self._max_x - self._min_x) * self.scale)) / 2))
         self.Z_offset = math.floor((self.image_size[1] * 0.5))
 
         if self.transparency:

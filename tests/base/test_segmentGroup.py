@@ -1,11 +1,4 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-baseFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(baseFolder)
-sys.path.append(parentFolder)
 
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -15,6 +8,7 @@ from liblathe.base.boundbox import BoundBox
 
 class test_segmentGroup(unittest.TestCase):
     """Test for segmentgroup.py"""
+
     def setUp(self):
         self.segmentGroup = SegmentGroup()
         self.segmentGroup2 = SegmentGroup()
@@ -249,6 +243,123 @@ class test_segmentGroup(unittest.TestCase):
         defeatured_group = sg.defeature(stock, tool, False)
 
         self.assertTrue(defeatured_group.count() > 0)
+        for move in defeatured_group.getSegments():
+            for step in range(41):
+                fraction = step / 40
+                radial = move.start.X + (move.end.X - move.start.X) * fraction
+                axial = move.start.Z + (move.end.Z - move.start.Z) * fraction
+                for edge in tool.getSegments():
+                    for sample in range(11):
+                        along = sample / 10
+                        point = Point(radial + edge.start.X + (edge.end.X - edge.start.X) * along,
+                                      axial + edge.start.Z + (edge.end.Z - edge.start.Z) * along)
+                        self.assertGreater(sg.sdv(point), 0)
+
+    def test_defeature_preserves_scan_grid_at_thin_shoulders(self):
+        part_vertices = [(0, 0), (1.003, 0), (1.003, -0.061), (1.007, -0.061),
+                         (1.007, -0.064), (1.003, -0.064), (1.003, -0.2), (0, -0.2)]
+        tool_vertices = [(0, 0), (0, 0.005), (0.004, 0.005), (0.004, 0), (0, 0)]
+        references = {
+            0: (0.017500000074505806, 0.007500000298023224, -0.20250001549720764,
+                1.00749933719635, 1.0124993324279785),
+            128: (128.01748657226562, 128.0074920654297, 127.79744720458984,
+                  129.00848388671875, 129.01348876953125),
+        }
+        for shift, (start_z, corner_z, end_z, inner_x, outer_x) in references.items():
+            for grooving in (False, True):
+                with self.subTest(shift=shift, grooving=grooving):
+                    part = SegmentGroup()
+                    tool = SegmentGroup()
+                    for start, end in zip(part_vertices, part_vertices[1:]):
+                        part.addSegment(Segment(Point(*start), Point(*end)))
+                    for start, end in zip(tool_vertices, tool_vertices[1:]):
+                        tool.addSegment(Segment(Point(start[0] - shift, start[1] - shift),
+                                                Point(end[0] - shift, end[1] - shift)))
+                    contour = part.defeature(BoundBox(Point(0, -0.21), Point(3, 0.02)), tool, grooving)
+                    segments = contour.getSegments()
+                    self.assertEqual(
+                        [(edge.start.X, edge.start.Z, edge.end.X, edge.end.Z, edge.bulge)
+                         for edge in segments],
+                        [(shift, start_z, inner_x, corner_z, 0),
+                         (inner_x, corner_z, inner_x if grooving else outer_x, end_z, 0)],
+                    )
+                    for edge in segments:
+                        part.validateToolSweep(tool, edge.start, edge.end)
+
+    def test_defeature_keeps_first_clear_region_between_radial_walls(self):
+        part = SegmentGroup()
+        tool = SegmentGroup()
+        for group, vertices in (
+                (part, [(0, 0), (2, 0), (2, -0.16), (2.014, -0.16),
+                        (2.014, 0), (2.018, 0), (2.018, -0.2), (0, -0.2)]),
+                (tool, [(0, 0), (0, 0.005), (0.004, 0.005), (0.004, 0), (0, 0)])):
+            for start, end in zip(vertices, vertices[1:]):
+                group.addSegment(Segment(Point(*start), Point(*end)))
+        for radial in (1, 2.015):
+            with self.subTest(colliding_radial=radial):
+                with self.assertRaises(RuntimeError):
+                    part.validateToolSweep(tool, Point(radial, -0.05), Point(radial, -0.05))
+        for radial in (2.0075, 2.025):
+            with self.subTest(clear_radial=radial):
+                part.validateToolSweep(tool, Point(radial, -0.05), Point(radial, -0.05))
+        for grooving in (False, True):
+            with self.subTest(grooving=grooving):
+                contour = part.defeature(BoundBox(Point(0, -0.12), Point(3, 0.02)), tool, grooving)
+                segments = contour.getSegments()
+                self.assertTrue(any(2 < edge.end.X < 2.01 for edge in segments))
+                for edge in segments:
+                    part.validateToolSweep(tool, edge.start, edge.end)
+
+    def test_validateToolSweep_preserves_rounded_insert_contact(self):
+        part = SegmentGroup()
+        vertices = [(0, 0), (1, 0), (1, -0.2), (0, -0.2), (0, 0)]
+        for start, end in zip(vertices, vertices[1:]):
+            part.addSegment(Segment(Point(*start), Point(*end)))
+        for shift in (0, 0.0025, 128):
+            with self.subTest(shift=shift):
+                tool = SegmentGroup()
+                first = Point(-shift, -shift)
+                second = Point(0.05 - shift, -shift)
+                tool.addSegment(Segment(first, second, 1))
+                tool.addSegment(Segment(second, first, 1))
+                part.validateToolSweep(tool, Point(1.01 + shift, shift), Point(1.01 + shift, -0.2 + shift))
+                for radial in (1, 0.98, 0.4):
+                    with self.subTest(radial=radial):
+                        position = Point(radial + shift, -0.1 + shift)
+                        with self.assertRaises(RuntimeError):
+                            part.validateToolSweep(tool, position, position)
+
+    def test_validateToolSweep_rejects_crossing_containment_and_contact(self):
+        part = SegmentGroup()
+        tool = SegmentGroup()
+        for group, vertices in (
+                (part, [(0, 0), (10, 0), (10, -20), (0, -20), (0, 0)]),
+                (tool, [(-0.4, -0.4), (-0.4, 2), (2, 2), (2, -0.4), (-0.4, -0.4)])):
+            for start, end in zip(vertices, vertices[1:]):
+                group.addSegment(Segment(Point(*start), Point(*end)))
+        part.validateToolSweep(tool, Point(13, 3), Point(13, -20))
+        for start, end in (((12, -10), (-3, -10)),
+                           ((5, -10), (5, -10)),
+                           ((10.4, -10), (10.4, -11))):
+            with self.subTest(start=start, end=end):
+                with self.assertRaises(RuntimeError):
+                    part.validateToolSweep(tool, Point(*start), Point(*end))
+
+    def test_isInside_rounded_square_tangent_roundoff(self):
+        vertices = [(8.725, -0.4), (-3.55e-14, -0.4), (-0.4, 1.16e-14),
+                    (-0.4, 8.725), (1.21e-14, 9.125), (8.725, 9.125),
+                    (9.125, 8.725), (9.125, 1.07e-14), (8.725, -0.4)]
+        group = SegmentGroup()
+        for index, (first, last) in enumerate(zip(vertices, vertices[1:])):
+            group.addSegment(Segment(Point(*first), Point(*last),
+                                     0.4142135679721832 if index % 2 else 0))
+        for axial in (-1, -0.43, -0.41, 9.2, 10):
+            with self.subTest(axial=axial):
+                self.assertFalse(group.isInside(Point(0, axial)))
+                self.assertGreater(group.sdv(Point(0, axial)), 0)
+        for axial in (0, 1, 8, 9):
+            with self.subTest(axial=axial):
+                self.assertTrue(group.isInside(Point(0, axial)))
 
     def test_fromPoints(self):
         points = [Point(100, 100), Point(0, 0), Point(100, -100)]
@@ -321,7 +432,6 @@ class test_segmentGroup(unittest.TestCase):
         self.assertFalse(sg.isInside(Point(10, 10)))
         self.assertFalse(sg.isInside(Point(16, -10)))
         self.assertFalse(sg.isInside(Point(10, -30)))
-
 
 
 if __name__ == '__main__':

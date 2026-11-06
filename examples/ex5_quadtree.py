@@ -21,18 +21,18 @@ from liblathe.tool.tool import Tool
 from liblathe.debug.debug import Debug
 
 sg = SegmentGroup()
-sg.addSegment(Segment(Point(0.0, -100.0) ,Point(27.5, -100.0), 0.000000))
-sg.addSegment(Segment(Point(27.5, -100.0) ,Point(27.5, -85), 0.000000))
-sg.addSegment(Segment(Point(27.5, -85) ,Point(14, -75), 0.000000))
-sg.addSegment(Segment(Point(14, -75) ,Point(14, -15), 0.000000))
-sg.addSegment(Segment(Point(14, -15) ,Point(0, 0), -0.3))
-sg.addSegment(Segment(Point(0, 0) ,Point(10, 0), 0))
+sg.addSegment(Segment(Point(0.0, -100.0), Point(27.5, -100.0), 0.000000))
+sg.addSegment(Segment(Point(27.5, -100.0), Point(27.5, -85), 0.000000))
+sg.addSegment(Segment(Point(27.5, -85), Point(14, -75), 0.000000))
+sg.addSegment(Segment(Point(14, -75), Point(14, -15), 0.000000))
+sg.addSegment(Segment(Point(14, -15), Point(0, 0), -0.3))
+sg.addSegment(Segment(Point(0, 0), Point(10, 0), 0))
 
 bb = sg.boundbox()
 height = bb.XLength() + 10
 width = bb.ZLength() + 10
 size = max(height, width)
-center = Point( size / 2, bb.ZMin + size / 2)
+center = Point(size / 2, bb.ZMin + size / 2)
 
 # Define a tool
 tool = Tool()

@@ -13,6 +13,12 @@ class ToolOri(Enum):
     Z = 90
 
 
+class ToolSide(Enum):
+    """Signed radial side used for planning and output."""
+    NEAR = "Near"
+    FAR = "Far"
+
+
 class Tool:
     """
     Class to hold a lathe tool definition
@@ -22,6 +28,7 @@ class Tool:
 
     Tool shape is stored as a SegmentGroup()
     """
+
     def __init__(self, tool_string=None):
         # tool_string                       # DCMT070204R
         self.shape = None                   # D
@@ -33,12 +40,23 @@ class Tool:
         # thickness                         # 02
         self.nose_radius = None             # 04
         self.direction = None               # R-L-N
+        self.side = ToolSide.NEAR
         self.orientation = ToolOri.X        # orientation of the tool X or Z
         self.tool_rotation = 0              # tool rotation about tool tip
         self.segmentGroup = SegmentGroup()  # tool shape
 
         if tool_string:
             self.set_tool_from_string(tool_string)
+
+    @property
+    def side(self):
+        return self._side
+
+    @side.setter
+    def side(self, value):
+        if not isinstance(value, ToolSide):
+            raise ValueError("Tool side must be a ToolSide enumeration member")
+        self._side = value
 
     def set_tool_from_string(self, tool_string):
         """Set the tools shape from a string"""
@@ -183,13 +201,18 @@ class Tool:
         Return the edge length for the tool
         """
         shapeSize = {
-            "C": {"03": 3.97, "04": 4.76, "05": 5.56, "06": 6.35, "08": 7.94, "09": 9.525, "12": 12.7, "16": 15.875, "19": 19.05, "22": 22.225, "25": 25.4},
-            "D": {"04": 3.97, "05": 4.76, "06": 5.56, "07": 6.35, "09": 7.94, "11": 9.525, "15": 12.7, "19": 15.875, "23": 19.05},
+            "C": {"03": 3.97, "04": 4.76, "05": 5.56, "06": 6.35, "08": 7.94, "09": 9.525,
+                  "12": 12.7, "16": 15.875, "19": 19.05, "22": 22.225, "25": 25.4},
+            "D": {"04": 3.97, "05": 4.76, "06": 5.56, "07": 6.35, "09": 7.94,
+                  "11": 9.525, "15": 12.7, "19": 15.875, "23": 19.05},
             "R": {"06": 6.0, "08": 8.0, "09": 9.525, "10": 10, "12": 12.0, "16": 16, "20": 20, "25": 25},
-            "S": {"03": 3.97, "04": 4.76, "05": 5.56, "06": 6.35, "08": 7.94, "09": 9.525, "12": 12.7, "16": 15.875, "19": 19.05, "22": 22.225, "25": 25.4},
-            "T": {"08": 4.76, "09": 5.56, "11": 6.35, "13": 7.94, "16": 9.525, "22": 12.7, "27": 15.875, "33": 19.05, "38": 22.225, "44": 25.4},
+            "S": {"03": 3.97, "04": 4.76, "05": 5.56, "06": 6.35, "08": 7.94, "09": 9.525,
+                  "12": 12.7, "16": 15.875, "19": 19.05, "22": 22.225, "25": 25.4},
+            "T": {"08": 4.76, "09": 5.56, "11": 6.35, "13": 7.94, "16": 9.525,
+                  "22": 12.7, "27": 15.875, "33": 19.05, "38": 22.225, "44": 25.4},
             "V": {"08": 4.76, "09": 5.56, "11": 6.35, "13": 7.94, "16": 9.525, "22": 12.7},
-            "W": {"02": 3.97, "L3": 4.76, "03": 5.56, "04": 6.35, "05": 7.94, "06": 9.525, "08": 12.7, "10": 15.875, "13": 19.05}
+            "W": {"02": 3.97, "L3": 4.76, "03": 5.56, "04": 6.35, "05": 7.94,
+                  "06": 9.525, "08": 12.7, "10": 15.875, "13": 19.05}
         }
 
         if shape in shapeSize:
@@ -262,7 +285,6 @@ class Tool:
             rotated_segmentGroup.addSegment(Segment(start, end, segment.bulge))
 
         return rotated_segmentGroup
-
 
     def set_segmentgroup_from_string(self):
         """

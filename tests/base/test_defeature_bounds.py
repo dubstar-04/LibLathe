@@ -1,7 +1,12 @@
 import math
 import random
+import subprocess
+import sys
+import textwrap
 import unittest
+from pathlib import Path
 
+import liblathe
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -100,37 +105,163 @@ class TestDefeatureBounds(unittest.TestCase):
         return self.profile([(0, 0), (10, 0), (10, -5), (6, -5),
                              (6, -11), (10, -11), (10, -18), (0, -18)])
 
-    def test_defeature_retains_legacy_contours_and_inputs(self):
+    def assert_clear_sweeps(self, source, tool, result):
+        self.assertGreater(result.count(), 0)
+        for move in result.getSegments():
+            for index in range(101):
+                fraction = index / 100
+                radial = move.start.X + (move.end.X - move.start.X) * fraction
+                axial = move.start.Z + (move.end.Z - move.start.Z) * fraction
+                translated = self.group([
+                    Segment(Point(edge.start.X + radial, edge.start.Z + axial),
+                            Point(edge.end.X + radial, edge.end.Z + axial), edge.bulge)
+                    for edge in tool.getSegments()
+                ])
+                self.assertFalse(source.intersectsGroup(translated))
+                for edge in translated.getSegments():
+                    for sample in range(21):
+                        along = sample / 20
+                        if edge.bulge:
+                            centre = edge.getCentrePoint()
+                            angle = math.atan2(edge.start.Z - centre.Z, edge.start.X - centre.X)
+                            angle -= 4 * math.atan(edge.bulge) * along
+                            point = Point(centre.X + edge.getRadius() * math.cos(angle),
+                                          centre.Z + edge.getRadius() * math.sin(angle))
+                        else:
+                            point = Point(edge.start.X + (edge.end.X - edge.start.X) * along,
+                                          edge.start.Z + (edge.end.Z - edge.start.Z) * along)
+                        self.assertFalse(source.isInside(point))
+                for edge in source.getSegments():
+                    self.assertFalse(translated.isInside(edge.start))
+
+    def test_defeature_connectors_clear_the_part_and_preserve_inputs(self):
         source = self.groove()
         tool = self.profile([(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)])
         stock = BoundBox(Point(0, 1), Point(12, -20))
         original_source, original_tool = self.coordinates(source), self.coordinates(tool)
-        # Captured from the unfiltered implementation, including float accumulation.
-        common = [(0.0, 0.009999999776482582), (10.005000114440918, 0.0)]
         for grooving in (False, True):
-            expected = common + ([
-                (10.005000114440918, -4.99001932144165),
-                (6.005000114440918, -7.000065326690674),
-                (6.005000114440918, -10.990156173706055),
-                (10.005000114440918, -11.00015640258789),
-            ] if grooving else []) + [(10.005000114440918, -17.99031639099121)]
             with self.subTest(grooving=grooving):
                 result = source.defeature(stock, tool, grooving)
-                expected_segments = [(a[0], a[1], b[0], b[1], 0)
-                                     for a, b in zip(expected, expected[1:])]
-                self.assertEqual(self.coordinates(result), expected_segments)
+                self.assert_clear_sweeps(source, tool, result)
+                if grooving:
+                    self.assertLess(min(edge.end.X for edge in result.getSegments()), 7)
                 self.assertEqual(self.coordinates(source), original_source)
                 self.assertEqual(self.coordinates(tool), original_tool)
 
-    def test_translated_tool_retains_legacy_chord_footprint(self):
+    def test_defeature_retains_the_curved_tool_footprint(self):
         source = self.groove()
         linear = self.profile([(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)])
         curved = self.group([Segment(edge.start, edge.end, 0.5 if i == 0 else 0)
                              for i, edge in enumerate(linear.getSegments())])
         stock = BoundBox(Point(0, 1), Point(12, -20))
         for grooving in (False, True):
-            self.assertEqual(self.coordinates(source.defeature(stock, curved, grooving)),
-                             self.coordinates(source.defeature(stock, linear, grooving)))
+            with self.subTest(grooving=grooving):
+                result = source.defeature(stock, curved, grooving)
+                self.assertNotEqual(self.coordinates(result),
+                                    self.coordinates(source.defeature(stock, linear, grooving)))
+                self.assert_clear_sweeps(source, curved, result)
+
+    def test_contained_and_translated_inserts_have_clear_start_and_connectors(self):
+        source = self.profile([(0, 0), (10, 0), (10, -20), (0, -20)])
+        stock = BoundBox(Point(0, 3), Point(12, -20))
+        for shift in (0, -0.6):
+            tool = self.profile([(radial + shift, axial - shift) for radial, axial in
+                                 ((0.2, -0.2), (2, -0.2), (2, -2), (0.2, -2), (0.2, -0.2))])
+            with self.subTest(shift=shift):
+                result = source.defeature(stock, tool, False)
+                self.assertGreater(result.getSegments()[0].start.Z, 2 + shift)
+                self.assert_clear_sweeps(source, tool, result)
+
+    def test_defeature_limits_follow_tool_reference_translation(self):
+        source = self.profile([(0, 0), (10, 0), (10, -20), (0, -20)])
+        stock = BoundBox(Point(0, 3), Point(12, -20))
+        vertices = ((0, -1), (0, 1), (2, 1), (2, -1), (0, -1))
+        original = source.defeature(stock, self.profile(vertices), False).boundbox()
+        radial_shift, axial_shift = 0.6, 0.8
+        shifted_tool = self.profile([(radial - radial_shift, axial - axial_shift)
+                                     for radial, axial in vertices])
+        shifted = source.defeature(stock, shifted_tool, False).boundbox()
+        self.assertAlmostEqual(shifted.ZMin - axial_shift, original.ZMin, delta=0.02)
+        self.assertAlmostEqual(shifted.ZMax - axial_shift, original.ZMax, delta=0.02)
+        self.assertAlmostEqual(shifted.XMax - radial_shift, original.XMax, delta=0.02)
+
+    def test_rounded_insert_reference_preserves_defeature_contour(self):
+        source = self.profile([(0, 0), (10, 0), (10, -20), (0, -20)])
+        stock = BoundBox(Point(0, 1), Point(12, -20))
+        corner = -math.tan(math.pi / 8)
+        outline = [(0, 0.4, 0.4, 0, corner), (0.4, 0, 9.125, 0, 0),
+                   (9.125, 0, 9.525, 0.4, corner), (9.525, 0.4, 9.525, 9.125, 0),
+                   (9.525, 9.125, 9.125, 9.525, corner), (9.125, 9.525, 0.4, 9.525, 0),
+                   (0.4, 9.525, 0, 9.125, corner), (0, 9.125, 0, 0.4, 0)]
+        contours = []
+        for shift in (0, 0.4):
+            tool = self.group([Segment(Point(radial - shift, axial - shift),
+                                       Point(end_radial - shift, end_axial - shift), bulge)
+                               for radial, axial, end_radial, end_axial, bulge in outline])
+            result = source.defeature(stock, tool, False)
+            contours.append([Segment(Point(edge.start.X - shift, edge.start.Z - shift),
+                                     Point(edge.end.X - shift, edge.end.Z - shift))
+                             for edge in result.getSegments()])
+        for original, shifted in (contours, reversed(contours)):
+            for edge in original:
+                for sample in range(41):
+                    point = edge.start.lerp(edge.end, sample / 40)
+                    self.assertLessEqual(min(candidate.distanceToPoint(point) for candidate in shifted), 0.02)
+
+    def test_defeature_search_reaches_tool_origin_clearance(self):
+        source = self.profile([(0, 0), (10, 0), (10, -18), (0, -18)])
+        stock = BoundBox(Point(0, 2), Point(12, -20))
+        original_source = self.coordinates(source)
+        for reference_x in (-0.4, 0, 0.4, 1.0):
+            tool = self.profile([(radial - reference_x, axial) for radial, axial in
+                                 ((0, -1), (0, 1), (2, 1), (2, -1), (0, -1))])
+            original_tool = self.coordinates(tool)
+            with self.subTest(reference_x=reference_x):
+                result = source.defeature(stock, tool, False)
+                cuts = [segment for segment in result.getSegments()
+                        if abs(segment.start.X - segment.end.X) < 0.02
+                        and abs(segment.start.Z - segment.end.Z) > 5]
+                self.assertTrue(cuts)
+                for segment in cuts:
+                    self.assertAlmostEqual(segment.start.X, 10 + reference_x, delta=0.02)
+                    self.assertAlmostEqual(segment.end.X, 10 + reference_x, delta=0.02)
+                self.assertEqual(self.coordinates(source), original_source)
+                self.assertEqual(self.coordinates(tool), original_tool)
+
+    def test_radial_scan_reports_unrepresentable_step_instead_of_looping(self):
+        # At X = 2**17 the 0.005 float radial step rounds away; run isolated so a hang fails.
+        script = textwrap.dedent("""
+            from liblathe.base.boundbox import BoundBox
+            from liblathe.base.point import Point
+            from liblathe.base.segment import Segment
+            from liblathe.base.segmentgroup import SegmentGroup
+
+            def profile(vertices):
+                group = SegmentGroup()
+                points = [Point(*vertex) for vertex in vertices]
+                for start, end in zip(points, points[1:]):
+                    group.addSegment(Segment(start, end))
+                return group
+
+            part = profile([(0, 0), (10, 0), (10, -20), (0, -20)])
+            tool = profile([(radial - 131072, axial) for radial, axial in
+                            ((0, -1), (0, 1), (2, 1), (2, -1), (0, -1))])
+            try:
+                part.defeature(BoundBox(Point(0, 2), Point(12, -20)), tool, False)
+            except RuntimeError as error:
+                print(error)
+            else:
+                print("no error")
+        """)
+        # Import the same liblathe build as this process, not an unbuilt source checkout.
+        root = Path(liblathe.__file__).resolve().parents[1]
+        try:
+            result = subprocess.run([sys.executable, "-c", script], cwd=root, capture_output=True,
+                                    text=True, timeout=30)
+        except subprocess.TimeoutExpired:
+            self.fail("Radial defeature scan did not advance at coordinate precision")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Cannot advance radial defeature scan at coordinate precision", result.stdout)
 
 
 if __name__ == '__main__':

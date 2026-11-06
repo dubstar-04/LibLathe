@@ -50,12 +50,12 @@ segmentgroup = Pybind11Extension('liblathe.base.segmentgroup',
                                   'liblathe/base/quadtree.cpp'])
 
 quadtree = Pybind11Extension('liblathe.base.quadtree',
-                            ['liblathe/base/quadtree_py.cpp',
-                             'liblathe/base/quadtree.cpp',
-                             'liblathe/base/boundbox.cpp',
-                             'liblathe/base/point.cpp',
-                             'liblathe/base/segment.cpp',
-                             'liblathe/base/segmentgroup.cpp'])
+                             ['liblathe/base/quadtree_py.cpp',
+                              'liblathe/base/quadtree.cpp',
+                              'liblathe/base/boundbox.cpp',
+                              'liblathe/base/point.cpp',
+                              'liblathe/base/segment.cpp',
+                              'liblathe/base/segmentgroup.cpp'])
 
 setup(
     name='liblathe',

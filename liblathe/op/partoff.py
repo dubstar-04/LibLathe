@@ -20,7 +20,7 @@ class PartoffOP(liblathe.op.base.BaseOP):
         XMax = self.stock.XMax + self.clearance
         ZMin = self.stock.ZMin - toolWidth
 
-        #TODO: Add a chip break / pecking option
+        # TODO: Add a chip break / pecking option
 
         # build list of segments
         segmentgroup = SegmentGroup()

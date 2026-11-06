@@ -1,11 +1,4 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-baseFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(baseFolder)
-sys.path.append(parentFolder)
 
 from liblathe.base.point import Point
 from liblathe.base.boundbox import BoundBox
@@ -13,6 +6,7 @@ from liblathe.base.boundbox import BoundBox
 
 class test_boundbox(unittest.TestCase):
     """Test for boundbox.py"""
+
     def setUp(self):
         self.pt1 = Point(0, 0)
         self.pt2 = Point(100, 100)

@@ -27,7 +27,7 @@ class test_OffsetAccuracy(unittest.TestCase):
                    bounds.ZLength() + 2 * padding)
         tree = Quadtree()
         tree.initialise(group, Point(xmin + size / 2,
-                                    bounds.ZMin - padding + size / 2),
+                                     bounds.ZMin - padding + size / 2),
                         size, size)
         return tree.getOffset(offset)
 
@@ -197,8 +197,25 @@ class test_OffsetAccuracy(unittest.TestCase):
                     wall = [s for s in source.getSegments()
                             if s.start.Z > -3 > s.end.Z]
                     self.assertEqual(len(wall), 1)
-                    self.assertAlmostEqual(wall[0].start.X, 8, delta=0.01)
-                    self.assertAlmostEqual(wall[0].end.X, 8, delta=0.01)
+                    if grooving:
+                        self.assertLess(min(wall[0].start.X, wall[0].end.X), 7.9)
+                        for move in source.getSegments():
+                            for index in range(41):
+                                position = move.start.lerp(move.end, index / 40)
+                                translated = SegmentGroup()
+                                for edge in tool.get_segmentgroup().getSegments():
+                                    translated.addSegment(Segment(
+                                        Point(edge.start.X + position.X, edge.start.Z + position.Z),
+                                        Point(edge.end.X + position.X, edge.end.Z + position.Z),
+                                        edge.bulge))
+                                self.assertFalse(group.intersectsGroup(translated))
+                                for edge in translated.getSegments():
+                                    self.assertFalse(group.isInside(edge.start))
+                                for edge in group.getSegments():
+                                    self.assertFalse(translated.isInside(edge.start))
+                    else:
+                        self.assertAlmostEqual(wall[0].start.X, 8, delta=0.01)
+                        self.assertAlmostEqual(wall[0].end.X, 8, delta=0.01)
                     for offset in (-0.1, 0, 0.5, 1, 2):
                         with self.subTest(offset=offset):
                             self.assert_contours_accurate(source, offset)

@@ -7,6 +7,8 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(boundbox, m)
 {
+    // Register the BoundBox class, extents and bounds with Python //
+    using namespace liblathe;
 
     // optional module docstring
     m.doc() = "Boundbox Class";

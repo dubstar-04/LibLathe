@@ -1,3 +1,5 @@
+import math
+
 from liblathe.gcode.command import Command
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -53,8 +55,12 @@ class Path:
 
         return False
 
-    def fromSegmentGroup(self, operation, segmentGroup):
-        """converts segmentgroup to gcode commands"""
+    def fromSegmentGroup(self, operation, segmentGroup, *, protect_part=False):
+        """Route rapids outside original stock and feed through approach/escape moves.
+
+        Profile and roughing callers certify the added feeds against the part.
+        Facing and parting may intentionally cut that region.
+        """
 
         def get_pos(pnt):
             x = pnt.X
@@ -71,42 +77,66 @@ class Path:
             return arcType
 
         segments = segmentGroup.getSegments()
+        if not segments:
+            return
+        clearance = float(operation.clearance)
+        if not math.isfinite(clearance) or clearance < 0:
+            raise ValueError("Clearance must be finite and non-negative")
+        clearance = max(clearance, 0.01)
+        tool = operation.tool.get_segmentgroup()
+        tool_bounds = tool.boundbox()
+        part_bounds = operation.partSegmentGroup.boundbox()
+        pass_bounds = segmentGroup.boundbox()
+        x_clear = max(operation.stock.XMax - tool_bounds.XMin,
+                      part_bounds.XMax - tool_bounds.XMin, pass_bounds.XMax) + clearance
+        z_clear = max(operation.stock.ZMax - tool_bounds.ZMin,
+                      part_bounds.ZMax - tool_bounds.ZMin, pass_bounds.ZMax) + clearance
+        if not all(math.isfinite(value) for value in (x_clear, z_clear)):
+            raise ValueError("Stock and tool clearance coordinates must be finite")
+        outside = Point(x_clear, z_clear)
+        commands = []
 
-        for seg in segments:
-            min_x_retract = self.get_min_retract_x(seg, segments, operation)
-            x_retract = min_x_retract + operation.step_over * operation.finish_passes
-            z_retract = segments[0].start.Z
+        def emit(movement, point):
+            commands.append(Command(movement, {'X': point.X, 'Z': point.Z, 'F': operation.hfeed}))
 
-            # rapid to the start of the segmentgroup
-            if segments.index(seg) == 0:
-                pt = get_pos(seg.start)
-                params = {'X': pt.X, 'Z': pt.Z, 'F': operation.hfeed}
-                rapid = Command('G0', params)
-                self.commands.append(rapid)
+        def clear_feed(start, end):
+            if protect_part:
+                operation.partSegmentGroup.validateToolSweep(tool, start, end)
 
-            # handle line segments
+        def approach(target):
+            for entry in (Point(target.X, z_clear), Point(x_clear, target.Z)):
+                try:
+                    clear_feed(entry, target)
+                except RuntimeError:
+                    continue
+                emit('G0', entry)
+                emit('G1', target)
+                return
+            raise ValueError("Cannot approach the pass without crossing the protected part")
+
+        def retract(origin):
+            for exit_point in (Point(x_clear, origin.Z), Point(origin.X, z_clear)):
+                try:
+                    clear_feed(origin, exit_point)
+                except RuntimeError:
+                    continue
+                emit('G1', exit_point)
+                emit('G0', outside)
+                return
+            raise ValueError("Cannot retract the insert without crossing the protected part")
+
+        emit('G0', outside)
+        for index, seg in enumerate(segments):
+            if index == 0 or not self.previous_segment_connected(segments, seg):
+                if index:
+                    retract(segments[index - 1].end)
+                approach(seg.start)
+
             if seg.bulge == 0:
-                # handle unconnected segments
-                if not self.previous_segment_connected(segments, seg) and segments.index(seg) != 0:
-                    pt = get_pos(seg.start)
-                    # rapid to the XMax
-                    params = {'X': x_retract, 'F': operation.hfeed}
-                    rapid = Command('G0', params)
-                    self.commands.append(rapid)
-                    # rapid at XMax to the start of the segment
-                    params = {'X': x_retract, 'Z': pt.Z, 'F': operation.hfeed}
-                    rapid = Command('G0', params)
-                    self.commands.append(rapid)
-                    # rapid to the start of the start of the cutting move
-                    params = {'X': pt.X, 'Z': pt.Z, 'F': operation.hfeed}
-                    cmd = Command('G0', params)
-                    self.commands.append(cmd)
-
-                # perform the cutting
                 pt = get_pos(seg.end)
                 params = {'X': pt.X, 'Z': pt.Z, 'F': operation.hfeed}
                 cmd = Command('G1', params)
-                self.commands.append(cmd)
+                commands.append(cmd)
             # handle arc segments
             if seg.bulge != 0:
                 pt1 = get_pos(seg.start)
@@ -118,16 +148,7 @@ class Path:
                 cen = get_pos(seg.getCentrePoint()).sub(pt1)
                 params = {'X': pt2.X, 'Z': pt2.Z, 'I': cen.X, 'K': cen.Z, 'F': operation.hfeed}
                 cmd = Command(arcType, params)
-                self.commands.append(cmd)
+                commands.append(cmd)
 
-            # handle the lead out at the end of the segmentgroup
-            if segments.index(seg) == len(segments) - 1:
-                pt = get_pos(seg.end)
-                # TODO: Remove the F parameter from rapid moves
-                params = {'X': x_retract, 'Z': pt.Z, 'F': operation.hfeed}
-                rapid = Command('G0', params)
-                self.commands.append(rapid)
-
-                params = {'X': x_retract, 'Z': z_retract, 'F': operation.hfeed}
-                rapid = Command('G0', params)
-                self.commands.append(rapid)
+        retract(segments[-1].end)
+        self.commands.extend(commands)

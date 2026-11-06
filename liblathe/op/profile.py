@@ -29,7 +29,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
             segmentgroup.extend(base_segmentGroup.offset(self.step_over * f_pass))
             # check if segement group intersect the part (internal offset)
             if segmentgroup.intersectsGroup(internalOffset):
-                #Debug().draw([internalOffset, segmentgroup])
+                # Debug().draw([internalOffset, segmentgroup])
                 raise ValueError("Calculated profile path intersects part")
 
             # add the segment group to the tool paths
@@ -44,8 +44,9 @@ class ProfileOP(liblathe.op.base.BaseOP):
         segment = segmentgroup.getSegments()[0]
         # TODO: handle leadin when profiling a mid portion of a part
         # calculate the new z_pos with lead in
-        if (segment.start.Z < self.stock.ZMax):
-            z_pos = self.stock.ZMax
+        stock_z = self.stock.ZMax - self.tool.get_segmentgroup().getRadialContactPoint().Z
+        if (segment.start.Z < stock_z):
+            z_pos = stock_z
         else:
             z_pos = segment.start.Z + self.clearance
         # create the new start point
@@ -63,6 +64,6 @@ class ProfileOP(liblathe.op.base.BaseOP):
         path = Path()
 
         for segmentgroup in reversed(self.tool_paths):
-            path.fromSegmentGroup(self, segmentgroup)
+            path.fromSegmentGroup(self, segmentgroup, protect_part=True)
 
         return path.commands

@@ -1,22 +1,17 @@
-import os
-import sys
 import math
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-baseFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(baseFolder)
-sys.path.append(parentFolder)
 
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.boundbox import BoundBox
+
 
 class test_segment(unittest.TestCase):
     """
     Test for segment.py
     To be qualified using model_test_segment.fcstd
     """
+
     def setUp(self):
 
         self.Pt1 = Point(0, 10)
@@ -61,7 +56,7 @@ class test_segment(unittest.TestCase):
         self.lineSegment2 = Segment(self.Pt3, self.Pt4)
         self.arcSegment2 = Segment(self.Pt4, self.Pt5, self.arc2_bulge)
         self.largeArcSegment = Segment(self.Pt1, self.Pt2, self.large_arc_bulge)
-        self.partialArcSegment = Segment(self.Pt1, Point(7.07107,2.92893), self.partial_arc_bulge)
+        self.partialArcSegment = Segment(self.Pt1, Point(7.07107, 2.92893), self.partial_arc_bulge)
 
         # interects line segment 1 at midpoint
         self.lineSegment1Intersect = Segment(Point(3.62400, -14.61757), Point(10.73243, -9.97400))
@@ -151,13 +146,13 @@ class test_segment(unittest.TestCase):
         self.assertAlmostEqual(bb.XMin, 2.38263, 2)
         self.assertAlmostEqual(bb.ZMin, -30, 2)
         self.assertAlmostEqual(bb.XMax, 5.4, 2)
-        self.assertAlmostEqual(bb.ZMax,  -22, 2)
+        self.assertAlmostEqual(bb.ZMax, -22, 2)
 
         bb = self.largeArcSegment.Boundbox()
         self.assertAlmostEqual(bb.XMin, 0, 2)
         self.assertAlmostEqual(bb.ZMin, -8.74157, 2)
         self.assertAlmostEqual(bb.XMax, 14.8564, 2)
-        self.assertAlmostEqual(bb.ZMax,  11.2584, 2)
+        self.assertAlmostEqual(bb.ZMax, 11.2584, 2)
 
         bb = self.partialArcSegment.Boundbox()
         self.assertAlmostEqual(bb.XMin, 0, 2)
@@ -233,7 +228,7 @@ class test_segment(unittest.TestCase):
         pts = self.lineSegment2.intersect(self.lineSegment1Intersect, False)
         self.assertTrue(len(pts) == 0)
 
-        #Arc Intersections
+        # Arc Intersections
         # intersection: 1
         pts = self.arcSegment1.intersect(self.arcSegment1Intersect)
         pt = pts[0]
@@ -444,9 +439,6 @@ class test_segment(unittest.TestCase):
         closest = self.lineSegment1.closestPoint(point)
         self.assertAlmostEqual(closest.X, self.lineSegment1.end.X, 4)
         self.assertAlmostEqual(closest.Z, self.lineSegment1.end.Z, 4)
-
-
-
 
 
 if __name__ == '__main__':

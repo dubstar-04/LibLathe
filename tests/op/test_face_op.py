@@ -1,18 +1,12 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-opFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(opFolder)
-sys.path.append(parentFolder)
 
 from liblathe.op.face import FaceOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.tool.tool import Tool
+from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.tool.tool import Tool, ToolSide
 
 
 class test_FaceOP(unittest.TestCase):
@@ -88,6 +82,32 @@ class test_FaceOP(unittest.TestCase):
                 # check the feed rate
                 if feed_exists:
                     self.assertEqual(command.getParams()['F'], self.hfeed)
+
+    def test_far_side_publishes_physical_clearing_paths(self):
+        operation = FaceOP()
+        self.assertEqual(operation.clearing_paths, [])
+        operation.setParams({'step_over': 1, 'stock_to_leave': 0, 'hfeed': self.hfeed, 'vfeed': 10})
+        operation.add_stock(BoundBox(Point(-25, -55), Point(0, 15)))
+        operation.addPartSegments([Segment(Point(-13, 10), Point(-13, -48))])
+        tool = Tool()
+        tool.set_tool_from_string('DCMT070204R')
+        tool.side = ToolSide.FAR
+        operation.add_tool(tool)
+        stale = SegmentGroup()
+        stale.addSegment(Segment(Point(99, 99), Point(98, 98)))
+        operation.clearing_paths = [stale]
+
+        commands = operation.getGCode()
+
+        self.assertTrue(operation.clearing_paths)
+        self.assertNotIn(stale, operation.clearing_paths)
+        points = [(segment.start.X, segment.start.Z, segment.end.X, segment.end.Z)
+                  for group in operation.clearing_paths for segment in group.getSegments()]
+        self.assertTrue(all(x <= 1e-6 for point in points for x in (point[0], point[2])))
+        command_x = {round(command.getParams()['X'], 6) for command in commands
+                     if 'X' in command.getParams()}
+        path_x = {round(x, 6) for point in points for x in (point[0], point[2])}
+        self.assertTrue(path_x <= command_x, path_x - command_x)
 
 
 if __name__ == '__main__':
