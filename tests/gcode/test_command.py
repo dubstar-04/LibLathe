@@ -1,11 +1,4 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-gcodeFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(gcodeFolder)
-sys.path.append(parentFolder)
 
 from liblathe.gcode.command import Command
 

@@ -1,11 +1,4 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-baseFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(baseFolder)
-sys.path.append(parentFolder)
 
 from liblathe.base.point import Point
 from liblathe.base.boundbox import BoundBox

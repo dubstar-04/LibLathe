@@ -1,11 +1,4 @@
-import os
-import sys
 import unittest
-
-thisFolder = os.path.dirname(os.path.abspath(__file__))
-opFolder = os.path.dirname(thisFolder)
-parentFolder = os.path.dirname(opFolder)
-sys.path.append(parentFolder)
 
 from liblathe.op.face import FaceOP
 from liblathe.gcode.command import Command

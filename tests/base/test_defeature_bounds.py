@@ -6,6 +6,7 @@ import textwrap
 import unittest
 from pathlib import Path
 
+import liblathe
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -252,7 +253,8 @@ class TestDefeatureBounds(unittest.TestCase):
             else:
                 print("no error")
         """)
-        root = Path(__file__).resolve().parents[2]
+        # Import the same liblathe build as this process, not an unbuilt source checkout.
+        root = Path(liblathe.__file__).resolve().parents[1]
         try:
             result = subprocess.run([sys.executable, "-c", script], cwd=root, capture_output=True,
                                     text=True, timeout=30)
