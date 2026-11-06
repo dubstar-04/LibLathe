@@ -1,3 +1,4 @@
+#include <cmath>
 #include <limits>
 
 #include "point.h"
@@ -25,10 +26,11 @@ namespace liblathe
     float Point::angleTo(Point pt)
     {
         // Return the direction angle to another point in radians //
-        float dX = this->X - pt.X;
-        float dZ = this->Z - pt.Z;
-        float angle = fmod(atan2(-dX, dZ) + M_PIf, M_PIf * 2);
-        return angle;
+        // Work in double: float atan2 and M_PIf round differently across platforms //
+        constexpr double pi = 3.14159265358979323846;
+        const double dX = double(this->X) - pt.X;
+        const double dZ = double(this->Z) - pt.Z;
+        return float(std::fmod(std::atan2(-dX, dZ) + pi, 2 * pi));
     }
 
     Point Point::nearest(std::vector<Point> pts)
