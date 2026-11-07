@@ -5,3 +5,12 @@ requires = [
 ]
 
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel.linux]
+# Preserve the existing CPython Linux wheel compatibility floor.
+manylinux-x86_64-image = "manylinux2014"
+
+[[tool.cibuildwheel.overrides]]
+select = "pp*-manylinux_x86_64"
+# Current PyPy interpreters are not available in manylinux2014.
+manylinux-x86_64-image = "manylinux_2_28"

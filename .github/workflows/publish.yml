@@ -26,10 +26,8 @@ jobs:
           # Keep the published CPython range aligned with the tested range.
           CIBW_BUILD: cp310-* cp311-* cp312-* cp313-* cp314-* pp*
           CIBW_ENABLE: pypy
-          # Preserve the Linux wheel compatibility floor from cibuildwheel 2.x.
-          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           # PyPy's macOS sysconfig passes GNU-only linker flags (-Bsymbolic-functions)
-          CIBW_SKIP: pp36-* pp37-* pp38-* pp39-* pp*-macosx_*
+          CIBW_SKIP: pp*-macosx_*
 
       - uses: actions/upload-artifact@v4
         with:
