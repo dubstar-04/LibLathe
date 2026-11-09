@@ -1,8 +1,15 @@
 import math
+from enum import Enum
 
 from liblathe.gcode.command import Command
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
+
+
+class RoutingDirection(Enum):
+    AUTO = "Auto"
+    RADIAL = "Radial"
+    AXIAL = "Axial"
 
 
 class Path:
@@ -55,12 +62,21 @@ class Path:
 
         return False
 
-    def fromSegmentGroup(self, operation, segmentGroup, *, protect_part=False):
+    def fromSegmentGroup(self, operation, segmentGroup, *, protect_part=False,
+                         direction=RoutingDirection.AUTO):
         """Route rapids outside original stock and feed through approach/escape moves.
 
         Profile and roughing callers certify the added feeds against the part.
         Facing and parting may intentionally cut that region.
+        Direction controls approach and retract moves, not the cutting segments.
+        Auto retains axial-first entry and radial-first exit with fallback, and
+        returns to the outside-stock corner between passes.
+        Forced directions never fall back to another axis and reposition along
+        their clearance plane, visiting the corner only at the start of the path.
         """
+
+        if not isinstance(direction, RoutingDirection):
+            raise ValueError("Direction must be a RoutingDirection enumeration member")
 
         def get_pos(pnt):
             x = pnt.X
@@ -104,7 +120,12 @@ class Path:
                 operation.partSegmentGroup.validateToolSweep(tool, start, end)
 
         def approach(target):
-            for entry in (Point(target.X, z_clear), Point(x_clear, target.Z)):
+            entries = (Point(target.X, z_clear), Point(x_clear, target.Z))
+            if direction == RoutingDirection.RADIAL:
+                entries = (Point(x_clear, target.Z),)
+            elif direction == RoutingDirection.AXIAL:
+                entries = (Point(target.X, z_clear),)
+            for entry in entries:
                 try:
                     clear_feed(entry, target)
                 except RuntimeError:
@@ -115,17 +136,25 @@ class Path:
             raise ValueError("Cannot approach the pass without crossing the protected part")
 
         def retract(origin):
-            for exit_point in (Point(x_clear, origin.Z), Point(origin.X, z_clear)):
+            exits = (Point(x_clear, origin.Z), Point(origin.X, z_clear))
+            if direction == RoutingDirection.RADIAL:
+                exits = (Point(x_clear, origin.Z),)
+            elif direction == RoutingDirection.AXIAL:
+                exits = (Point(origin.X, z_clear),)
+            for exit_point in exits:
                 try:
                     clear_feed(origin, exit_point)
                 except RuntimeError:
                     continue
                 emit('G1', exit_point)
-                emit('G0', outside)
+                if direction == RoutingDirection.AUTO:
+                    emit('G0', outside)
                 return
             raise ValueError("Cannot retract the insert without crossing the protected part")
 
-        emit('G0', outside)
+        # forced directions stay on their clearance plane, so the corner is only needed to enter the path
+        if direction == RoutingDirection.AUTO or len(self.commands) == 1:
+            emit('G0', outside)
         for index, seg in enumerate(segments):
             if index == 0 or not self.previous_segment_connected(segments, seg):
                 if index:

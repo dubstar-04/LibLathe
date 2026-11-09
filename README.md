@@ -77,6 +77,16 @@ Facing and parting use the same stock-clear rapid routing but may intentionally
 cut the original part region. Rebuild the native extensions for the new sweep
 validation binding before using the updated Python routing code.
 
+`Path.fromSegmentGroup()` accepts an internal `direction` argument using
+`RoutingDirection` from `liblathe.gcode.path`. `AUTO` (default) retains axial-first
+entry and radial-first exit, trying the other axis if a protected feed cannot
+be certified. `RADIAL` forces X-only approaches and retracts; `AXIAL` forces
+Z-only approaches and retracts. Forced directions do not fall back, and with
+`protect_part=True` an uncertifiable route raises an error without publishing
+partial commands for that group. The direction does not alter cutting segments.
+Forced directions reposition along their clearance plane between passes and
+use the outside-stock corner only to enter a path.
+
 This conservative routing does not track previously cleared stock. It checks
 the first rapid destination, not travel from an unknown initial machine position,
 and does not certify holders, fixtures, all original cutting moves, or machining
