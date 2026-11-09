@@ -70,10 +70,10 @@ G-code entry and retract routing uses the complete rotated insert bounds to keep
 rapid moves outside the original stock envelope. The `clearance` parameter must
 be finite and non-negative; routing applies a minimum clearance of 0.01 model
 units. Approaches and escapes use feed moves at `hfeed`, so these moves may remove
-stock. Profile, roughing and grooving operations certify the added feeds against the
+stock. With `protect_part=True`, the added feeds are certified against the
 original part with `SegmentGroup.validateToolSweep`; an uncertifiable approach
 or escape raises an error instead of publishing partial commands for that group.
-Facing and parting use the same stock-clear rapid routing but may intentionally
+Without it, routing still keeps rapids clear of the stock but approaches may
 cut the original part region. Rebuild the native extensions for the new sweep
 validation binding before using the updated Python routing code.
 
@@ -84,16 +84,8 @@ be certified. `RADIAL` forces X-only approaches and retracts; `AXIAL` forces
 Z-only approaches and retracts. Forced directions do not fall back, and with
 `protect_part=True` an uncertifiable route raises an error without publishing
 partial commands for that group. The direction does not alter cutting segments.
-Grooving uses `RADIAL`, with feed-rate retracts to the radial clearance plane;
-between plunges it repositions in Z along that plane rather than returning to
-the outside-stock corner, which forced directions use only to enter a path.
-Axial spacing uses the fixed 10% `GrooveOP.overlap_percent` class constant,
-which is not included in the operation's parameter dictionary.
-After the plunges, grooving adds `finish_passes` spring passes (0 disables
-them). Each follows the same final contour, clipped to the stock X and Z
-limits, to remove the scallops plunges leave on sloped or curved walls. These
-passes feed axially along floors and diagonally along walls; their approaches
-and retracts remain radial.
+Forced directions reposition along their clearance plane between passes and
+use the outside-stock corner only to enter a path.
 
 This conservative routing does not track previously cleared stock. It checks
 the first rapid destination, not travel from an unknown initial machine position,
@@ -102,10 +94,8 @@ safety. Reference-equivalent final stock remains a separate validation requireme
 
 `SegmentGroup.getRadialContactPoint()` derives a cutting-edge datum from the
 native outline, including arc extrema and the axial midpoint of a flat innermost
-edge. Roughing uses it to express physical stock limits in tool-origin coordinates
-and anchors its pass grid to the stock, rather than a sampled offset endpoint.
-Profile uses the same datum for its lead-in plane. These changes require rebuilt
-native bindings; they do not establish reference-equivalent Profile final stock.
+edge. Operations use it to express physical stock limits in tool-origin
+coordinates. It requires rebuilt native bindings.
 
 The SDF uses the profile closed back to X = 0: sign and distance include the
 same boundary. Artificial closing edges do not generate offset candidates;
