@@ -55,7 +55,7 @@ Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts
 1. **Defeature:** the tool is moved along the part and only the area it can actually reach is kept, removing features that can't be turned, such as undercuts.
 2. **Offset:** a signed distance field (SDF) gives the distance from any point to the profile. A quadtree samples it, refining only near the target distance. Points at that distance are collected, ordered and simplified with the Ramer-Douglas-Peucker (RDP) algorithm into the offset path.
 
-The operations (face, rough, profile and part-off) combine these steps into toolpaths and gcode. The geometry core is C++ exposed to Python with pybind11.
+The operations (face, rough, profile, groove and part-off) combine these steps into toolpaths and gcode. The geometry core is C++ exposed to Python with pybind11.
 
 Defeature retains the complete line/arc insert footprint and checks containment
 as well as edge crossings. Returned points are tool origins, not contact points.
@@ -70,7 +70,7 @@ G-code entry and retract routing uses the complete rotated insert bounds to keep
 rapid moves outside the original stock envelope. The `clearance` parameter must
 be finite and non-negative; routing applies a minimum clearance of 0.01 model
 units. Approaches and escapes use feed moves at `hfeed`, so these moves may remove
-stock. Profile and roughing operations certify the added feeds against the
+stock. Profile, roughing and grooving operations certify the added feeds against the
 original part with `SegmentGroup.validateToolSweep`; an uncertifiable approach
 or escape raises an error instead of publishing partial commands for that group.
 Facing and parting use the same stock-clear rapid routing but may intentionally
@@ -84,8 +84,16 @@ be certified. `RADIAL` forces X-only approaches and retracts; `AXIAL` forces
 Z-only approaches and retracts. Forced directions do not fall back, and with
 `protect_part=True` an uncertifiable route raises an error without publishing
 partial commands for that group. The direction does not alter cutting segments.
-Forced directions reposition along their clearance plane between passes and
-use the outside-stock corner only to enter a path.
+Grooving uses `RADIAL`, with feed-rate retracts to the radial clearance plane;
+between plunges it repositions in Z along that plane rather than returning to
+the outside-stock corner, which forced directions use only to enter a path.
+Axial spacing uses the fixed 10% `GrooveOP.overlap_percent` class constant,
+which is not included in the operation's parameter dictionary.
+After the plunges, grooving adds `finish_passes` spring passes (0 disables
+them). Each follows the same final contour, clipped to the stock X and Z
+limits, to remove the scallops plunges leave on sloped or curved walls. These
+passes feed axially along floors and diagonally along walls; their approaches
+and retracts remain radial.
 
 This conservative routing does not track previously cleared stock. It checks
 the first rapid destination, not travel from an unknown initial machine position,
