@@ -1,10 +1,19 @@
 Lathe Operations
 ================
 
-The current operation modules provide roughing, facing, profiling and parting.
-Grooving, boring, chamfering, threading and drilling are not separate supported
-operation classes. In particular, selecting the Far tool side does not enable
-internal boring.
+The current operation modules provide facing, roughing, profiling, grooving
+and parting. Grooving is external and radial only. Boring, chamfering,
+threading and drilling are not separate supported operation classes. In
+particular, selecting the Far tool side does not enable internal boring.
+
+.. toctree::
+   :maxdepth: 1
+
+   operations/face
+   operations/rough
+   operations/profile
+   operations/groove
+   operations/partoff
 
 All operations inherit the signed-side dispatch in ``BaseOP.getGCode()``.
 Supply matching physical tool, stock and part geometry; Far-side inputs and
