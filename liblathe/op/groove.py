@@ -75,6 +75,30 @@ class GrooveOP(liblathe.op.base.BaseOP):
             return None
         return Segment(start.lerp(end, t_start), start.lerp(end, t_end))
 
+    @staticmethod
+    def _get_finish_strokes(finish):
+        """Split the contour at gaps and X reversals, orienting every stroke inward."""
+        strokes = []
+        run = SegmentGroup()
+        direction = 0
+        previous = None
+        for segment in finish.getSegments():
+            dx = segment.end.X - segment.start.X
+            sign = (dx > 0) - (dx < 0)
+            if previous is not None and (
+                    not previous.end.isSame(segment.start)
+                    or (sign and direction and sign != direction)):
+                strokes.append(run.reversed() if direction > 0 else run)
+                run = SegmentGroup()
+                direction = 0
+            run.addSegment(segment)
+            if sign:
+                direction = sign
+            previous = segment
+        if run.count():
+            strokes.append(run.reversed() if direction > 0 else run)
+        return strokes
+
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
         self.tool_paths = []
@@ -150,10 +174,15 @@ class GrooveOP(liblathe.op.base.BaseOP):
             clipped = self._clip(segment, x_min, x_top, z_low, z_high)
             if clipped is not None:
                 finish.addSegment(clipped)
-        if finish.count():
+        if finish.count() and self.finish_passes:
             if finish.intersectsGroup(internal_offset):
                 raise ValueError("Calculated grooving finish path intersects part")
-            tool_paths.extend(finish for _ in range(self.finish_passes))
+            strokes = self._get_finish_strokes(finish)
+            for stroke in strokes:
+                for segment in stroke.getSegments():
+                    self.partSegmentGroup.validateToolSweep(tool, segment.start, segment.end)
+            for _ in range(self.finish_passes):
+                tool_paths.extend(strokes)
 
         self.tool_paths = tool_paths
 
@@ -195,10 +224,14 @@ class GrooveOP(liblathe.op.base.BaseOP):
         return max(self.stock.XMax, part_bounds.XMax) - tool_bounds.XMin + max(clearance, 0.01)
 
     def generateGCode(self):
-        """Emit radial plunges; Z only changes with the tool radially clear of the stock."""
+        """Route plunges and inward finishing strokes with radial approach and retract."""
         path = Path()
-        for segmentgroup in self.tool_paths:
-            path.fromSegmentGroup(self, segmentgroup, protect_part=True,
-                                  direction=RoutingDirection.RADIAL)
+        try:
+            for segmentgroup in self.tool_paths:
+                path.fromSegmentGroup(self, segmentgroup, protect_part=True,
+                                      direction=RoutingDirection.RADIAL)
+        except (ValueError, RuntimeError):
+            self.tool_paths = []
+            raise
 
         return path.commands

@@ -46,6 +46,27 @@ must form a simple region.
    uncertifiable contours and detected collapsed, zero-width branches rather
    than returning an inaccurate path.
 
+## Cutting traversal and routing
+
+Operations choose the traversal of generated geometry; the G-code router
+chooses approaches and retracts. `SegmentGroup.reversed()` provides a shared,
+non-mutating geometry operation that reverses segment order, endpoints and arc
+bulges without changing the curve. It does not choose an operation's strategy
+or rebuild its lead-in/out.
+
+Grooving partitions its clipped finishing polyline at radial direction changes
+and gaps, reversing outward runs so each stroke cuts inward. Constant-X floor
+segments remain, and the existing radial router provides clearance moves
+between strokes. Near-side generation followed by the existing far-side
+reflection keeps both tool sides cutting toward the centerline. Other
+operations retain their existing traversal and layer order.
+
+Full-insert sweep checks certify finishing cuts as well as added approach and
+retract moves. Long public sweep queries are partitioned into consecutive
+translations no longer than the insert's smaller X/Z extent; each uses the
+existing checker and subdivision budget. This bounds the work of individual
+checks without skipping any travel or relaxing clearance tolerances.
+
 ## Geometry lifetime and debug data
 
 Prepared geometry belongs to one extraction and is rebuilt for each request,

@@ -1,5 +1,7 @@
 import math
 import unittest
+from unittest.mock import Mock, patch
+from collections import Counter
 
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
@@ -30,6 +32,20 @@ def square_tool(width=TOOL_WIDTH, sign=1):
     tool.set_tool_shape('S')
     tool.set_tool_from_segments([Segment(Point(sign * a[0], a[1]), Point(sign * b[0], b[1]))
                                  for a, b in zip(points, points[1:])])
+    if sign < 0:
+        tool.side = ToolSide.FAR
+    return tool
+
+
+def rounded_tool(width=2, radius=0.2, origin=0, sign=1):
+    points = [(radius, 0), (0, radius), (0, width - radius),
+              (radius, width), (12, width), (12, 0), (radius, 0)]
+    tool = Tool()
+    tool.set_tool_from_segments([
+        Segment(Point(sign * a[0], a[1] + origin),
+                Point(sign * b[0], b[1] + origin),
+                sign * math.tan(math.pi / 8) if index in (0, 2) else 0)
+        for index, (a, b) in enumerate(zip(points, points[1:]))])
     if sign < 0:
         tool.side = ToolSide.FAR
     return tool
@@ -197,24 +213,126 @@ class test_GrooveOP(unittest.TestCase):
 
     def test_finish_passes_are_repeated_contours_after_plunges(self):
         plunge_layers = len(self.op.tool_paths)
+        once = make_op(finish_passes=1)
+        once.generatePath()
+        strokes = once.tool_paths[plunge_layers:]
+        self.assertGreater(len(strokes), 1)
+        geometry = lambda group: [(s.start.X, s.start.Z, s.end.X, s.end.Z)
+                                  for s in group.getSegments()]
         for count in (0, 1, 2):
             with self.subTest(finish_passes=count):
                 op = make_op(finish_passes=count)
                 op.generatePath()
-                self.assertEqual(len(op.tool_paths), plunge_layers + count)
+                self.assertEqual(len(op.tool_paths), plunge_layers + count * len(strokes))
                 finishes = op.tool_paths[plunge_layers:]
+                self.assertEqual([geometry(group) for group in finishes],
+                                 [geometry(group) for group in strokes] * count)
                 for finish in finishes:
-                    self.assertEqual([(s.start.X, s.start.Z, s.end.X, s.end.Z) for s in finish.getSegments()],
-                                     [(s.start.X, s.start.Z, s.end.X, s.end.Z) for s in finishes[0].getSegments()])
-                    # follows the walls and floors, not only radial moves
-                    self.assertTrue(any(abs(s.start.Z - s.end.Z) > 1 for s in finish.getSegments()))
+                    for segment in finish.getSegments():
+                        self.assertLessEqual(segment.end.X, segment.start.X)
+
+    def test_finish_strokes_preserve_all_segments_and_gaps(self):
+        cases = [
+            [],
+            [(15, 0), (10, -5)],
+            [(10, 0), (15, -5)],
+            [(10, 0), (10, -5), (10, -10)],
+            [(15, 0), (10, -5), (10, -10), (15, -15)],
+            [(15, 0), (15, -1), (12, -3), (10, -5), (12, -7), (15, -9)],
+            [(15, 0), (10, -5), (15, -10), (12, -15), (12, -16), (15, -20)],
+            [(10, 0), (10.00001, -1), (10, -2), (10.00001, -3)],
+        ]
+        def edge_key(segment):
+            return tuple(sorted(((segment.start.X, segment.start.Z),
+                                 (segment.end.X, segment.end.Z))))
+
+        for points in cases:
+            for gap in (False, True):
+                with self.subTest(points=points, gap=gap):
+                    finish = SegmentGroup()
+                    for a, b in zip(points, points[1:]):
+                        finish.addSegment(Segment(Point(*a), Point(*b)))
+                    if gap:
+                        finish.addSegment(Segment(Point(20, -40), Point(18, -45)))
+                    before = Counter(edge_key(s) for s in finish.getSegments())
+                    strokes = GrooveOP._get_finish_strokes(finish)
+                    after = Counter(edge_key(s) for group in strokes for s in group.getSegments())
+                    self.assertEqual(before, after)
+                    for stroke in strokes:
+                        segments = stroke.getSegments()
+                        for segment in segments:
+                            self.assertLessEqual(segment.end.X, segment.start.X)
+                        for a, b in zip(segments, segments[1:]):
+                            self.assertTrue(a.end.isSame(b.start))
+
+    def test_finish_strokes_keep_floor_with_inward_wall(self):
+        finish = SegmentGroup().fromPoints([
+            Point(15, 0), Point(10, -5), Point(10, -10), Point(15, -15)])
+        strokes = GrooveOP._get_finish_strokes(finish)
+        self.assertEqual([stroke.count() for stroke in strokes], [2, 1])
+        self.assertTrue(strokes[0].getSegments()[-1].end.isSame(Point(10, -10)))
+        self.assertTrue(strokes[1].getSegments()[0].start.isSame(Point(15, -15)))
+
+    def test_curved_walls_finish_inward_with_rounded_tool_and_mirrored_origins(self):
+        points = [(0, 0), (15, 0), (15, -10), (10, -15),
+                  (10, -25), (15, -30), (15, -40), (0, -40)]
+        for origin in (-2, -1, 0):
+            for sign in (1, -1):
+                with self.subTest(origin=origin, sign=sign):
+                    tool = rounded_tool(origin=origin, sign=sign)
+                    op = make_op(tool=tool, sign=sign, stock=(0, -30, 16, -10),
+                                 finish_passes=1, stock_to_leave=0.1)
+                    op.partSegmentGroup = SegmentGroup()
+                    op.addPartSegments([
+                        Segment(Point(sign * a[0], a[1]), Point(sign * b[0], b[1]),
+                                sign * math.tan(math.pi / 8) if i in (2, 4) else 0)
+                        for i, (a, b) in enumerate(zip(points, points[1:]))])
+                    commands = op.getGCode()
+                    self.assertTrue(commands)
+                    # The otherwise identical zero-finish operation identifies the plunge prefix.
+                    op.finish_passes = 0
+                    op.getGCode()
+                    plunge_count = len(op.tool_paths)
+                    op.finish_passes = 1
+                    op.getGCode()
+                    self.assertGreater(len(op.tool_paths), plunge_count)
+                    for stroke in op.tool_paths[plunge_count:]:
+                        for segment in stroke.getSegments():
+                            self.assertLessEqual(sign * (segment.end.X - segment.start.X), 0)
+                            op.partSegmentGroup.validateToolSweep(
+                                tool.get_segmentgroup(), segment.start, segment.end)
+
+    def test_uncertified_finish_leaves_no_paths(self):
+        op = make_op(finish_passes=1)
+        part = op.partSegmentGroup
+        op.partSegmentGroup = Mock(wraps=part)
+        def validate(tool, start, end):
+            if abs(end.Z - start.Z) > 1e-6:
+                raise RuntimeError("Uncertified finishing move")
+            return part.validateToolSweep(tool, start, end)
+        op.partSegmentGroup.validateToolSweep.side_effect = validate
+        with self.assertRaisesRegex(RuntimeError, 'Uncertified finishing'):
+            op.getGCode()
+        self.assertEqual(op.tool_paths, [])
+
+    def test_failed_finish_routing_leaves_no_paths(self):
+        op = make_op(finish_passes=1)
+        op.generatePath()
+        with patch('liblathe.op.groove.Path.fromSegmentGroup',
+                   side_effect=ValueError("Cannot approach")):
+            with self.assertRaisesRegex(ValueError, 'Cannot approach'):
+                op.generateGCode()
+        self.assertEqual(op.tool_paths, [])
 
     def test_finish_pass_stays_inside_grooving_limits(self):
         op = make_op(stock=(11, -20, 16, -10), finish_passes=1)
         op.generatePath()
         bounds = op.tool.get_segmentgroup().boundbox()
         z_high, z_low = op.get_z_range(bounds)
-        for seg in op.tool_paths[-1].getSegments():
+        plunge = make_op(stock=(11, -20, 16, -10))
+        plunge.generatePath()
+        for seg in (s for group in op.tool_paths[len(plunge.tool_paths):]
+                    for s in group.getSegments()):
             for point in (seg.start, seg.end):
                 self.assertGreaterEqual(point.X, 11 - 1e-6)
                 self.assertLessEqual(point.X, 16 + 1e-6)
@@ -262,6 +380,39 @@ class test_GrooveOP(unittest.TestCase):
             if command.get_movement() == 'G0' and abs(current['Z'] - previous['Z']) > 1e-6:
                 self.assertAlmostEqual(previous['X'], x_clear)
                 self.assertAlmostEqual(current['X'], x_clear)
+
+    def test_each_finish_stroke_routes_via_radial_clearance(self):
+        op = make_op(finish_passes=2)
+        op.generatePath()
+        plunged = make_op()
+        plunged.generatePath()
+        strokes = op.tool_paths[len(plunged.tool_paths):]
+        self.assertGreater(len(strokes), 2)
+        op.tool_paths = strokes
+        commands = op.generateGCode()[1:]
+        # A forced-direction path visits the outside corner once, then each group
+        # emits a clearance rapid, approach, its contour feeds, and a radial exit.
+        outside = commands.pop(0).getParams()
+        x_clear = outside['X']
+        for stroke in strokes:
+            segments = stroke.getSegments()
+            entry, approach = commands.pop(0), commands.pop(0)
+            self.assertEqual(entry.get_movement(), 'G0')
+            self.assertAlmostEqual(entry.getParams()['X'], x_clear)
+            self.assertAlmostEqual(entry.getParams()['Z'], segments[0].start.Z)
+            self.assertEqual(approach.get_movement(), 'G1')
+            self.assertAlmostEqual(approach.getParams()['X'], segments[0].start.X)
+            self.assertAlmostEqual(approach.getParams()['Z'], segments[0].start.Z)
+            for segment in segments:
+                cut = commands.pop(0)
+                self.assertEqual(cut.get_movement(), 'G1')
+                self.assertAlmostEqual(cut.getParams()['X'], segment.end.X)
+                self.assertAlmostEqual(cut.getParams()['Z'], segment.end.Z)
+            retract = commands.pop(0)
+            self.assertEqual(retract.get_movement(), 'G1')
+            self.assertAlmostEqual(retract.getParams()['X'], x_clear)
+            self.assertAlmostEqual(retract.getParams()['Z'], segments[-1].end.Z)
+        self.assertEqual(commands, [])
 
 
 if __name__ == '__main__':
