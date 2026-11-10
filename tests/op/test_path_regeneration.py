@@ -89,6 +89,17 @@ class test_PathRegeneration(unittest.TestCase):
                     self.assertEqual(self.commands(operation), self.commands(fresh))
                     self.assertEqual(len(operation.tool_paths), len(fresh.tool_paths))
 
+    def test_failed_roughing_routing_clears_previous_and_partial_paths(self):
+        operation = self.operation(test_rough_op.test_RoughOP)
+        expected = self.commands(operation)
+        with patch('liblathe.op.rough.Path.fromSegmentGroup',
+                   side_effect=[None, ValueError('No safe containment entry')]) as route:
+            with self.assertRaisesRegex(ValueError, 'No safe containment entry'):
+                operation.getGCode()
+        self.assertEqual(route.call_count, 2)
+        self.assertEqual(operation.tool_paths, [])
+        self.assertEqual(self.commands(operation), expected)
+
 
 if __name__ == '__main__':
     unittest.main()

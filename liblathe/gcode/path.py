@@ -64,7 +64,7 @@ class Path:
 
     def fromSegmentGroup(self, operation, segmentGroup, *, protect_part=False,
                          direction=RoutingDirection.AUTO, radial_clearance=None,
-                         return_to_clearance=False):
+                         return_to_clearance=False, contain_feeds=False):
         """Route rapids outside original stock and feed through approach/escape moves.
 
         Profile and roughing callers certify the added feeds against the part.
@@ -76,6 +76,9 @@ class Path:
         their clearance plane, visiting the corner only at the start of the path.
         Local radial clearance uses prepared stock inside the selected Z range
         and actual stock elsewhere; all rapid transfers are certified.
+        With contain_feeds, cutting and entry feeds stay inside tool-reference
+        containment. Radial feed withdrawals may leave it to reach stock clearance;
+        rapid transfers must clear the physical stock.
         """
 
         if not isinstance(direction, RoutingDirection):
@@ -86,6 +89,9 @@ class Path:
             raise ValueError("Local radial clearance requires protected radial routing and actual stock")
         if return_to_clearance and radial_clearance is None:
             raise ValueError("Returning to clearance requires local radial routing")
+        if contain_feeds and (direction != RoutingDirection.AUTO or radial_clearance is not None
+                              or not protect_part):
+            raise ValueError("Contained feeds require protected automatic routing")
 
         def get_pos(pnt):
             x = pnt.X
@@ -112,11 +118,18 @@ class Path:
         tool_bounds = tool.boundbox()
         part_bounds = operation.partSegmentGroup.boundbox()
         pass_bounds = segmentGroup.boundbox()
+        if contain_feeds:
+            limits = operation.containment
+            if not (pass_bounds.XMin >= limits.XMin - 1e-5
+                    and pass_bounds.XMax <= limits.XMax + 1e-5
+                    and pass_bounds.ZMin >= limits.ZMin - 1e-5
+                    and pass_bounds.ZMax <= limits.ZMax + 1e-5):
+                raise ValueError("Cutting path is outside roughing containment")
         x_clear = max(operation.containment.XMax - tool_bounds.XMin,
                       part_bounds.XMax - tool_bounds.XMin, pass_bounds.XMax) + clearance
         z_clear = max(operation.containment.ZMax - tool_bounds.ZMin,
                       part_bounds.ZMax - tool_bounds.ZMin, pass_bounds.ZMax) + clearance
-        if radial_clearance is not None:
+        if radial_clearance is not None or (contain_feeds and operation.stock is not None):
             actual = operation.stock
             x_clear = max(x_clear, actual.XMax - tool_bounds.XMin + clearance)
             z_clear = max(z_clear, actual.ZMax - tool_bounds.ZMin + clearance)
@@ -129,7 +142,27 @@ class Path:
             x_clear = radial_clearance
         commands = []
 
-        def emit(movement, point):
+        def clears_stock(start, end):
+            stock = operation.stock if operation.stock is not None else operation.containment
+            return (min(start.X, end.X) + tool_bounds.XMin >= stock.XMax - 1e-5
+                    or min(start.Z, end.Z) + tool_bounds.ZMin >= stock.ZMax - 1e-5
+                    or max(start.Z, end.Z) + tool_bounds.ZMax <= stock.ZMin + 1e-5)
+
+        def emit(movement, point, *, withdrawal=False):
+            if contain_feeds:
+                previous = commands[-1] if commands else self.commands[-1]
+                params = previous.getParams()
+                if movement == 'G1' and not withdrawal:
+                    limits = operation.containment
+                    for endpoint in (point, Point(params['X'], params['Z'])):
+                        if not (limits.XMin - 1e-5 <= endpoint.X <= limits.XMax + 1e-5
+                                and limits.ZMin - 1e-5 <= endpoint.Z <= limits.ZMax + 1e-5):
+                            raise ValueError("Feed move is outside roughing containment")
+                elif movement == 'G0' and 'X' in params and 'Z' in params:
+                    start = Point(params['X'], params['Z'])
+                    if not clears_stock(start, point):
+                        raise ValueError("Rapid transfer crosses stock")
+                    operation.partSegmentGroup.validateToolSweep(tool, start, point)
             if movement == 'G0' and radial_clearance is not None:
                 previous = commands[-1] if commands else self.commands[-1]
                 params = previous.getParams()
@@ -150,12 +183,32 @@ class Path:
             if protect_part:
                 operation.partSegmentGroup.validateToolSweep(tool, start, end)
 
-        def approach(target):
+        def boundary_point(anchor, dx, dz):
+            limits = operation.containment
+            distances = []
+            for value, delta, low, high in (
+                    (anchor.X, dx, limits.XMin, limits.XMax),
+                    (anchor.Z, dz, limits.ZMin, limits.ZMax)):
+                if delta > 0:
+                    distances.append((high - value) / delta)
+                elif delta < 0:
+                    distances.append((low - value) / delta)
+            distance = max(0, min(distances)) if distances else 0
+            return Point(anchor.X + distance * dx, anchor.Z + distance * dz)
+
+        def approach(segment):
+            target = segment.start
             if radial_clearance is not None:
                 previous = commands[-1] if commands else self.commands[-1]
                 if abs(previous.getParams()['X'] - x_clear) > 1e-6:
                     emit('G0', Point(outside.X, target.Z))
-            entries = (Point(target.X, z_clear), Point(x_clear, target.Z))
+            entry_x = operation.containment.XMax if contain_feeds else x_clear
+            entry_z = operation.containment.ZMax if contain_feeds else z_clear
+            entries = (Point(target.X, entry_z), Point(entry_x, target.Z))
+            if contain_feeds and segment.bulge == 0:
+                aligned = boundary_point(target, target.X - segment.end.X,
+                                         target.Z - segment.end.Z)
+                entries = (aligned, *entries)
             if direction == RoutingDirection.RADIAL:
                 entries = (Point(x_clear, target.Z),)
             elif direction == RoutingDirection.AXIAL:
@@ -165,27 +218,61 @@ class Path:
                     clear_feed(entry, target)
                 except RuntimeError:
                     continue
+                if contain_feeds:
+                    for corner in (Point(entry.X, outside.Z), Point(outside.X, entry.Z)):
+                        if not (clears_stock(outside, corner) and clears_stock(corner, entry)):
+                            continue
+                        try:
+                            clear_feed(outside, corner)
+                            clear_feed(corner, entry)
+                        except RuntimeError:
+                            continue
+                        break
+                    else:
+                        continue
+                    emit('G0', corner)
                 emit('G0', entry)
                 emit('G1', target)
                 return
-            raise ValueError("Cannot approach the pass without crossing the protected part")
+            raise ValueError("Cannot approach the pass safely; extend roughing containment beyond stock"
+                             if contain_feeds else
+                             "Cannot approach the pass without crossing the protected part")
 
-        def retract(origin):
-            exits = (Point(x_clear, origin.Z), Point(origin.X, z_clear))
+        def retract(segment):
+            origin = segment.end
+            exit_x = operation.containment.XMax if contain_feeds else x_clear
+            exit_z = operation.containment.ZMax if contain_feeds else z_clear
+            exits = (Point(exit_x, origin.Z), Point(origin.X, exit_z))
+            if contain_feeds:
+                exits = (Point(x_clear, origin.Z),)
             if direction == RoutingDirection.RADIAL:
                 exits = (Point(x_clear, origin.Z),)
             elif direction == RoutingDirection.AXIAL:
                 exits = (Point(origin.X, z_clear),)
             for exit_point in exits:
+                if contain_feeds and segment.bulge == 0:
+                    dx, dz = origin.X - segment.start.X, origin.Z - segment.start.Z
+                    ex, ez = exit_point.X - origin.X, exit_point.Z - origin.Z
+                    if (dx * ex + dz * ez < 0
+                            and abs(dx * ez - dz * ex) <= 1e-6 * max(
+                                1, math.hypot(dx, dz) * math.hypot(ex, ez))):
+                        continue
+                if contain_feeds and not clears_stock(exit_point, outside):
+                    continue
                 try:
                     clear_feed(origin, exit_point)
+                    if contain_feeds:
+                        clear_feed(exit_point, outside)
                 except RuntimeError:
                     continue
-                emit('G1', exit_point)
+                emit('G1', exit_point, withdrawal=contain_feeds)
                 if direction == RoutingDirection.AUTO:
                     emit('G0', outside)
                 return
-            raise ValueError("Cannot retract the insert without crossing the protected part")
+            raise ValueError("Cannot withdraw radially to stock clearance without crossing "
+                             "the protected part or reversing the cut"
+                             if contain_feeds else
+                             "Cannot retract the insert without crossing the protected part")
 
         # forced directions stay on their clearance plane, so the corner is only needed to enter the path
         if direction == RoutingDirection.AUTO or len(self.commands) == 1:
@@ -193,8 +280,8 @@ class Path:
         for index, seg in enumerate(segments):
             if index == 0 or not self.previous_segment_connected(segments, seg):
                 if index:
-                    retract(segments[index - 1].end)
-                approach(seg.start)
+                    retract(segments[index - 1])
+                approach(seg)
 
             if seg.bulge == 0:
                 pt = get_pos(seg.end)
@@ -214,7 +301,7 @@ class Path:
                 cmd = Command(arcType, params)
                 commands.append(cmd)
 
-        retract(segments[-1].end)
+        retract(segments[-1])
         if return_to_clearance:
             emit('G0', Point(outside.X, segments[-1].end.Z))
             emit('G0', outside)

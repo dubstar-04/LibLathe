@@ -1,11 +1,14 @@
 import unittest
+import math
+from unittest.mock import Mock
 
 from liblathe.op.rough import RoughOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.tool.tool import Tool
+from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.tool.tool import Tool, ToolSide
 
 
 class test_RoughOP(unittest.TestCase):
@@ -59,13 +62,12 @@ class test_RoughOP(unittest.TestCase):
         # tool.set_rotation(45)
         self.op.add_tool(tool)
 
-    def test_cutting_limits_follow_tool_reference_translation(self):
-        limits = []
-        radial_passes = []
+    def test_shifted_tool_reference_uses_programmed_containment(self):
         for radial_shift, axial_shift in ((0, 0), (0.6, 0.8)):
             operation = RoughOP()
             operation.stock_to_leave = 0.5
-            operation.add_containment(BoundBox(Point(0, -20), Point(14, 1)))
+            operation.add_containment(BoundBox(Point(radial_shift, -20 + axial_shift),
+                                               Point(14 + radial_shift, 1 + axial_shift)))
             vertices = ((0, 0), (10, 0), (10, -20), (0, -20))
             operation.addPartSegments([
                 Segment(Point(*start), Point(*end)) for start, end in zip(vertices, vertices[1:])])
@@ -79,14 +81,11 @@ class test_RoughOP(unittest.TestCase):
             operation.generatePath()
             bounds = [group.boundbox() for group in operation.tool_paths]
             self.assertTrue(bounds)
-            radial_passes.append(sorted({round(edge.start.X - radial_shift, 4)
-                                         for group in operation.tool_paths for edge in group.getSegments()
-                                         if abs(edge.start.X - edge.end.X) < 1e-5}))
-            limits.append((min(bound.ZMin for bound in bounds) - axial_shift,
-                           max(bound.ZMax for bound in bounds) - axial_shift))
-        self.assertEqual(*radial_passes)
-        for original, shifted in zip(*limits):
-            self.assertAlmostEqual(original, shifted, delta=0.02)
+            for bound in bounds:
+                self.assertGreaterEqual(bound.XMin, radial_shift - 1e-4)
+                self.assertLessEqual(bound.XMax, 14 + radial_shift + 1e-4)
+                self.assertGreaterEqual(bound.ZMin, -20 + axial_shift - 1e-4)
+                self.assertLessEqual(bound.ZMax, 1 + axial_shift + 1e-4)
 
     def test_getGCode(self):
         """run the operation and evaluate the gcode"""
@@ -121,8 +120,133 @@ class test_RoughOP(unittest.TestCase):
                 if "Z" in command.getParams():
                     min_z = min(command.getParams()['Z'], min_z)
 
-        # test the z value matches the stock ZMin
-        self.assertEqual(min_z, self.op.containment.ZMin)
+        self.assertAlmostEqual(min_z, self.op.containment.ZMin, places=4)
+
+    def test_leads_shorten_without_changing_direction(self):
+        self.op.pass_offset = 2
+        self.op.partSegmentGroup = Mock()
+        limits = BoundBox(Point(0, 0), Point(10, 10))
+        cases = (
+            (Point(9.5, 5), math.pi * 1.5, False, 0.5),
+            (Point(9.5, 5), math.pi * 1.5, True, 0.5),
+            (Point(0.5, 5), math.pi * 0.5, False, 0.5),
+            (Point(5, 9.5), 0, False, 0.5),
+            (Point(5, 0.5), math.pi, False, 0.5),
+            (Point(5, 9.5), math.pi * 1.75, False, math.sqrt(0.5)),
+            (Point(10, 5), math.pi * 1.5, False, 0),
+            (Point(5, 5), math.pi * 1.75, False, 2),
+        )
+        for anchor, angle, lead_in, length in cases:
+            with self.subTest(anchor=anchor, angle=angle, lead_in=lead_in):
+                group = SegmentGroup()
+                self.op.partSegmentGroup.reset_mock()
+                self.op._add_lead(group, anchor, angle, limits, lead_in=lead_in)
+                if length == 0:
+                    self.assertEqual(group.count(), 0)
+                    self.op.partSegmentGroup.validateToolSweep.assert_not_called()
+                    continue
+                segment = group.getSegments()[0]
+                self.assertAlmostEqual(segment.getLength(), length, places=4)
+                fixed = segment.end if lead_in else segment.start
+                free = segment.start if lead_in else segment.end
+                self.assertTrue(fixed.isSame(anchor))
+                original = anchor.project(angle, 2)
+                cross = ((free.X - anchor.X) * (original.Z - anchor.Z)
+                         - (free.Z - anchor.Z) * (original.X - anchor.X))
+                self.assertAlmostEqual(cross, 0, places=4)
+                self.op.partSegmentGroup.validateToolSweep.assert_called_once()
+
+    def test_colliding_lead_is_rejected(self):
+        self.op.partSegmentGroup = Mock()
+        self.op.partSegmentGroup.validateToolSweep.side_effect = RuntimeError("collision")
+        group = SegmentGroup()
+        with self.assertRaisesRegex(RuntimeError, "collision"):
+            self.op._add_lead(group, Point(5, 5), math.pi * 1.5,
+                              BoundBox(Point(0, 0), Point(10, 10)))
+        self.assertEqual(group.count(), 0)
+
+    def test_generated_leads_fit_cutting_limits(self):
+        self.op.generatePath()
+        tool = self.op.tool.get_segmentgroup()
+        leads = 0
+        for group in self.op.tool_paths:
+            for segment in group.getSegments():
+                if abs(segment.start.X - segment.end.X) > 1e-5:
+                    leads += 1
+                    self.op.partSegmentGroup.validateToolSweep(tool, segment.start, segment.end)
+                for point in (segment.start, segment.end):
+                    self.assertGreaterEqual(point.X, self.op.containment.XMin - 1e-4)
+                    self.assertLessEqual(point.X, self.op.containment.XMax + 1e-4)
+                    self.assertGreaterEqual(point.Z, self.op.containment.ZMin - 1e-4)
+                    self.assertLessEqual(point.Z, self.op.containment.ZMax + 1e-4)
+        self.assertGreater(leads, 0)
+
+    def test_tool_reference_stays_inside_containment(self):
+        for sign in (1, -1):
+            for origin in (0, -1, -2):
+                with self.subTest(sign=sign, origin=origin):
+                    operation = RoughOP()
+                    operation.pass_offset = 1
+                    operation.add_containment(BoundBox(Point(sign * 0.5, -20),
+                                                       Point(sign * 14.2, 1)))
+                    vertices = ((0, 0), (10, 0), (10, -20), (0, -20))
+                    operation.addPartSegments([
+                        Segment(Point(sign * a[0], a[1]), Point(sign * b[0], b[1]))
+                        for a, b in zip(vertices, vertices[1:])])
+                    vertices = ((0, origin), (0, origin + 2), (12, origin + 2),
+                                (12, origin), (0, origin))
+                    tool = Tool()
+                    tool.set_tool_from_segments([
+                        Segment(Point(sign * a[0], a[1]), Point(sign * b[0], b[1]))
+                        for a, b in zip(vertices, vertices[1:])])
+                    tool.side = ToolSide.NEAR if sign == 1 else ToolSide.FAR
+                    operation.add_tool(tool)
+                    commands = operation.getGCode()
+                    self.assertTrue(commands)
+                    self.assertTrue(operation.tool_paths)
+                    for group in operation.tool_paths:
+                        for segment in group.getSegments():
+                            for point in (segment.start, segment.end):
+                                self.assertGreaterEqual(sign * point.X, 0.5 - 1e-4)
+                                self.assertLessEqual(sign * point.X, 14.2 + 1e-4)
+                                self.assertGreaterEqual(point.Z, -20 - 1e-4)
+                                self.assertLessEqual(point.Z, 1 + 1e-4)
+                    moves = [c for c in commands if 'X' in c.getParams()]
+                    for previous, current in zip(moves, moves[1:]):
+                        if current.get_movement() == 'G1':
+                            if sign * current.getParams()['X'] > 14.2 + 1e-4:
+                                self.assertAlmostEqual(current.getParams()['Z'],
+                                                       previous.getParams()['Z'])
+                                continue
+                            for command in (previous, current):
+                                position = command.getParams()
+                                self.assertGreaterEqual(sign * position['X'], 0.5 - 1e-4)
+                                self.assertLessEqual(sign * position['X'], 14.2 + 1e-4)
+                                self.assertGreaterEqual(position['Z'], -20 - 1e-4)
+                                self.assertLessEqual(position['Z'], 1 + 1e-4)
+
+    def test_containment_can_be_bigger_than_stock(self):
+        self.op.add_stock(BoundBox(Point(0, -48), Point(20, 10)))
+        self.op.add_containment(BoundBox(Point(0, -47.5), Point(25, 15)))
+        commands = self.op.getGCode()
+        moves = [c for c in commands if 'X' in c.getParams() and 'Z' in c.getParams()]
+        feeds = 0
+        for previous, current in zip(moves, moves[1:]):
+            if current.get_movement() != 'G1':
+                continue
+            if current.getParams()['X'] > 25 + 1e-4:
+                self.assertAlmostEqual(current.getParams()['Z'], previous.getParams()['Z'])
+                continue
+            feeds += 1
+            for command in (previous, current):
+                position = command.getParams()
+                self.assertGreaterEqual(position['X'], -1e-4)
+                self.assertLessEqual(position['X'], 25 + 1e-4)
+                self.assertGreaterEqual(position['Z'], -47.5 - 1e-4)
+                self.assertLessEqual(position['Z'], 15 + 1e-4)
+        self.assertGreater(feeds, 0)
+        self.assertTrue(any(c.get_movement() == 'G0' and c.getParams()['Z'] > 15
+                            for c in moves))
 
 
 if __name__ == '__main__':

@@ -30,3 +30,19 @@ Parameters
 - ``hfeed``: feed rate.
 
 Approach and retract moves are checked against the part.
+
+Containment bounds the programmed tool-reference path, not the insert footprint.
+It is independent of physical stock and may extend beyond it to provide room for
+lead-in and lead-out moves.
+Lead-in and lead-out moves are shortened along their original direction to fit
+these limits, omitted when no room remains, and checked with a full-insert sweep
+against the part. Feed approaches also stay inside containment.
+Approaches follow the first cutting or lead-in direction where safe.
+Rapid approaches use separate X and Z moves, positioning radially at axial
+clearance before approaching in Z where safe.
+After the lead-out, the tool feeds radially outward to stock plus clearance,
+even when this lies outside containment. It then returns at rapid speed; it never
+reverses along the last cut. Withdrawals are checked against the full part and
+rapid transfers against both stock and part. Set physical stock with ``add_stock(bounds)``.
+If omitted, the containment box is used as a conservative stock envelope.
+If no safe entry or radial withdrawal exists, generation fails explicitly.

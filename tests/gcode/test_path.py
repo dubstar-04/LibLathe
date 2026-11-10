@@ -33,6 +33,12 @@ class test_Path(unittest.TestCase):
         self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True,
                                    direction=direction)
 
+    def axial_passes(self):
+        passes = SegmentGroup()
+        for z in (-5, -10):
+            passes.addSegment(Segment(Point(12, z + 1), Point(12, z)))
+        return passes
+
     def test_default_matches_explicit_auto(self):
         self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True)
         explicit = Path()
@@ -40,6 +46,182 @@ class test_Path(unittest.TestCase):
                                   direction=RoutingDirection.AUTO)
         self.assertEqual([command.to_string() for command in self.path.commands],
                          [command.to_string() for command in explicit.commands])
+
+    def test_contained_feeds_and_stock_safe_rapids(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        self.path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True,
+                                   contain_feeds=True)
+        moves = self.path.commands[1:]
+        tool = self.operation.tool.get_segmentgroup().boundbox()
+        stock = self.operation.stock
+        limits = self.operation.containment
+        for previous, current in zip(moves, moves[1:]):
+            start, end = previous.getParams(), current.getParams()
+            if current.get_movement() == 'G1':
+                if end['X'] > limits.XMax:
+                    self.assertGreater(end['X'], stock.XMax - tool.XMin)
+                    self.assertEqual(end['Z'], start['Z'])
+                    positions = (start,)
+                else:
+                    positions = (start, end)
+                for position in positions:
+                    self.assertTrue(limits.XMin <= position['X'] <= limits.XMax)
+                    self.assertTrue(limits.ZMin <= position['Z'] <= limits.ZMax)
+            else:
+                self.assertTrue(
+                    min(start['X'], end['X']) + tool.XMin >= stock.XMax - 1e-5
+                    or min(start['Z'], end['Z']) + tool.ZMin >= stock.ZMax - 1e-5
+                    or max(start['Z'], end['Z']) + tool.ZMax <= stock.ZMin + 1e-5)
+        self.assertEqual(moves[2].getParams()['Z'], limits.ZMax)
+
+    def test_contained_routing_fails_instead_of_rapiding_into_stock(self):
+        self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
+        before = list(self.path.commands)
+        with self.assertRaisesRegex(ValueError, "extend roughing containment"):
+            self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True,
+                                       contain_feeds=True)
+        self.assertEqual(self.path.commands, before)
+
+    def test_contained_routing_can_use_radial_entry(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 1)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        self.path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True,
+                                   contain_feeds=True)
+        self.assertEqual(self.path.commands[3].getParams()['X'], 15)
+
+    def test_roughing_rapids_move_one_axis_at_a_time(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        self.path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True,
+                                   contain_feeds=True)
+        moves = self.path.commands[1:]
+        for previous, current in zip(moves, moves[1:]):
+            if current.get_movement() == 'G0':
+                start, end = previous.getParams(), current.getParams()
+                self.assertTrue(abs(start['X'] - end['X']) < 1e-5
+                                or abs(start['Z'] - end['Z']) < 1e-5)
+        outside = moves[0].getParams()
+        radial = moves[1].getParams()
+        axial = moves[2].getParams()
+        self.assertEqual(radial['Z'], outside['Z'])
+        self.assertLess(radial['X'], outside['X'])
+        self.assertEqual(axial['X'], radial['X'])
+        self.assertEqual(axial['Z'], self.operation.containment.ZMax)
+
+    def test_roughing_can_use_z_then_x_when_x_then_z_is_obstructed(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        passes = SegmentGroup()
+        passes.addSegment(Segment(Point(12, -5), Point(11, -6)))
+
+        def block_radial_at_axial_clearance(tool, start, end):
+            if start.Z > 4 and end.Z == start.Z and end.X < start.X:
+                raise RuntimeError("Radial transfer obstructed")
+            return self.operation.partSegmentGroup._mock_wraps.validateToolSweep(tool, start, end)
+
+        self.sweep.side_effect = block_radial_at_axial_clearance
+        self.path.fromSegmentGroup(self.operation, passes, protect_part=True, contain_feeds=True)
+        outside = self.path.commands[1].getParams()
+        corner = self.path.commands[2].getParams()
+        entry = self.path.commands[3].getParams()
+        self.assertEqual(corner['X'], outside['X'])
+        self.assertEqual(corner['Z'], entry['Z'])
+        self.assertEqual(entry['X'], 15)
+        self.assertEqual(entry['Z'], -2)
+
+    def test_contained_routing_rejects_outside_cutting_segments(self):
+        self.passes.addSegment(Segment(Point(13, -5), Point(12, -5)))
+        with self.assertRaisesRegex(ValueError, "outside roughing containment"):
+            self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True,
+                                       contain_feeds=True)
+        self.assertEqual(len(self.path.commands), 1)
+
+    def test_extending_containment_extends_the_feed_approach(self):
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        for zmax in (2, 5):
+            with self.subTest(zmax=zmax):
+                self.operation.add_containment(BoundBox(Point(0, -22), Point(15, zmax)))
+                path = Path()
+                path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True,
+                                      contain_feeds=True)
+                self.assertEqual(path.commands[3].getParams()['Z'], zmax)
+                self.assertEqual(path.commands[4].get_movement(), 'G1')
+
+    def test_contained_entry_follows_first_cut_direction(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        passes = SegmentGroup()
+        passes.addSegment(Segment(Point(12, -5), Point(11, -6)))
+        self.path.fromSegmentGroup(self.operation, passes, protect_part=True, contain_feeds=True)
+        entry = self.path.commands[3].getParams()
+        self.assertAlmostEqual(entry['X'], 15)
+        self.assertAlmostEqual(entry['Z'], -2)
+
+    def test_withdrawal_feeds_radially_to_stock_clearance(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        passes = SegmentGroup()
+        passes.addSegment(Segment(Point(11, -5), Point(12, -4)))
+        self.path.fromSegmentGroup(self.operation, passes, protect_part=True, contain_feeds=True)
+        exit_point = self.path.commands[-2].getParams()
+        self.assertAlmostEqual(exit_point['X'], 15.4 + self.operation.clearance, places=5)
+        self.assertAlmostEqual(exit_point['Z'], -4)
+        self.assertEqual(self.path.commands[-2].get_movement(), 'G1')
+        self.assertEqual(self.path.commands[-1].get_movement(), 'G0')
+
+    def test_contained_entry_uses_safe_fallback_if_aligned_approach_is_blocked(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        passes = SegmentGroup()
+        passes.addSegment(Segment(Point(12, -5), Point(11, -6)))
+
+        def block_aligned(tool, start, end):
+            if start.isSame(Point(15, -2)) and end.isSame(Point(12, -5)):
+                raise RuntimeError("Aligned entry obstructed")
+            return self.operation.partSegmentGroup._mock_wraps.validateToolSweep(tool, start, end)
+
+        self.sweep.side_effect = block_aligned
+        self.path.fromSegmentGroup(self.operation, passes, protect_part=True, contain_feeds=True)
+        entry = self.path.commands[3].getParams()
+        self.assertAlmostEqual(entry['X'], 12)
+        self.assertAlmostEqual(entry['Z'], 4)
+
+    def test_contained_exit_never_backtracks_when_outward_route_is_blocked(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        passes = SegmentGroup()
+        passes.addSegment(Segment(Point(11, -4), Point(11, -6)))
+        def block_outward(tool, start, end):
+            if start.isSame(Point(11, -6)) and end.X > start.X:
+                raise RuntimeError("Outward route obstructed")
+            return self.operation.partSegmentGroup._mock_wraps.validateToolSweep(tool, start, end)
+
+        self.sweep.side_effect = block_outward
+        with self.assertRaisesRegex(ValueError, "Cannot withdraw"):
+            self.path.fromSegmentGroup(self.operation, passes, protect_part=True, contain_feeds=True)
+        self.assertEqual(len(self.path.commands), 1)
+
+    def test_contained_radial_cut_cannot_retract_back_along_itself(self):
+        self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        with self.assertRaisesRegex(ValueError, "Cannot withdraw"):
+            self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True,
+                                       contain_feeds=True)
+        self.assertEqual(len(self.path.commands), 1)
+
+    def test_withdrawal_clears_stock_when_containment_is_slightly_smaller(self):
+        self.operation.add_containment(BoundBox(Point(0, -20), Point(19.9487, 1.4)))
+        self.operation.add_stock(BoundBox(Point(0, -20), Point(20, 1)))
+        passes = SegmentGroup()
+        passes.addSegment(Segment(Point(19, 1.4), Point(19, -20)))
+        self.path.fromSegmentGroup(self.operation, passes, protect_part=True, contain_feeds=True)
+        withdrawal = self.path.commands[-2]
+        self.assertEqual(withdrawal.get_movement(), 'G1')
+        self.assertAlmostEqual(withdrawal.getParams()['X'],
+                               20.4 + self.operation.clearance, places=5)
+        self.assertEqual(withdrawal.getParams()['Z'], -20)
+        self.assertEqual(self.path.commands[-1].get_movement(), 'G0')
 
     def test_auto_prefers_axial_entry_and_radial_exit(self):
         self.route(RoutingDirection.AUTO)

@@ -1,8 +1,8 @@
-import math
 from collections import namedtuple
 
 import liblathe.op.base
 from liblathe.base.point import Point
+from liblathe.base.boundbox import BoundBox
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
@@ -14,6 +14,26 @@ Intersection = namedtuple('Intersection', 'point, seg')
 
 class RoughOP(liblathe.op.base.BaseOP):
 
+    def _add_lead(self, group, anchor, angle, limits, *, lead_in=False):
+        """Shorten a lead along its original direction to fit the cutting limits."""
+        end = anchor.project(angle, self.pass_offset)
+        fraction = 1.0
+        for start, delta, low, high in (
+                (anchor.X, end.X - anchor.X, limits.XMin, limits.XMax),
+                (anchor.Z, end.Z - anchor.Z, limits.ZMin, limits.ZMax)):
+            if delta > 0:
+                fraction = min(fraction, (high - start) / delta)
+            elif delta < 0:
+                fraction = min(fraction, (low - start) / delta)
+        if fraction <= 1e-6:
+            return
+        end = anchor.lerp(end, fraction)
+        if anchor.distanceTo(end) <= 1e-6:
+            return
+        start, end = (end, anchor) if lead_in else (anchor, end)
+        self.partSegmentGroup.validateToolSweep(self.tool.get_segmentgroup(), start, end)
+        group.addSegment(Segment(start, end))
+
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
         self.tool_paths = []
@@ -23,9 +43,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internalOffset = roughing_segmentGroup.offset(-0.1)
 
-        contact = self.tool.get_segmentgroup().getRadialContactPoint()
-        ZMax = self.containment.ZMax - contact.Z
-        ZMin = self.containment.ZMin - contact.Z
+        ZMax = self.containment.ZMax
+        ZMin = self.containment.ZMin
 
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
@@ -33,21 +52,15 @@ class RoughOP(liblathe.op.base.BaseOP):
         roughing_boundary = roughing_segmentGroup.offset(offset)
 
         # define the x limits for roughing
-        XMin = self.containment.XMin - contact.X
-        XMax = math.ceil(self.containment.XMax) - contact.X
+        XMin = self.containment.XMin
+        XMax = self.containment.XMax
+        limits = BoundBox(Point(XMin, ZMin), Point(XMax, ZMax))
 
         # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
         # TODO: This is a bit hacky, is there a better way?
         x_pos = XMin + 1e-6
-        # work from 0 to XMin creating roughing passes
-        print('XMin:', XMin, 'XMax:', XMax, 'x_pos:', x_pos)
+        # Generate passes from the inner limit outward; G-code traverses them in reverse.
         while x_pos < XMax:
-            # check if the roughing pass start is outside the stock
-            # boundary_z = self.containment.ZMax + 5  #roughing_boundary.Z_at_x(x_pos)
-            # if boundary_z and round(boundary_z, 5) >= round(self.containment.ZMax, 5):
-            #    x_pos += self.pass_offset
-            #    continue
-
             pt1 = Point(x_pos, ZMax)
             pt2 = Point(x_pos, ZMin)
             path_line = Segment(pt1, pt2)
@@ -74,10 +87,8 @@ class RoughOP(liblathe.op.base.BaseOP):
                 segmentgroup.addSegment(seg)
                 if intersections[0].seg:
                     # add lead out
-                    startPt = intersections[0].point
-                    endPt = startPt.project(self.leadout_angle, self.pass_offset)
-                    path_line = Segment(startPt, endPt)
-                    segmentgroup.addSegment(path_line)
+                    self._add_lead(segmentgroup, intersections[0].point,
+                                   self.leadout_angle, limits)
 
             if len(intersections) > 1:
                 # more than one intersection
@@ -106,11 +117,8 @@ class RoughOP(liblathe.op.base.BaseOP):
                             # if the intersection is connected to another segment
                             if intersections[i].seg:
                                 # add a lead in
-                                # TODO: optimise this to match the max tool angle
-                                endPt = intersections[i].point
-                                startPt = endPt.project(self.leadin_angle, self.pass_offset)
-                                path_line = Segment(startPt, endPt)
-                                segmentgroup.addSegment(path_line)
+                                self._add_lead(segmentgroup, intersections[i].point,
+                                               self.leadin_angle, limits, lead_in=True)
 
                             # add the primary segment to the segment group
                             segmentgroup.addSegment(primary_segment)
@@ -118,10 +126,8 @@ class RoughOP(liblathe.op.base.BaseOP):
                             # if the intersection is connected to another segment
                             if intersections[i + 1].seg:
                                 # add a lead out
-                                startPt = intersections[i + 1].point
-                                endPt = startPt.project(self.leadout_angle, self.pass_offset)
-                                path_line = Segment(startPt, endPt)
-                                segmentgroup.addSegment(path_line)
+                                self._add_lead(segmentgroup, intersections[i + 1].point,
+                                               self.leadout_angle, limits)
 
             x_pos += self.pass_offset
 
@@ -139,7 +145,11 @@ class RoughOP(liblathe.op.base.BaseOP):
 
         path = Path()
 
-        for segmentgroup in reversed(self.tool_paths):
-            path.fromSegmentGroup(self, segmentgroup, protect_part=True)
+        try:
+            for segmentgroup in reversed(self.tool_paths):
+                path.fromSegmentGroup(self, segmentgroup, protect_part=True, contain_feeds=True)
+        except (ValueError, RuntimeError):
+            self.tool_paths = []
+            raise
 
         return path.commands

@@ -88,6 +88,7 @@ namespace liblathe
             void validateContour(const std::vector<Point> &points, float offset) const;
             void validateChord(Point start, Point end, float offset) const;
             void validateToolSweep(const PreparedGeometry &tool, Point start, Point end) const;
+            void validateToolSweepSpan(const PreparedGeometry &tool, Point start, Point end) const;
         };
         PreparedGeometry prepareGeometry();
         std::vector<Segment> segments;

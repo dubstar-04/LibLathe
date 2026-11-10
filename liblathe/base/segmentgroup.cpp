@@ -230,7 +230,21 @@ namespace liblathe
         // Certify a full insert translation against the prepared axis-closed part region //
         const auto partGeometry = this->prepareGeometry();
         const auto toolGeometry = tool.prepareGeometry();
-        auto bounds = tool.boundbox();
+        partGeometry.validateToolSweep(toolGeometry, start, end);
+    }
+
+    void SegmentGroup::PreparedGeometry::validateToolSweep(
+        const PreparedGeometry &tool, Point start, Point end) const
+    {
+        auto bounds = tool.boundaryBounds.front();
+        for (size_t index = 1; index < tool.originalCount; ++index)
+        {
+            const auto &edge = tool.boundaryBounds[index];
+            bounds.XMin = std::min(bounds.XMin, edge.XMin);
+            bounds.XMax = std::max(bounds.XMax, edge.XMax);
+            bounds.ZMin = std::min(bounds.ZMin, edge.ZMin);
+            bounds.ZMax = std::max(bounds.ZMax, edge.ZMax);
+        }
         const double span = std::min(bounds.XLength(), bounds.ZLength());
         const double dx = double(end.X) - start.X;
         const double dz = double(end.Z) - start.Z;
@@ -248,7 +262,7 @@ namespace liblathe
             const Point next = index == static_cast<size_t>(count)
                                    ? end
                                    : Point(start.X + fraction * dx, start.Z + fraction * dz);
-            partGeometry.validateToolSweep(toolGeometry, previous, next);
+            this->validateToolSweepSpan(tool, previous, next);
             previous = next;
         }
     }
@@ -579,7 +593,7 @@ namespace liblathe
         return this->fromPoints(defeatured_points);
     }
 
-    void SegmentGroup::PreparedGeometry::validateToolSweep(
+    void SegmentGroup::PreparedGeometry::validateToolSweepSpan(
         const PreparedGeometry &tool, Point start, Point end) const
     {
         // Certify insert clearance throughout a translation, rejecting collisions or unresolved sweeps //
