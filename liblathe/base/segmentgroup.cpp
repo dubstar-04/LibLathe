@@ -228,7 +228,29 @@ namespace liblathe
     void SegmentGroup::validateToolSweep(SegmentGroup tool, Point start, Point end)
     {
         // Certify a full insert translation against the prepared axis-closed part region //
-        this->prepareGeometry().validateToolSweep(tool.prepareGeometry(), start, end);
+        const auto partGeometry = this->prepareGeometry();
+        const auto toolGeometry = tool.prepareGeometry();
+        auto bounds = tool.boundbox();
+        const double span = std::min(bounds.XLength(), bounds.ZLength());
+        const double dx = double(end.X) - start.X;
+        const double dz = double(end.Z) - start.Z;
+        const double travel = std::hypot(dx, dz);
+        if (!std::isfinite(travel) || !std::isfinite(span) || span <= 0)
+            throw std::invalid_argument("Tool sweep requires finite coordinates and positive insert X/Z extents");
+        const double count = std::max(1.0, std::ceil(travel / span));
+        if (count >= double(std::numeric_limits<size_t>::max()))
+            throw std::runtime_error("Tool sweep requires too many translation spans");
+        // Bound each translation's subdivision work without changing the swept path or clearance tests.
+        Point previous = start;
+        for (size_t index = 1; index <= static_cast<size_t>(count); ++index)
+        {
+            const double fraction = index / count;
+            const Point next = index == static_cast<size_t>(count)
+                                   ? end
+                                   : Point(start.X + fraction * dx, start.Z + fraction * dz);
+            partGeometry.validateToolSweep(toolGeometry, previous, next);
+            previous = next;
+        }
     }
 
     void SegmentGroup::PreparedGeometry::validateContour(

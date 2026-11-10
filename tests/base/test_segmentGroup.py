@@ -374,6 +374,24 @@ class test_segmentGroup(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     part.validateToolSweep(tool, Point(*start), Point(*end))
 
+    def test_validateToolSweep_certifies_long_diagonal_with_rounded_insert(self):
+        part = SegmentGroup().fromPoints([
+            Point(0, 95), Point(30.005, 95), Point(30.005, 64.999),
+            Point(22.505, 57.498), Point(22.505, 42.502),
+            Point(30.005, 35.001), Point(30.005, 0), Point(0, 0)])
+        points = [(0.2, 0), (0, 0.2), (0, 1.8), (0.2, 2),
+                  (12, 2), (12, 0), (0.2, 0)]
+        tool = SegmentGroup()
+        for i, (start, end) in enumerate(zip(points, points[1:])):
+            tool.addSegment(Segment(Point(*start), Point(*end),
+                                    0.4142135679721832 if i in (0, 2) else 0))
+        start = Point(29.91090965270996, 63)
+        end = Point(22.521726608276367, 55.60438919067383)
+        part.validateToolSweep(tool, start, end)
+        part.validateToolSweep(tool, end, start)
+        with self.assertRaises(RuntimeError):
+            part.validateToolSweep(tool, start, end.sub(Point(0.1, 0)))
+
     def test_isInside_rounded_square_tangent_roundoff(self):
         vertices = [(8.725, -0.4), (-3.55e-14, -0.4), (-0.4, 1.16e-14),
                     (-0.4, 8.725), (1.21e-14, 9.125), (8.725, 9.125),
