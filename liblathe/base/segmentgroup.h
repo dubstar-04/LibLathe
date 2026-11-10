@@ -24,6 +24,7 @@ namespace liblathe
         void addSegment(Segment segment);
         void insertSegment(Segment segment, int position);
         std::vector<Segment> getSegments();
+        SegmentGroup reversed() const;
         // C++ accessor without copying geometry; throws invalid_argument if empty.
         const Point &getStartPoint() const;
         void extend(SegmentGroup segmentgroup);

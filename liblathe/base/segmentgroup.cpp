@@ -724,6 +724,14 @@ namespace liblathe
         return segmentGroup;
     }
 
+    SegmentGroup SegmentGroup::reversed() const
+    {
+        SegmentGroup result;
+        for (auto segment = segments.rbegin(); segment != segments.rend(); ++segment)
+            result.addSegment(Segment(segment->end, segment->start, -segment->bulge));
+        return result;
+    }
+
     std::vector<Point> SegmentGroup::reduce(std::vector<Point> &points, float tolerance)
     {
         // Return a simplified polyline using the supplied distance tolerance //

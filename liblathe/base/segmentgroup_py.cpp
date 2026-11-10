@@ -19,6 +19,8 @@ PYBIND11_MODULE(segmentgroup, m)
          .def("addSegment", &SegmentGroup::addSegment)
          .def("insertSegment", &SegmentGroup::insertSegment)
          .def("getSegments", &SegmentGroup::getSegments)
+         .def("reversed", &SegmentGroup::reversed,
+              "Return an independent group with reversed segment order, endpoints and arc bulges.")
          .def("extend", &SegmentGroup::extend)
          .def("count", &SegmentGroup::count)
          .def("boundbox", &SegmentGroup::boundbox)

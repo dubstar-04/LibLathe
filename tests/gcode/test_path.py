@@ -152,6 +152,23 @@ class test_Path(unittest.TestCase):
         self.assertEqual([command.to_string() for command in self.path.commands], ['G18'])
         self.sweep.assert_not_called()
 
+    def test_reversed_arc_uses_new_start_and_exchanges_g2_g3(self):
+        group = SegmentGroup()
+        group.addSegment(Segment(Point(14, -5), Point(12, -7), 0.4))
+        paths = []
+        for geometry in (group, group.reversed()):
+            path = Path()
+            path.fromSegmentGroup(self.operation, geometry, direction=RoutingDirection.RADIAL)
+            paths.append(path)
+        forward = next(c for c in paths[0].commands if c.get_movement() == 'G3')
+        backward = next(c for c in paths[1].commands if c.get_movement() == 'G2')
+        self.assertAlmostEqual(forward.getParams()['X'], 12)
+        self.assertAlmostEqual(backward.getParams()['X'], 14)
+        arc = group.reversed().getSegments()[0]
+        center = arc.getCentrePoint()
+        self.assertAlmostEqual(backward.getParams()['I'], center.X - arc.start.X)
+        self.assertAlmostEqual(backward.getParams()['K'], center.Z - arc.start.Z)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -46,6 +46,35 @@ class test_segmentGroup(unittest.TestCase):
         self.assertEqual(segmentEnd.X, self.pt2.X)
         self.assertEqual(segmentEnd.Z, self.pt2.Z)
 
+    def test_reversed_preserves_geometry_and_does_not_mutate_source(self):
+        def values(group):
+            return [(s.start.X, s.start.Z, s.end.X, s.end.Z, s.bulge)
+                    for s in group.getSegments()]
+
+        self.assertEqual(self.segmentGroup.reversed().count(), 0)
+        for bulge in (0, 0.4, -0.4, 2, -2):
+            with self.subTest(bulge=bulge):
+                group = SegmentGroup()
+                segments = [Segment(Point(10, 0), Point(8, -2), bulge),
+                            Segment(Point(8, -2), Point(8, -5)),
+                            Segment(Point(4, -8), Point(4, -8))]
+                for segment in segments:
+                    group.addSegment(segment)
+                original = values(group)
+                result = group.reversed()
+                self.assertEqual(values(result), [(c, d, a, b, -e)
+                                                  for a, b, c, d, e in reversed(original)])
+                self.assertEqual(values(result.reversed()), original)
+                if bulge:
+                    arc = result.getSegments()[-1]
+                    self.assertAlmostEqual(arc.getRadius(), segments[0].getRadius())
+                    self.assertTrue(arc.getCentrePoint().isSame(segments[0].getCentrePoint()))
+                result.addSegment(Segment(Point(1, 1), Point(2, 2)))
+                self.assertEqual(values(group), original)
+                single = SegmentGroup()
+                single.addSegment(segments[0])
+                self.assertEqual(single.reversed().count(), 1)
+
     def test_offset_rejects_empty_and_nonfinite_inputs(self):
         with self.assertRaisesRegex(ValueError, 'empty'):
             self.segmentGroup.offset(1)
