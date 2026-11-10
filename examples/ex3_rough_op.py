@@ -27,10 +27,10 @@ partSegments.append(Segment(Point(27.5, -85), Point(14, -75), 0.000000))
 partSegments.append(Segment(Point(14, -75), Point(14, -15), 0.000000))
 partSegments.append(Segment(Point(14, -15), Point(0, 0), -0.3))
 
-# Define stock bounds
-stockPt1 = Point(0, -105)
-stockPt2 = Point(35, 15)
-StockBoundingBox = BoundBox(stockPt1, stockPt2)
+# Define containment bounds
+containmentPt1 = Point(0, -105)
+containmentPt2 = Point(35, 15)
+ContainmentBoundingBox = BoundBox(containmentPt1, containmentPt2)
 
 # Define Operations Properties
 params = {}
@@ -44,7 +44,7 @@ params['vfeed'] = 10
 # Create Profile Operation
 roughOP = RoughOP()
 roughOP.setParams(params)
-roughOP.add_stock(StockBoundingBox)
+roughOP.add_containment(ContainmentBoundingBox)
 roughOP.addPartSegments(partSegments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')

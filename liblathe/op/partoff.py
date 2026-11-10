@@ -16,9 +16,9 @@ class PartoffOP(liblathe.op.base.BaseOP):
         toolBoundbox = toolShape.boundbox()
         toolWidth = toolBoundbox.XLength()
 
-        XMin = self.stock.XMin
-        XMax = self.stock.XMax + self.clearance
-        ZMin = self.stock.ZMin - toolWidth
+        XMin = self.containment.XMin
+        XMax = self.containment.XMax + self.clearance
+        ZMin = self.containment.ZMin - toolWidth
 
         # TODO: Add a chip break / pecking option
 

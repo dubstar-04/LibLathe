@@ -51,16 +51,16 @@ def rounded_tool(width=2, radius=0.2, origin=0, sign=1):
     return tool
 
 
-def make_op(stock=(0, -40, 16, 0), sign=1, tool=None, **params):
+def make_op(containment=(0, -40, 16, 0), sign=1, tool=None, **params):
     settings = {'pass_offset': 1.5, 'finish_passes': 0, 'stock_to_leave': 0, 'hfeed': 10}
     settings.update(params)
     op = GrooveOP()
     op.setParams(settings)
-    xmin, zmin, xmax, zmax = stock
+    xmin, zmin, xmax, zmax = containment
     if sign > 0:
-        op.add_stock(BoundBox(Point(xmin, zmin), Point(xmax, zmax)))
+        op.add_containment(BoundBox(Point(xmin, zmin), Point(xmax, zmax)))
     else:
-        op.add_stock(BoundBox(Point(-xmax, zmin), Point(-xmin, zmax)))
+        op.add_containment(BoundBox(Point(-xmax, zmin), Point(-xmin, zmax)))
     op.addPartSegments([Segment(Point(sign * a[0], a[1]), Point(sign * b[0], b[1]))
                         for a, b in zip(PART_POINTS, PART_POINTS[1:])])
     op.add_tool(tool or square_tool(sign=sign))
@@ -82,14 +82,164 @@ class test_GrooveOP(unittest.TestCase):
     def test_params(self):
         params = self.op.getParams()
         self.assertEqual(params['pass_offset'], 1.5)
+        self.assertEqual(params['finish_pass_offset'], 0)
         self.assertNotIn('overlap_percent', params)
         self.assertEqual(GrooveOP.overlap_percent, 10.0)
         self.assertNotIn('overlap_percent', vars(self.op))
 
+    def test_local_clearance_preserves_cuts_and_reduces_feed_travel(self):
+        op = make_op(containment=(0, -30, 8, -10), tool=rounded_tool(),
+                     finish_passes=2, finish_pass_offset=0.1)
+        points = [(0, 0), (14, 0), (14, -5), (8, -10), (5, -15),
+                  (5, -25), (8, -30), (14, -35), (14, -40), (0, -40)]
+        op.partSegmentGroup = SegmentGroup()
+        op.addPartSegments([Segment(Point(*a), Point(*b)) for a, b in zip(points, points[1:])])
+        before = op.getGCode()
+        geometry = lambda: [[(s.start.X, s.start.Z, s.end.X, s.end.Z)
+                              for s in g.getSegments()] for g in op.tool_paths]
+        original = geometry()
+        op.add_stock(BoundBox(Point(0, -45), Point(20, 5)))
+        after = op.getGCode()
+        self.assertEqual(geometry(), original)
+        self.assertAlmostEqual(after[1].getParams()['X'], 23)
+        first_feed = next(i for i, c in enumerate(after) if c.get_movement() == 'G1')
+        self.assertAlmostEqual(after[first_feed - 1].getParams()['X'], 11)
+        self.assertAlmostEqual(after[first_feed].getParams()['X'], 8)
+        self.assertAlmostEqual(after[-1].getParams()['X'], 23)
+
+        def feed_length(commands):
+            return sum(math.hypot(b.getParams()['X'] - a.getParams()['X'],
+                                  b.getParams()['Z'] - a.getParams()['Z'])
+                       for a, b in zip(commands[1:], commands[2:])
+                       if b.get_movement() == 'G1')
+        self.assertLess(feed_length(after), feed_length(before))
+        bounds = op.tool.get_segmentgroup().boundbox()
+        for a, b in zip(after[1:], after[2:]):
+            start = Point(a.getParams()['X'], a.getParams()['Z'])
+            end = Point(b.getParams()['X'], b.getParams()['Z'])
+            if b.get_movement() == 'G0':
+                op.partSegmentGroup.validateToolSweep(op.tool.get_segmentgroup(), start, end)
+                inside_z = (min(start.Z, end.Z) + bounds.ZMin >= op.containment.ZMin - 1e-5
+                            and max(start.Z, end.Z) + bounds.ZMax <= op.containment.ZMax + 1e-5)
+                outside_radius = min(start.X, end.X) + bounds.XMin > (
+                    op.containment.XMax if inside_z else op.stock.XMax)
+                outside_z = (min(start.Z, end.Z) + bounds.ZMin > op.stock.ZMax
+                             or max(start.Z, end.Z) + bounds.ZMax < op.stock.ZMin)
+                self.assertTrue(outside_radius or outside_z)
+
+    def test_stock_validation(self):
+        for bounds in (BoundBox(Point(0, 0), Point(0, 10)),
+                       BoundBox(Point(0, 0), Point(10, 0)),
+                       BoundBox(Point(0, 0), Point(math.inf, 10))):
+            with self.subTest(bounds=bounds):
+                with self.assertRaises(ValueError):
+                    self.op.add_stock(bounds)
+        for sign in (1, -1):
+            op = make_op(sign=sign)
+            op.add_stock(BoundBox(Point(0, -45), Point(-sign * 20, 5)))
+            op.tool_paths = ['stale']
+            with self.assertRaisesRegex(ValueError, 'signed radial'):
+                op.getGCode()
+            self.assertEqual(op.tool_paths, [])
+
+    def test_local_clearance_follows_radial_tool_reference(self):
+        for shift in (-0.6, 0.6):
+            with self.subTest(shift=shift):
+                op = make_op(containment=(0, -20, 12, -10))
+                op.generatePath()
+                translated_paths = []
+                for group in op.tool_paths:
+                    translated = SegmentGroup()
+                    for segment in group.getSegments():
+                        translated.addSegment(Segment(
+                            Point(segment.start.X + shift, segment.start.Z),
+                            Point(segment.end.X + shift, segment.end.Z), segment.bulge))
+                    translated_paths.append(translated)
+                op.tool_paths = translated_paths
+                original = op.tool.get_segmentgroup().getSegments()
+                tool = Tool()
+                tool.set_tool_from_segments([
+                    Segment(Point(s.start.X - shift, s.start.Z),
+                            Point(s.end.X - shift, s.end.Z), s.bulge) for s in original])
+                op.add_tool(tool)
+                op.add_stock(BoundBox(Point(0, -45), Point(20, 5)))
+                commands = op.generateGCode()
+                self.assertAlmostEqual(op._local_clearance(), 15 + shift, places=5)
+                first_feed = next(i for i, c in enumerate(commands) if c.get_movement() == 'G1')
+                self.assertAlmostEqual(commands[first_feed - 1].getParams()['X'], 15 + shift, places=5)
+
+    def test_local_clearance_mirrors_tools_and_nose_references(self):
+        for origin in (-2, -1, 0):
+            for clearance in (0, 0.1, 3):
+                with self.subTest(origin=origin, clearance=clearance):
+                    operations = []
+                    for sign in (1, -1):
+                        op = make_op(containment=(11, -20, 12, -10),
+                                     tool=rounded_tool(origin=origin, sign=sign), sign=sign,
+                                     finish_passes=2, finish_pass_offset=0.1, clearance=clearance)
+                        op.add_stock(BoundBox(Point(0, -45), Point(sign * 20, 5)))
+                        commands = op.getGCode()
+                        self.assertTrue(commands)
+                        operations.append(commands)
+                    for near, far in zip(*operations):
+                        self.assertEqual(near.get_movement(), far.get_movement())
+                        if 'X' in near.getParams():
+                            self.assertAlmostEqual(near.getParams()['X'], -far.getParams()['X'])
+                            self.assertAlmostEqual(near.getParams()['Z'], far.getParams()['Z'])
+                    self.assertEqual(len(operations[0]), len(operations[1]))
+
+    def test_local_clearance_falls_back_when_transfer_crosses_a_shoulder(self):
+        op = make_op(containment=(0, -25, 12, -5), clearance=0.5)
+        op.add_stock(BoundBox(Point(0, -45), Point(20, 5)))
+        op.partSegmentGroup = SegmentGroup().fromPoints([
+            Point(0, 0), Point(10, 0), Point(10, -16), Point(14, -16),
+            Point(14, -18), Point(10, -18), Point(10, -40), Point(0, -40)])
+        group = SegmentGroup()
+        for z in (-10, -22):
+            group.addSegment(Segment(Point(12, z), Point(10.5, z)))
+        op.tool_paths = [group]
+        self.assertAlmostEqual(op._local_clearance(), 20.5)
+        commands = op.generateGCode()
+        for a, b in zip(commands[1:], commands[2:]):
+            if b.get_movement() == 'G0':
+                op.partSegmentGroup.validateToolSweep(
+                    op.tool.get_segmentgroup(),
+                    Point(a.getParams()['X'], a.getParams()['Z']),
+                    Point(b.getParams()['X'], b.getParams()['Z']))
+
+    def test_local_clearance_outside_prepared_z_uses_stock(self):
+        op = make_op(containment=(0, -20, 12, -10))
+        op.add_stock(BoundBox(Point(0, -45), Point(20, 5)))
+        group = SegmentGroup()
+        # The insert extends below the selected Z range.
+        group.addSegment(Segment(Point(16, -19), Point(15.5, -19)))
+        op.tool_paths = [group]
+        self.assertAlmostEqual(op._local_clearance(), 23)
+
+    def test_uncertified_local_transfer_leaves_no_paths(self):
+        op = make_op(containment=(0, -20, 12, -10))
+        op.add_stock(BoundBox(Point(0, -45), Point(20, 5)))
+        op.generatePath()
+        part = op.partSegmentGroup
+        op.partSegmentGroup = Mock(wraps=part)
+
+        def validate(tool, start, end):
+            if start.Z != end.Z:
+                raise RuntimeError("Cannot certify rapid")
+            return part.validateToolSweep(tool, start, end)
+
+        op.partSegmentGroup.validateToolSweep.side_effect = validate
+        with self.assertRaises(RuntimeError):
+            op.generateGCode()
+        self.assertEqual(op.tool_paths, [])
+
     def test_invalid_params(self):
         for params in ({'pass_offset': 0}, {'pass_offset': -1}, {'pass_offset': math.nan},
                        {'pass_offset': math.inf}, {'finish_passes': -1}, {'finish_passes': 1.5},
-                       {'finish_passes': True}):
+                       {'finish_passes': True}, {'finish_pass_offset': -0.1},
+                       {'finish_pass_offset': math.nan}, {'finish_pass_offset': math.inf},
+                       {'finish_pass_offset': -math.inf},
+                       {'finish_passes': 3, 'finish_pass_offset': 1e308}):
             op = make_op(**params)
             op.tool_paths = ['stale']
             with self.assertRaises(ValueError):
@@ -143,7 +293,7 @@ class test_GrooveOP(unittest.TestCase):
     def check_removal(self, op, z_min, z_max):
         """All material in the range is removed within offset tolerance, one step-over at a time."""
         grid = [z_max - i * 0.005 for i in range(1, int((z_max - z_min) / 0.005))]
-        floor = {z: op.stock.XMax for z in grid}
+        floor = {z: op.containment.XMax for z in grid}
         for z, _, end in passes(op):
             self.assertGreaterEqual(z - TOOL_WIDTH, z_min - 1e-6)
             self.assertLessEqual(z, z_max + 1e-6)
@@ -164,23 +314,23 @@ class test_GrooveOP(unittest.TestCase):
         self.assertLess(min(end for _, _, end in passes(self.op)), 10.05)
 
     def test_section_is_limited_to_stock_range(self):
-        op = make_op(stock=(0, -20, 16, -10))
+        op = make_op(containment=(0, -20, 16, -10))
         op.generatePath()
         self.assertTrue(op.tool_paths)
         self.check_removal(op, -20, -10)
 
     def test_min_diameter_limits_depth(self):
-        op = make_op(stock=(13, -40, 16, 0))
+        op = make_op(containment=(13, -40, 16, 0))
         op.generatePath()
         self.assertGreaterEqual(min(end for _, _, end in passes(op)), 13 - 1e-6)
 
     def test_stock_to_leave(self):
-        op = make_op(stock=(0, -20, 16, -10), stock_to_leave=0.5)
+        op = make_op(containment=(0, -20, 16, -10), stock_to_leave=0.5)
         op.generatePath()
         self.assertAlmostEqual(min(end for _, _, end in passes(op)), 10.5, delta=0.05)
 
     def test_narrow_range_is_rejected(self):
-        op = make_op(stock=(0, -11, 16, -10))
+        op = make_op(containment=(0, -11, 16, -10))
         with self.assertRaises(ValueError):
             op.generatePath()
         self.assertEqual(op.tool_paths, [])
@@ -189,7 +339,7 @@ class test_GrooveOP(unittest.TestCase):
         self.assertEqual(self.gcode[0].get_movement(), 'G18')
         moves = self.gcode[1:]
         x_clear = max(command.getParams()['X'] for command in moves)
-        self.assertGreater(x_clear, self.op.stock.XMax)
+        self.assertGreater(x_clear, self.op.containment.XMax)
         previous = None
         for command in moves:
             self.assertIsInstance(command, Command)
@@ -265,6 +415,111 @@ class test_GrooveOP(unittest.TestCase):
                         for a, b in zip(segments, segments[1:]):
                             self.assertTrue(a.end.isSame(b.start))
 
+    def test_finish_pass_offset_reserves_allowance_and_reaches_final_contour(self):
+        op = make_op(containment=(0, -20, 16, -10), finish_passes=3,
+                     finish_pass_offset=0.1, stock_to_leave=0.3)
+        contours = []
+        split = op._get_finish_strokes
+
+        def capture(contour):
+            strokes = split(contour)
+            contours.append(strokes)
+            return strokes
+
+        with patch.object(op, '_get_finish_strokes', side_effect=capture):
+            op.getGCode()
+        self.assertEqual(len(contours), 3)
+        depths = [min(s.end.X for group in contour for s in group.getSegments())
+                  for contour in contours]
+        for actual, expected in zip(depths, (10.51, 10.41, 10.31)):
+            self.assertAlmostEqual(actual, expected, delta=op.offset_tolerance)
+        for outer, inner in zip(depths, depths[1:]):
+            self.assertAlmostEqual(outer - inner, 0.1, delta=1e-5)
+        finishing_count = sum(len(contour) for contour in contours)
+        plunges = op.tool_paths[:-finishing_count]
+        self.assertTrue(plunges)
+        self.assertAlmostEqual(min(s.end.X for group in plunges for s in group.getSegments()),
+                               depths[0], delta=0.001)
+        final = make_op(containment=(0, -20, 16, -10), finish_passes=1, stock_to_leave=0.3)
+        final.getGCode()
+        self.assertEqual(
+            [[(s.start.X, s.start.Z, s.end.X, s.end.Z) for s in group.getSegments()]
+             for group in contours[-1]],
+            [[(s.start.X, s.start.Z, s.end.X, s.end.Z) for s in group.getSegments()]
+             for group in final.tool_paths[-len(contours[-1]):]])
+        for layer in op.tool_paths:
+            for segment in layer.getSegments():
+                op.partSegmentGroup.validateToolSweep(
+                    op.tool.get_segmentgroup(), segment.start, segment.end)
+
+    def test_finish_pass_offset_zero_or_single_pass_preserves_gcode(self):
+        for count in (0, 1, 3):
+            reference = make_op(finish_passes=count).getGCode()
+            op = make_op(finish_passes=count, finish_pass_offset=0 if count > 1 else 0.1)
+            self.assertEqual([c.to_string() for c in op.getGCode()],
+                             [c.to_string() for c in reference])
+
+    def test_finish_pass_offset_uses_independent_normal_offsets(self):
+        points = [(0, 0), (15, 0), (15, -10), (10, -15),
+                  (10, -25), (15, -30), (15, -40), (0, -40)]
+        for curved in (False, True):
+            for sign in (1, -1):
+                with self.subTest(curved=curved, sign=sign):
+                    op = make_op(tool=rounded_tool(sign=sign), sign=sign,
+                                 containment=(11, -30, 16, -10),
+                                 finish_passes=3, finish_pass_offset=0.1)
+                    op.partSegmentGroup = SegmentGroup()
+                    op.addPartSegments([
+                        Segment(Point(sign * a[0], a[1]), Point(sign * b[0], b[1]),
+                                sign * math.tan(math.pi / 8) if curved and i in (2, 4) else 0)
+                        for i, (a, b) in enumerate(zip(points, points[1:]))])
+                    profile = op.partSegmentGroup
+                    if sign == 1:
+                        # Observe offsets on the original tool-origin contour, never on a prior offset.
+                        op.partSegmentGroup = Mock(wraps=profile)
+                        generated = profile.defeature(op.containment, op.tool.get_segmentgroup(), True)
+                        contour = Mock(wraps=generated)
+                        op.partSegmentGroup.defeature.return_value = contour
+                    commands = op.getGCode()
+                    self.assertTrue(commands)
+                    if sign == 1:
+                        self.assertEqual(len(contour.offset.call_args_list), 4)
+                        for call, expected in zip(contour.offset.call_args_list,
+                                                  (-0.1, 0.21, 0.11, 0.01)):
+                            self.assertAlmostEqual(call.args[0], expected)
+                    bounds = op.tool.get_segmentgroup().boundbox()
+                    z_high = op.containment.ZMax - bounds.ZMax
+                    z_low = op.containment.ZMin - bounds.ZMin
+                    for layer in op.tool_paths:
+                        for segment in layer.getSegments():
+                            self.assertLessEqual(sign * (segment.end.X - segment.start.X), 0)
+                            for point in (segment.start, segment.end):
+                                self.assertGreaterEqual(sign * point.X, 11 - 1e-5)
+                                self.assertLessEqual(sign * point.X, 16 + 1e-5)
+                                self.assertGreaterEqual(point.Z, z_low - 1e-5)
+                                self.assertLessEqual(point.Z, z_high + 1e-5)
+                            profile.validateToolSweep(
+                                op.tool.get_segmentgroup(), segment.start, segment.end)
+
+    def test_failed_later_finish_offset_leaves_no_paths(self):
+        op = make_op(finish_passes=3, finish_pass_offset=0.1)
+        part = op.partSegmentGroup
+        contour = part.defeature(op.containment, op.tool.get_segmentgroup(), True)
+        observed = Mock(wraps=contour)
+
+        def offset(value):
+            if abs(value - 0.11) < 1e-6:
+                raise RuntimeError("Cannot offset later finishing contour")
+            return contour.offset(value)
+
+        observed.offset.side_effect = offset
+        op.partSegmentGroup = Mock(wraps=part)
+        op.partSegmentGroup.defeature.return_value = observed
+        op.tool_paths = ['stale']
+        with self.assertRaisesRegex(RuntimeError, 'later finishing contour'):
+            op.generatePath()
+        self.assertEqual(op.tool_paths, [])
+
     def test_finish_strokes_keep_floor_with_inward_wall(self):
         finish = SegmentGroup().fromPoints([
             Point(15, 0), Point(10, -5), Point(10, -10), Point(15, -15)])
@@ -280,7 +535,7 @@ class test_GrooveOP(unittest.TestCase):
             for sign in (1, -1):
                 with self.subTest(origin=origin, sign=sign):
                     tool = rounded_tool(origin=origin, sign=sign)
-                    op = make_op(tool=tool, sign=sign, stock=(0, -30, 16, -10),
+                    op = make_op(tool=tool, sign=sign, containment=(0, -30, 16, -10),
                                  finish_passes=1, stock_to_leave=0.1)
                     op.partSegmentGroup = SegmentGroup()
                     op.addPartSegments([
@@ -325,11 +580,11 @@ class test_GrooveOP(unittest.TestCase):
         self.assertEqual(op.tool_paths, [])
 
     def test_finish_pass_stays_inside_grooving_limits(self):
-        op = make_op(stock=(11, -20, 16, -10), finish_passes=1)
+        op = make_op(containment=(11, -20, 16, -10), finish_passes=1)
         op.generatePath()
         bounds = op.tool.get_segmentgroup().boundbox()
         z_high, z_low = op.get_z_range(bounds)
-        plunge = make_op(stock=(11, -20, 16, -10))
+        plunge = make_op(containment=(11, -20, 16, -10))
         plunge.generatePath()
         for seg in (s for group in op.tool_paths[len(plunge.tool_paths):]
                     for s in group.getSegments()):
@@ -348,7 +603,7 @@ class test_GrooveOP(unittest.TestCase):
 
         def leftover(op):
             grid = [-10 - i * 0.005 for i in range(1, 4000)]
-            floor = [op.stock.XMax] * len(grid)
+            floor = [op.containment.XMax] * len(grid)
             for layer in op.tool_paths:
                 for seg in layer.getSegments():
                     steps = max(1, int(seg.getLength() / 0.005))
@@ -363,7 +618,7 @@ class test_GrooveOP(unittest.TestCase):
 
         results = []
         for count in (0, 1):
-            op = make_op(stock=(0, -30, 16, -10), finish_passes=count)
+            op = make_op(containment=(0, -30, 16, -10), finish_passes=count)
             op.partSegmentGroup = SegmentGroup()
             op.addPartSegments([Segment(Point(*a), Point(*b)) for a, b in zip(points, points[1:])])
             op.getGCode()

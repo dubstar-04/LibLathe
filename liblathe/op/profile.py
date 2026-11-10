@@ -13,7 +13,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
         self.tool_paths = []
         tool_paths = []
         # get the defeature part profile
-        profileSegmentGroup = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
+        profileSegmentGroup = self.partSegmentGroup.defeature(self.containment, self.tool.get_segmentgroup(), self.allow_grooving)
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internalOffset = profileSegmentGroup.offset(-0.1)
 
@@ -44,7 +44,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
         segment = segmentgroup.getSegments()[0]
         # TODO: handle leadin when profiling a mid portion of a part
         # calculate the new z_pos with lead in
-        stock_z = self.stock.ZMax - self.tool.get_segmentgroup().getRadialContactPoint().Z
+        stock_z = self.containment.ZMax - self.tool.get_segmentgroup().getRadialContactPoint().Z
         if (segment.start.Z < stock_z):
             z_pos = stock_z
         else:

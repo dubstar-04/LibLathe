@@ -20,6 +20,13 @@ class CuttingParameterTests(unittest.TestCase):
                 op.pass_offset = 0.25
                 self.assertEqual(op.getParams()["pass_offset"], 0.25)
 
+    def test_finish_pass_offset(self):
+        op = GrooveOP()
+        self.assertEqual(op.finish_pass_offset, 0)
+        op.setParams({"finish_pass_offset": 0.1})
+        self.assertEqual(op.finish_pass_offset, 0.1)
+        self.assertEqual(op.getParams()["finish_pass_offset"], 0.1)
+
     def test_old_parameter_names_are_not_supported(self):
         for operation in (BaseOP, RoughOP, GrooveOP, FaceOP, ProfileOP, PartoffOP):
             op = operation()

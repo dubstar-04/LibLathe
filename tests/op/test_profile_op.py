@@ -39,10 +39,10 @@ class test_ProfileOP(unittest.TestCase):
         partSegments.append(Segment(PartPt8, PartPt9))
         partSegments.append(Segment(PartPt9, PartPt10))
 
-        # Define stock bounds
-        stockPt1 = Point(0, 15)
-        stockPt2 = Point(25, -55)
-        stock_boundbox = BoundBox(stockPt1, stockPt2)
+        # Define containment bounds
+        containmentPt1 = Point(0, 15)
+        containmentPt2 = Point(25, -55)
+        containment_bounds = BoundBox(containmentPt1, containmentPt2)
 
         # set feed rate to test
         self.hfeed = 10
@@ -58,7 +58,7 @@ class test_ProfileOP(unittest.TestCase):
 
         self.op = ProfileOP()
         self.op.setParams(params)
-        self.op.add_stock(stock_boundbox)
+        self.op.add_containment(containment_bounds)
         self.op.addPartSegments(partSegments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
@@ -72,7 +72,7 @@ class test_ProfileOP(unittest.TestCase):
             Segment(Point(*start), Point(*end)) for start, end in zip(vertices, vertices[1:])])
         operation = ProfileOP()
         operation.add_tool(tool)
-        operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        operation.add_containment(BoundBox(Point(0, -20), Point(12, 1)))
         vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
         operation.addPartSegments([
             Segment(Point(*start), Point(*end)) for start, end in zip(vertices, vertices[1:])])
@@ -95,9 +95,9 @@ class test_ProfileOP(unittest.TestCase):
                    parameters.get("Z", position[1] if position else 0))
             if command.get_movement() == "G0":
                 start = position or end
-                outside_radius = min(start[0], end[0]) + bounds.XMin > operation.stock.XMax
-                above_stock = min(start[1], end[1]) + bounds.ZMin > operation.stock.ZMax
-                below_stock = max(start[1], end[1]) + bounds.ZMax < operation.stock.ZMin
+                outside_radius = min(start[0], end[0]) + bounds.XMin > operation.containment.XMax
+                above_stock = min(start[1], end[1]) + bounds.ZMin > operation.containment.ZMax
+                below_stock = max(start[1], end[1]) + bounds.ZMax < operation.containment.ZMin
                 self.assertTrue(outside_radius or above_stock or below_stock, (start, end))
             position = end
 

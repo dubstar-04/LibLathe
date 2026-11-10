@@ -81,7 +81,8 @@ class test_PathRegeneration(unittest.TestCase):
 
                     self.assertEqual(intersection.call_count, 2)
                     self.assertEqual(operation.tool_paths, [])
-                    params = {'clearance': operation.clearance + 1, 'pass_offset': 2}
+                    params = {'clearance': operation.clearance + 1,
+                              'pass_offset': 2}
                     operation.setParams(params)
                     fresh = self.operation(fixture)
                     fresh.setParams(params)

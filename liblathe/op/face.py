@@ -14,14 +14,14 @@ class FaceOP(liblathe.op.base.BaseOP):
         """Generate the path for the profile operation"""
         part_boundbox = self.partSegmentGroup.boundbox()
 
-        XMin = self.stock.XMin
-        XMax = self.stock.XMax + self.clearance
+        XMin = self.containment.XMin
+        XMax = self.containment.XMax + self.clearance
         ZMin = part_boundbox.ZMax + self.stock_to_leave
-        ZMax = math.ceil(self.stock.ZMax) + self.pass_offset
+        ZMax = math.ceil(self.containment.ZMax) + self.pass_offset
         self.clearing_paths = []
 
         # TODO: Move the final pass to finishing passes for a slower pass
-        # work backwards from ZMin to ZMax adding a segmentgroup for each stepover
+        # work backwards from ZMin to ZMax at the requested axial depth
         z_pos = ZMin
         while z_pos < ZMax:
             segmentgroup = SegmentGroup()

@@ -33,12 +33,12 @@ partSegments.append(Segment(Point(12, -30), Point(15, -30)))
 partSegments.append(Segment(Point(15, -30), Point(15, -40)))
 partSegments.append(Segment(Point(15, -40), Point(0.0, -40)))
 
-# Define stock bounds
-# The stock Z limits set the section to groove and the X limits set the max and min diameters
+# Define containment bounds
+# The containment Z limits set the section to groove and the X limits set the max and min diameters
 # e.g. BoundBox(Point(0, -20), Point(16, -10)) grooves only the wide groove
-stockPt1 = Point(0, -40)
-stockPt2 = Point(16, 0)
-StockBoundingBox = BoundBox(stockPt1, stockPt2)
+containmentPt1 = Point(0, -40)
+containmentPt2 = Point(16, 0)
+ContainmentBoundingBox = BoundBox(containmentPt1, containmentPt2)
 
 # Define Operations Properties
 params = {}
@@ -59,7 +59,7 @@ tool.set_tool_from_segments([Segment(start, end) for start, end in zip(toolPoint
 # Create Groove Operation
 grooveOP = GrooveOP()
 grooveOP.setParams(params)
-grooveOP.add_stock(StockBoundingBox)
+grooveOP.add_containment(ContainmentBoundingBox)
 grooveOP.addPartSegments(partSegments)
 grooveOP.add_tool(tool)
 gcode = grooveOP.getGCode()

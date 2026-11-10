@@ -34,10 +34,10 @@ class test_FaceOP(unittest.TestCase):
         partSegments.append(Segment(PartPt6, PartPt8))
         partSegments.append(Segment(PartPt7, PartPt8))
 
-        # Define stock bounds
-        stockPt1 = Point(0, 15)
-        stockPt2 = Point(-25, -55)
-        stock_boundbox = BoundBox(stockPt1, stockPt2)
+        # Define containment bounds
+        containmentPt1 = Point(0, 15)
+        containmentPt2 = Point(-25, -55)
+        containment_bounds = BoundBox(containmentPt1, containmentPt2)
 
         # set feed rate to test
         self.hfeed = 10
@@ -53,7 +53,7 @@ class test_FaceOP(unittest.TestCase):
 
         self.op = FaceOP()
         self.op.setParams(params)
-        self.op.add_stock(stock_boundbox)
+        self.op.add_containment(containment_bounds)
         self.op.addPartSegments(partSegments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')
@@ -87,7 +87,7 @@ class test_FaceOP(unittest.TestCase):
         operation = FaceOP()
         self.assertEqual(operation.clearing_paths, [])
         operation.setParams({'pass_offset': 1, 'stock_to_leave': 0, 'hfeed': self.hfeed, 'vfeed': 10})
-        operation.add_stock(BoundBox(Point(-25, -55), Point(0, 15)))
+        operation.add_containment(BoundBox(Point(-25, -55), Point(0, 15)))
         operation.addPartSegments([Segment(Point(-13, 10), Point(-13, -48))])
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')

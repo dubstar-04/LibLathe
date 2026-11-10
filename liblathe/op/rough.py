@@ -18,14 +18,14 @@ class RoughOP(liblathe.op.base.BaseOP):
         """Replace toolpaths on success; leave no published paths on failure."""
         self.tool_paths = []
         tool_paths = []
-        roughing_segmentGroup = self.partSegmentGroup.defeature(self.stock, self.tool.get_segmentgroup(), self.allow_grooving)
+        roughing_segmentGroup = self.partSegmentGroup.defeature(self.containment, self.tool.get_segmentgroup(), self.allow_grooving)
 
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internalOffset = roughing_segmentGroup.offset(-0.1)
 
         contact = self.tool.get_segmentgroup().getRadialContactPoint()
-        ZMax = self.stock.ZMax - contact.Z
-        ZMin = self.stock.ZMin - contact.Z
+        ZMax = self.containment.ZMax - contact.Z
+        ZMin = self.containment.ZMin - contact.Z
 
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
@@ -33,8 +33,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         roughing_boundary = roughing_segmentGroup.offset(offset)
 
         # define the x limits for roughing
-        XMin = self.stock.XMin - contact.X
-        XMax = math.ceil(self.stock.XMax) - contact.X
+        XMin = self.containment.XMin - contact.X
+        XMax = math.ceil(self.containment.XMax) - contact.X
 
         # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
         # TODO: This is a bit hacky, is there a better way?
@@ -43,8 +43,8 @@ class RoughOP(liblathe.op.base.BaseOP):
         print('XMin:', XMin, 'XMax:', XMax, 'x_pos:', x_pos)
         while x_pos < XMax:
             # check if the roughing pass start is outside the stock
-            # boundary_z = self.stock.ZMax + 5  #roughing_boundary.Z_at_x(x_pos)
-            # if boundary_z and round(boundary_z, 5) >= round(self.stock.ZMax, 5):
+            # boundary_z = self.containment.ZMax + 5  #roughing_boundary.Z_at_x(x_pos)
+            # if boundary_z and round(boundary_z, 5) >= round(self.containment.ZMax, 5):
             #    x_pos += self.pass_offset
             #    continue
 

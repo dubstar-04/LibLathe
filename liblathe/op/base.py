@@ -20,6 +20,7 @@ class BaseOP:
 
     def __init__(self):
 
+        self.containment = None
         self.stock = None
         self.tool = None
         self.partSegmentGroup = SegmentGroup()
@@ -41,9 +42,9 @@ class BaseOP:
     def setParams(self, params):
         """Set operations parameters"""
 
-        for param in params:
+        for param, value in params.items():
             if hasattr(self, param):
-                setattr(self, param, params[param])
+                setattr(self, param, value)
             else:
                 raise Warning("Attempting to set undefined parameter '%s'" % param)
 
@@ -59,18 +60,29 @@ class BaseOP:
         if self.tool is None:
             raise Warning("Tool is unset")
 
+        if self.stock is not None:
+            if ((self.tool.side == ToolSide.FAR and self.stock.XMax > 1e-4)
+                    or (self.tool.side == ToolSide.NEAR and self.stock.XMin < -1e-4)):
+                self.tool_paths = []
+                self.clearing_paths = []
+                raise ValueError("Stock must use the tool side's signed radial coordinates")
+
         if self.tool.side == ToolSide.FAR:
             self.tool_paths = []
             self.clearing_paths = []
-            if self.stock is None or self.stock.XMax > 1e-4 or self.stock.XMin >= 0:
-                raise ValueError("Far-side stock must use negative X coordinates")
+            if self.containment is None or self.containment.XMax > 1e-4 or self.containment.XMin >= 0:
+                raise ValueError("Far-side containment must use negative X coordinates")
             if self.partSegmentGroup.boundbox().XMax > 1e-4:
                 raise ValueError("Far-side part geometry must use negative X coordinates")
             planning = copy(self)
             planning.tool_paths = []
             planning.clearing_paths = []
-            planning.stock = BoundBox(Point(-self.stock.XMax, self.stock.ZMin),
-                                      Point(-self.stock.XMin, self.stock.ZMax))
+            planning.containment = BoundBox(Point(-self.containment.XMax, self.containment.ZMin),
+                                      Point(-self.containment.XMin, self.containment.ZMax))
+            if self.stock is not None:
+                planning.stock = BoundBox(
+                    Point(-self.stock.XMax, self.stock.ZMin),
+                    Point(-self.stock.XMin, self.stock.ZMax))
             planning.partSegmentGroup = SegmentGroup()
             for segment in reflect_x_segments(self.partSegmentGroup.getSegments()):
                 planning.partSegmentGroup.addSegment(segment)
@@ -122,14 +134,21 @@ class BaseOP:
         self.partSegmentGroup.validate()
         # self.partSegmentGroup.create_freecad_shape('partSegmentGroup')
 
-    def add_stock(self, stockBoundbox):
-        """Define bounding box for the stock material stockBoundbox = LibLathe BoundBox"""
-        self.stock = stockBoundbox
+    def add_containment(self, bounds):
+        """Set the operation's machining limits as a LibLathe BoundBox."""
+        self.containment = bounds
 
-    def add_stock_from_limits(self, xmin, xmax, zmin, zmax):
-        """Define bounding box for the stock material xmin, xmax, zmin, zmax = float values defining the stock limits"""
-        stockBoundbox = BoundBox(Point(xmin, zmin), Point(xmax, zmax))
-        self.stock = stockBoundbox
+    def add_containment_from_limits(self, xmin, xmax, zmin, zmax):
+        """Set the operation's radial and axial machining limits."""
+        self.add_containment(BoundBox(Point(xmin, zmin), Point(xmax, zmax)))
+
+    def add_stock(self, bounds):
+        """Set the physical stock envelope used for safe clearance routing."""
+        values = (bounds.XMin, bounds.XMax, bounds.ZMin, bounds.ZMax)
+        if (not all(math.isfinite(value) for value in values)
+                or bounds.XMax <= bounds.XMin or bounds.ZMax <= bounds.ZMin):
+            raise ValueError("Stock must have finite bounds and positive radial/axial extents")
+        self.stock = bounds
 
     def add_tool(self, tool):
         """Set the tool for the operation"""

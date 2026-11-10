@@ -38,10 +38,10 @@ partSegments.append(Segment(Point(14, -15) ,Point(0, 0), -0.3))
 """
 
 
-# Define stock bounds
-stockPt1 = Point(0, -150)
-stockPt2 = Point(50, 10)
-StockBoundingBox = BoundBox(stockPt1, stockPt2)
+# Define containment bounds
+containmentPt1 = Point(0, -150)
+containmentPt2 = Point(50, 10)
+ContainmentBoundingBox = BoundBox(containmentPt1, containmentPt2)
 
 # Define Operations Properties
 params = {}
@@ -55,7 +55,7 @@ params['vfeed'] = 10
 # Create Profile Operation
 profileOP = ProfileOP()
 profileOP.setParams(params)
-profileOP.add_stock(StockBoundingBox)
+profileOP.add_containment(ContainmentBoundingBox)
 profileOP.addPartSegments(partSegments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')

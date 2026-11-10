@@ -48,11 +48,18 @@ must form a simple region.
 
 ## Cutting traversal and routing
 
+`containment` defines the operation's machining limits, set through
+`add_containment(bounds)` or `add_containment_from_limits(xmin, xmax, zmin, zmax)`.
+`stock` is the optional physical material envelope, set through
+`add_stock(bounds)` for safe clearance routing. These are separate bounds:
+restricting containment must not shrink the stock envelope used for transfers.
+
 All operations inherit `pass_offset` from the base class. It is radial for
 roughing/grooving, axial for facing, normal to the contour for profiling and
 unused for parting. The add-on uses one `PassOffset` property, with descriptive
 Radial Pass Offset, Axial Pass Offset or Pass Offset labels; parting hides it.
-The previous `step_over` parameter and `StepOver` property are not supported;
+Grooving also uses `finish_pass_offset` (`FinishPassOffset` in the add-on)
+between finishing contours. Previous parameter names are not supported;
 existing scripts and saved operations must be updated or recreated.
 
 Operations choose the traversal of generated geometry; the G-code router
@@ -67,6 +74,11 @@ segments remain, and the existing radial router provides clearance moves
 between strokes. Near-side generation followed by the existing far-side
 reflection keeps both tool sides cutting toward the centerline. Other
 operations retain their existing traversal and layer order.
+
+Grooving's optional `finish_pass_offset` reserves a finishing allowance during
+plunging. Each finishing contour is offset independently from the original
+tool-origin profile, from the outer allowance down to `stock_to_leave`.
+The default of zero preserves repeated final-contour passes.
 
 Full-insert sweep checks certify finishing cuts as well as added approach and
 retract moves. Long public sweep queries are partitioned into consecutive

@@ -13,7 +13,7 @@ from liblathe.tool.tool import Tool
 class test_Path(unittest.TestCase):
     def setUp(self):
         self.operation = BaseOP()
-        self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
+        self.operation.add_containment(BoundBox(Point(0, -20), Point(12, 1)))
         tool = Tool()
         vertices = [(-0.4, -0.4), (-0.4, 2), (2, 2), (2, -0.4), (-0.4, -0.4)]
         tool.set_tool_from_segments([
@@ -151,6 +151,34 @@ class test_Path(unittest.TestCase):
             self.route(direction)
         self.assertEqual([command.to_string() for command in self.path.commands], ['G18'])
         self.sweep.assert_not_called()
+
+    def test_local_clearance_rejects_unprotected_or_unsafe_routes_atomically(self):
+        self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
+        for settings in (
+                {'direction': RoutingDirection.AUTO, 'radial_clearance': 15.4},
+                {'direction': RoutingDirection.RADIAL, 'radial_clearance': float('nan')},
+                {'direction': RoutingDirection.RADIAL, 'radial_clearance': 12},
+                {'direction': RoutingDirection.RADIAL, 'return_to_clearance': True}):
+            with self.subTest(settings=settings):
+                path = Path()
+                with self.assertRaises(ValueError):
+                    path.fromSegmentGroup(self.operation, self.passes, protect_part=True, **settings)
+                self.assertEqual(len(path.commands), 1)
+        path = Path()
+        with self.assertRaises(ValueError):
+            path.fromSegmentGroup(self.operation, self.passes,
+                                  direction=RoutingDirection.RADIAL, radial_clearance=15.4)
+        self.assertEqual(len(path.commands), 1)
+
+    def test_local_rapid_outside_prepared_region_is_rejected(self):
+        self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
+        group = SegmentGroup()
+        group.addSegment(Segment(Point(12, -20), Point(10.5, -20)))
+        path = Path()
+        with self.assertRaisesRegex(ValueError, 'outside the prepared groove'):
+            path.fromSegmentGroup(self.operation, group, protect_part=True,
+                                  direction=RoutingDirection.RADIAL, radial_clearance=15.5)
+        self.assertEqual(len(path.commands), 1)
 
     def test_reversed_arc_uses_new_start_and_exchanges_g2_g3(self):
         group = SegmentGroup()
