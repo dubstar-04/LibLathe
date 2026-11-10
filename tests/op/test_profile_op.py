@@ -50,7 +50,7 @@ class test_ProfileOP(unittest.TestCase):
         # Define Operations Properties
         params = {}
         params['allow_grooving'] = True
-        params['step_over'] = 1
+        params['pass_offset'] = 1
         params['finish_passes'] = 3
         params['stock_to_leave'] = 0
         params['hfeed'] = self.hfeed

@@ -48,6 +48,13 @@ must form a simple region.
 
 ## Cutting traversal and routing
 
+All operations inherit `pass_offset` from the base class. It is radial for
+roughing/grooving, axial for facing, normal to the contour for profiling and
+unused for parting. The add-on uses one `PassOffset` property, with descriptive
+Radial Pass Offset, Axial Pass Offset or Pass Offset labels; parting hides it.
+The previous `step_over` parameter and `StepOver` property are not supported;
+existing scripts and saved operations must be updated or recreated.
+
 Operations choose the traversal of generated geometry; the G-code router
 chooses approaches and retracts. `SegmentGroup.reversed()` provides a shared,
 non-mutating geometry operation that reverses segment order, endpoints and arc

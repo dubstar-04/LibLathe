@@ -44,7 +44,7 @@ class test_RoughOP(unittest.TestCase):
         # Define Operations Properties
         params = {}
         params['allow_grooving'] = True
-        params['step_over'] = 1
+        params['pass_offset'] = 1
         params['finish_passes'] = 2
         params['stock_to_leave'] = 0
         params['hfeed'] = self.hfeed

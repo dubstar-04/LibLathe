@@ -45,7 +45,7 @@ class test_FaceOP(unittest.TestCase):
         # Define Operations Properties
         params = {}
         params['allow_grooving'] = False
-        params['step_over'] = 1
+        params['pass_offset'] = 1
         params['finish_passes'] = 2
         params['stock_to_leave'] = 0
         params['hfeed'] = self.hfeed
@@ -86,7 +86,7 @@ class test_FaceOP(unittest.TestCase):
     def test_far_side_publishes_physical_clearing_paths(self):
         operation = FaceOP()
         self.assertEqual(operation.clearing_paths, [])
-        operation.setParams({'step_over': 1, 'stock_to_leave': 0, 'hfeed': self.hfeed, 'vfeed': 10})
+        operation.setParams({'pass_offset': 1, 'stock_to_leave': 0, 'hfeed': self.hfeed, 'vfeed': 10})
         operation.add_stock(BoundBox(Point(-25, -55), Point(0, 15)))
         operation.addPartSegments([Segment(Point(-13, 10), Point(-13, -48))])
         tool = Tool()

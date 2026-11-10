@@ -42,7 +42,7 @@ StockBoundingBox = BoundBox(stockPt1, stockPt2)
 
 # Define Operations Properties
 params = {}
-params['step_over'] = 1.5
+params['pass_offset'] = 1.5
 params['finish_passes'] = 1
 params['stock_to_leave'] = 0
 params['hfeed'] = 10

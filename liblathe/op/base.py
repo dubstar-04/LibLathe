@@ -28,7 +28,7 @@ class BaseOP:
         self.clearing_paths = []
 
         self.allow_grooving = False
-        self.step_over = 1.5
+        self.pass_offset = 1.5
         self.finish_passes = 1
         self.stock_to_leave = 0
         self.hfeed = 100
@@ -49,7 +49,7 @@ class BaseOP:
 
     def getParams(self):
         """Return operations parameters"""
-        return {'allow_grooving': self.allow_grooving, 'step_over': self.step_over,
+        return {'allow_grooving': self.allow_grooving, 'pass_offset': self.pass_offset,
                 'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
                 'vfeed': self.vfeed, 'clearance': self.clearance}
 

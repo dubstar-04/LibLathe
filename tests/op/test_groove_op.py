@@ -52,7 +52,7 @@ def rounded_tool(width=2, radius=0.2, origin=0, sign=1):
 
 
 def make_op(stock=(0, -40, 16, 0), sign=1, tool=None, **params):
-    settings = {'step_over': 1.5, 'finish_passes': 0, 'stock_to_leave': 0, 'hfeed': 10}
+    settings = {'pass_offset': 1.5, 'finish_passes': 0, 'stock_to_leave': 0, 'hfeed': 10}
     settings.update(params)
     op = GrooveOP()
     op.setParams(settings)
@@ -81,14 +81,14 @@ class test_GrooveOP(unittest.TestCase):
 
     def test_params(self):
         params = self.op.getParams()
-        self.assertEqual(params['step_over'], 1.5)
+        self.assertEqual(params['pass_offset'], 1.5)
         self.assertNotIn('overlap_percent', params)
         self.assertEqual(GrooveOP.overlap_percent, 10.0)
         self.assertNotIn('overlap_percent', vars(self.op))
 
     def test_invalid_params(self):
-        for params in ({'step_over': 0}, {'step_over': -1}, {'step_over': math.nan},
-                       {'step_over': math.inf}, {'finish_passes': -1}, {'finish_passes': 1.5},
+        for params in ({'pass_offset': 0}, {'pass_offset': -1}, {'pass_offset': math.nan},
+                       {'pass_offset': math.inf}, {'finish_passes': -1}, {'finish_passes': 1.5},
                        {'finish_passes': True}):
             op = make_op(**params)
             op.tool_paths = ['stale']
@@ -106,10 +106,10 @@ class test_GrooveOP(unittest.TestCase):
         self.assertEqual(GrooveOP.get_z_stations(-5, -5, 3), [-5])
 
     def test_max_increment_scales_with_tool_width(self):
-        op = make_op(step_over=10)
+        op = make_op(pass_offset=10)
         self.assertAlmostEqual(op.get_max_increment(square_tool(2).get_segmentgroup().boundbox()), 1.8)
         self.assertAlmostEqual(op.get_max_increment(square_tool(4).get_segmentgroup().boundbox()), 3.6)
-        op.step_over = 1
+        op.pass_offset = 1
         self.assertAlmostEqual(op.get_max_increment(square_tool(4).get_segmentgroup().boundbox()), 3.6)
 
     def test_layers_are_depth_first(self):
@@ -130,7 +130,7 @@ class test_GrooveOP(unittest.TestCase):
             for seg in layer.getSegments():
                 self.assertEqual(seg.start.Z, seg.end.Z)
                 self.assertLess(seg.end.X, seg.start.X)
-                self.assertLessEqual(seg.start.X - seg.end.X, self.op.step_over + 1e-6)
+                self.assertLessEqual(seg.start.X - seg.end.X, self.op.pass_offset + 1e-6)
                 self.assertGreaterEqual(seg.end.X, 0)
         # stations in the deepest layer (the wide groove) are evenly spaced and below the tool width
         deep = [seg.start.Z for seg in self.op.tool_paths[-1].getSegments()]
@@ -150,7 +150,7 @@ class test_GrooveOP(unittest.TestCase):
             for zp in grid:
                 if z - TOOL_WIDTH <= zp <= z:
                     cut_to = max(end, part_radius(zp))
-                    self.assertLessEqual(floor[zp] - cut_to, op.step_over + 1e-6)
+                    self.assertLessEqual(floor[zp] - cut_to, op.pass_offset + 1e-6)
                     floor[zp] = min(floor[zp], cut_to)
         # leftover material wider than the offset tolerance would be a missed pass
         widest = run = 0

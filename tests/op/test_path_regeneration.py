@@ -49,7 +49,7 @@ class test_PathRegeneration(unittest.TestCase):
             with self.subTest(operation=fixture.__name__):
                 operation = self.operation(fixture)
                 original = self.commands(operation)
-                params = {'clearance': operation.clearance + 1, 'step_over': 2}
+                params = {'clearance': operation.clearance + 1, 'pass_offset': 2}
                 operation.setParams(params)
                 fresh = self.operation(fixture)
                 fresh.setParams(params)
@@ -81,7 +81,7 @@ class test_PathRegeneration(unittest.TestCase):
 
                     self.assertEqual(intersection.call_count, 2)
                     self.assertEqual(operation.tool_paths, [])
-                    params = {'clearance': operation.clearance + 1, 'step_over': 2}
+                    params = {'clearance': operation.clearance + 1, 'pass_offset': 2}
                     operation.setParams(params)
                     fresh = self.operation(fixture)
                     fresh.setParams(params)

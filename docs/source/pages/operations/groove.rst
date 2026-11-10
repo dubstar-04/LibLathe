@@ -9,7 +9,7 @@ can be machined.
 
 Plunges are spaced evenly along Z, slightly less than the tool's width apart,
 so neighbouring plunges overlap by 10% of the tool width. Each depth layer of
-``step_over`` is completed across every station before the next, deeper layer
+``pass_offset`` is completed across every station before the next, deeper layer
 begins. Plunges stop at the part or the stock's minimum X.
 
 The tool always retracts radially out of the stock before moving to the next
@@ -25,7 +25,7 @@ to reach the next stroke. Curved walls use the existing offset polyline.
 Parameters
 ----------
 
-- ``step_over``: radial depth of each plunge layer.
+- ``pass_offset``: radial depth of each plunge layer.
 - ``finish_passes``: number of finishing passes along the final contour.
   Each pass completes all inward-oriented strokes along the same contour;
   ``0`` disables them. This counts complete contours, not individual strokes.

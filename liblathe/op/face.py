@@ -17,7 +17,7 @@ class FaceOP(liblathe.op.base.BaseOP):
         XMin = self.stock.XMin
         XMax = self.stock.XMax + self.clearance
         ZMin = part_boundbox.ZMax + self.stock_to_leave
-        ZMax = math.ceil(self.stock.ZMax) + self.step_over
+        ZMax = math.ceil(self.stock.ZMax) + self.pass_offset
         self.clearing_paths = []
 
         # TODO: Move the final pass to finishing passes for a slower pass
@@ -30,10 +30,10 @@ class FaceOP(liblathe.op.base.BaseOP):
             seg = Segment(pt1, pt2)
             segmentgroup.addSegment(seg)
 
-            pt3 = pt2.project(self.leadout_angle, self.step_over)
+            pt3 = pt2.project(self.leadout_angle, self.pass_offset)
             leadout = Segment(pt2, pt3)
             segmentgroup.addSegment(leadout)
-            z_pos += self.step_over
+            z_pos += self.pass_offset
             self.clearing_paths.append(segmentgroup)
 
     def generateGCode(self):

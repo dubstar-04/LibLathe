@@ -102,9 +102,9 @@ class GrooveOP(liblathe.op.base.BaseOP):
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
         self.tool_paths = []
-        radial_step = float(self.step_over)
+        radial_step = float(self.pass_offset)
         if not math.isfinite(radial_step) or radial_step <= 0:
-            raise ValueError("step_over must be finite and positive")
+            raise ValueError("pass_offset must be finite and positive")
         if isinstance(self.finish_passes, bool) or not isinstance(self.finish_passes, int) or self.finish_passes < 0:
             raise ValueError("finish_passes must be a non-negative integer")
 
