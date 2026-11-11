@@ -34,6 +34,10 @@ Stock, tools and moves must share one physical coordinate system.
 ``(start_x, start_z, end_x, end_z)`` and represents a straight translation of the
 whole insert. Failed removal leaves the snapshot unchanged. Pass ``after.copy()``
 to the next calculation to retain independent before/after snapshots.
+Python preview methods retain the GIL, serializing access to each snapshot
+between Python threads, including the transactional copy and replacement during
+removal. A sequence of separate calls is not atomic; use ``copy()`` when reading
+several properties of one consistent snapshot.
 
 Include cutting feeds, including feed approaches and withdrawals; do not subtract
 rapid moves. Track position through both rapids and feeds when extracting moves

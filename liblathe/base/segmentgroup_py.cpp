@@ -31,7 +31,7 @@ PYBIND11_MODULE(segmentgroup, m)
               for (auto move : moves)
                    result.sweep(tool, {move[0], move[1]}, {move[2], move[3]});
               state = std::move(result);
-         }, py::call_guard<py::gil_scoped_release>())
+         })
          .def("polygons", [](const stock_preview::StockState& state) {
               std::vector<std::vector<std::pair<double, double>>> result;
               for (const auto& polygon : state.polygons()) {
