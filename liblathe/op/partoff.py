@@ -3,7 +3,7 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
-from liblathe.gcode.path import Path
+from liblathe.gcode.path import Path, RoutingDirection
 
 
 class PartoffOP(liblathe.op.base.BaseOP):
@@ -34,7 +34,7 @@ class PartoffOP(liblathe.op.base.BaseOP):
 
         try:
             for segmentgroup in self.tool_paths:
-                path.fromSegmentGroup(self, segmentgroup)
+                path.fromSegmentGroup(self, segmentgroup, direction=RoutingDirection.RADIAL)
         except (ValueError, RuntimeError):
             self.tool_paths = []
             raise

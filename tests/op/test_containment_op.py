@@ -43,3 +43,16 @@ def test_every_operation_contains_all_feeds(operation_type, sign):
         cuts = operation.tool_paths[0].getSegments()
         assert cuts[0].start.Z == -25
         assert cuts[-1].end.X == 0
+        cut_end = next(i for i, c in enumerate(moves)
+                       if c.get_movement() == "G1"
+                       and abs(c.getParams()["X"]) < 1e-5
+                       and abs(c.getParams()["Z"] + 25) < 1e-5)
+        withdrawal = moves[cut_end + 1]
+        assert withdrawal.get_movement() == "G1"
+        assert withdrawal.getParams()["Z"] == pytest.approx(-25)
+        assert sign * withdrawal.getParams()["X"] == pytest.approx(15)
+        for previous, current in zip(moves[cut_end:], moves[cut_end + 1:]):
+            if abs(current.getParams()["Z"] - previous.getParams()["Z"]) > 1e-5:
+                assert current.get_movement() == "G0"
+                assert sign * previous.getParams()["X"] > 12
+                assert sign * current.getParams()["X"] > 12
