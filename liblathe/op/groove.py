@@ -62,24 +62,6 @@ class GrooveOP(liblathe.op.base.BaseOP):
         return x_min
 
     @staticmethod
-    def _clip(segment, x_min, x_max, z_low, z_high):
-        """Return the part of a line segment inside the X and Z limits, or None."""
-        start, end = segment.start, segment.end
-        t_start, t_end = 0.0, 1.0
-        for delta, room in ((end.X - start.X, x_max - start.X), (start.X - end.X, start.X - x_min),
-                            (end.Z - start.Z, z_high - start.Z), (start.Z - end.Z, start.Z - z_low)):
-            if abs(delta) < 1e-12:
-                if room < 0:
-                    return None
-            elif delta > 0:
-                t_end = min(t_end, room / delta)
-            else:
-                t_start = max(t_start, room / delta)
-        if t_end - t_start <= 1e-9:
-            return None
-        return Segment(start.lerp(end, t_start), start.lerp(end, t_end))
-
-    @staticmethod
     def _get_finish_strokes(finish):
         """Split the contour at gaps and X reversals, orienting every stroke inward."""
         strokes = []

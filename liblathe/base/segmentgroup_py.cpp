@@ -28,8 +28,10 @@ PYBIND11_MODULE(segmentgroup, m)
               "Return the axial midpoint of the radially innermost edge, including arc extrema.")
          .def("intersectsGroup", &SegmentGroup::intersectsGroup)
          .def("offset", &SegmentGroup::offset,
+              py::arg("step_over"), py::arg("extend_start") = false,
               "Extract an offset polyline with raw and simplified chord errors "
               "bounded by 0.05 model units in the closed signed-distance field. "
+              "Optionally retain the contour beyond the profile's starting Z. "
               "Raises RuntimeError for detected zero-width branches, uncertifiable "
               "chords or fewer than two contour points. Does not guarantee completeness.")
          .def("defeature", &SegmentGroup::defeature)

@@ -171,7 +171,7 @@ namespace liblathe
                             prepareIntersections(segmentGroup.segments), Point());
     }
 
-    SegmentGroup SegmentGroup::offset(float step_over)
+    SegmentGroup SegmentGroup::offset(float step_over, bool extend_start)
     {
         // Create an offset segmentgroup by the distance of step_over //
         if (this->count() == 0)
@@ -197,7 +197,7 @@ namespace liblathe
 
         Quadtree qt = Quadtree();
         qt.initialise(this, center, size, size);
-        std::vector<Point> offset = qt.getOffset(step_over);
+        std::vector<Point> offset = qt.getOffset(step_over, extend_start);
         offset.erase(std::unique(offset.begin(), offset.end(),
                                  [](Point first, Point second)
                                  { return first.isSame(second); }),

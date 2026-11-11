@@ -78,7 +78,7 @@ class test_Path(unittest.TestCase):
     def test_contained_routing_fails_instead_of_rapiding_into_stock(self):
         self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
         before = list(self.path.commands)
-        with self.assertRaisesRegex(ValueError, "extend roughing containment"):
+        with self.assertRaisesRegex(ValueError, "extend containment"):
             self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True,
                                        contain_feeds=True)
         self.assertEqual(self.path.commands, before)
@@ -132,7 +132,7 @@ class test_Path(unittest.TestCase):
 
     def test_contained_routing_rejects_outside_cutting_segments(self):
         self.passes.addSegment(Segment(Point(13, -5), Point(12, -5)))
-        with self.assertRaisesRegex(ValueError, "outside roughing containment"):
+        with self.assertRaisesRegex(ValueError, "outside containment"):
             self.path.fromSegmentGroup(self.operation, self.passes, protect_part=True,
                                        contain_feeds=True)
         self.assertEqual(len(self.path.commands), 1)

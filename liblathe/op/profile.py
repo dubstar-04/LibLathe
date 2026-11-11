@@ -1,12 +1,48 @@
+import math
+
 import liblathe.op.base
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
-from liblathe.gcode.path import Path
-
 
 class ProfileOP(liblathe.op.base.BaseOP):
+
+    def __init__(self):
+        super().__init__()
+        self.leadin_angle = 0
+
+    def _trim_entry(self, contour, radius):
+        """Join an axial entry to the first intersection with the offset polyline."""
+        segments = contour.getSegments()
+        for index, segment in enumerate(segments):
+            low, high = sorted((segment.start.X, segment.end.X))
+            if low <= radius <= high:
+                dx = segment.end.X - segment.start.X
+                fraction = (radius - segment.start.X) / dx if dx else 0
+                entry = Point(radius, segment.start.Z + fraction * (segment.end.Z - segment.start.Z))
+                result = SegmentGroup()
+                if not entry.isSame(segment.end):
+                    result.addSegment(Segment(entry, segment.end))
+                for remaining in segments[index + 1:]:
+                    result.addSegment(remaining)
+                return result
+        raise ValueError("Profile offset does not intersect its axial lead-in")
+
+    def _profile_offsets(self, base):
+        """Generate fixed normal offsets meeting regularly spaced axial entries."""
+        step = float(self.pass_offset)
+        if not math.isfinite(step) or step <= 0:
+            raise ValueError("pass_offset must be finite and positive")
+        if isinstance(self.finish_passes, bool) or not isinstance(self.finish_passes, int) or self.finish_passes < 0:
+            raise ValueError("finish_passes must be a non-negative integer")
+        if not self.finish_passes:
+            return
+        datum = base.getSegments()[0].start.X
+        for index in range(self.finish_passes):
+            distance = step * index
+            contour = base.offset(distance, extend_start=True)
+            yield self._trim_entry(contour, datum + distance)
 
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
@@ -19,51 +55,20 @@ class ProfileOP(liblathe.op.base.BaseOP):
 
         # define the base segment group using the stock to leave as a datum
         base_segmentGroup = profileSegmentGroup.offset(self.stock_to_leave)
-        # add lead in to the profile path
-        self.add_leadin(base_segmentGroup)
-        f_pass = 0
-        while f_pass < self.finish_passes:
-            # create a new segment group
-            segmentgroup = SegmentGroup()
-            # generate the offset profile path
-            segmentgroup.extend(base_segmentGroup.offset(self.pass_offset * f_pass))
-            # check if segement group intersect the part (internal offset)
-            if segmentgroup.intersectsGroup(internalOffset):
-                # Debug().draw([internalOffset, segmentgroup])
-                raise ValueError("Calculated profile path intersects part")
-
-            # add the segment group to the tool paths
-            tool_paths.append(segmentgroup)
-            # increment f_pass to the next pass
-            f_pass += 1
+        tool = self.tool.get_segmentgroup()
+        for offset in self._profile_offsets(base_segmentGroup):
+            for stroke in self._clip_path(offset):
+                segments = stroke.getSegments()
+                segmentgroup = SegmentGroup()
+                self._add_lead(segmentgroup, segments[0].start, self.leadin_angle,
+                               self.containment, lead_in=True)
+                segmentgroup.extend(stroke)
+                self._add_lead(segmentgroup, segments[-1].end, self.leadout_angle,
+                               self.containment)
+                if segmentgroup.intersectsGroup(internalOffset):
+                    raise ValueError("Calculated profile path intersects part")
+                for segment in segmentgroup.getSegments():
+                    self.partSegmentGroup.validateToolSweep(tool, segment.start, segment.end)
+                tool_paths.append(segmentgroup)
 
         self.tool_paths = tool_paths
-
-    def add_leadin(self, segmentgroup):
-        # get the first segment of the segment group
-        segment = segmentgroup.getSegments()[0]
-        # TODO: handle leadin when profiling a mid portion of a part
-        # calculate the new z_pos with lead in
-        stock_z = self.containment.ZMax - self.tool.get_segmentgroup().getRadialContactPoint().Z
-        if (segment.start.Z < stock_z):
-            z_pos = stock_z
-        else:
-            z_pos = segment.start.Z + self.clearance
-        # create the new start point
-        start_point = Point(segment.start.X, z_pos)
-        # use the segments start as the leadin end point
-        end_point = segment.start
-        # create the leadin segment
-        leadin = Segment(start_point, end_point)
-        # add the leadin segment at the start of segment group
-        segmentgroup.insertSegment(leadin, 0)
-
-    def generateGCode(self):
-        """Generate Gcode for the op segments"""
-
-        path = Path()
-
-        for segmentgroup in reversed(self.tool_paths):
-            path.fromSegmentGroup(self, segmentgroup, protect_part=True)
-
-        return path.commands

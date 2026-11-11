@@ -35,7 +35,7 @@ namespace liblathe
         // Throws invalid_argument for empty geometry or nonfinite offsets,
         // runtime_error if fewer than two distinct contour points are produced or
         // connecting chords cannot be certified within offsetTolerance.
-        SegmentGroup offset(float step_over);
+        SegmentGroup offset(float step_over, bool extend_start = false);
         // C++ extraction/simplification guard; empty and single-point contours are
         // handled separately by offset(). Does not certify contour completeness.
         void validateOffsetContour(const std::vector<Point> &points, float offset);

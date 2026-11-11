@@ -61,7 +61,7 @@ class test_BaseOP(unittest.TestCase):
 
     def test_generate_gcode(self):
         gcode = self.baseop.generateGCode()
-        self.assertEqual(gcode, "")
+        self.assertEqual([command.get_movement() for command in gcode], ["G18"])
 
     def test_far_side_reflects_copies_and_signed_output(self):
         class ReflectionProbe(BaseOP):

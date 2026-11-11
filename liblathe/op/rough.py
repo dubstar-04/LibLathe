@@ -6,33 +6,11 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
-from liblathe.gcode.path import Path
-
 # create a namedtuple to hold intersection data
 Intersection = namedtuple('Intersection', 'point, seg')
 
 
 class RoughOP(liblathe.op.base.BaseOP):
-
-    def _add_lead(self, group, anchor, angle, limits, *, lead_in=False):
-        """Shorten a lead along its original direction to fit the cutting limits."""
-        end = anchor.project(angle, self.pass_offset)
-        fraction = 1.0
-        for start, delta, low, high in (
-                (anchor.X, end.X - anchor.X, limits.XMin, limits.XMax),
-                (anchor.Z, end.Z - anchor.Z, limits.ZMin, limits.ZMax)):
-            if delta > 0:
-                fraction = min(fraction, (high - start) / delta)
-            elif delta < 0:
-                fraction = min(fraction, (low - start) / delta)
-        if fraction <= 1e-6:
-            return
-        end = anchor.lerp(end, fraction)
-        if anchor.distanceTo(end) <= 1e-6:
-            return
-        start, end = (end, anchor) if lead_in else (anchor, end)
-        self.partSegmentGroup.validateToolSweep(self.tool.get_segmentgroup(), start, end)
-        group.addSegment(Segment(start, end))
 
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
@@ -139,17 +117,3 @@ class RoughOP(liblathe.op.base.BaseOP):
                 tool_paths.append(segmentgroup)
 
         self.tool_paths = tool_paths
-
-    def generateGCode(self):
-        """Generate Gcode for the op segments"""
-
-        path = Path()
-
-        try:
-            for segmentgroup in reversed(self.tool_paths):
-                path.fromSegmentGroup(self, segmentgroup, protect_part=True, contain_feeds=True)
-        except (ValueError, RuntimeError):
-            self.tool_paths = []
-            raise
-
-        return path.commands

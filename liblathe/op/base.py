@@ -5,6 +5,7 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.gcode.command import Command
+from liblathe.gcode.path import Path
 from liblathe.tool.tool import ToolSide
 import math
 
@@ -121,9 +122,74 @@ class BaseOP:
         pass
 
     def generateGCode(self):
-        """Generate Gcode for the op segments"""
+        """Route contained passes from outermost to innermost."""
+        path = Path()
+        try:
+            for group in reversed(self.tool_paths):
+                path.fromSegmentGroup(self, group, protect_part=True, contain_feeds=True)
+        except (ValueError, RuntimeError):
+            self.tool_paths = []
+            raise
+        return path.commands
 
-        return ""
+    def _add_lead(self, group, anchor, angle, limits, *, lead_in=False):
+        """Shorten a lead along its original direction to fit the cutting limits."""
+        end = anchor.project(angle, self.pass_offset)
+        fraction = 1.0
+        for start, delta, low, high in (
+                (anchor.X, end.X - anchor.X, limits.XMin, limits.XMax),
+                (anchor.Z, end.Z - anchor.Z, limits.ZMin, limits.ZMax)):
+            if delta > 0:
+                fraction = min(fraction, (high - start) / delta)
+            elif delta < 0:
+                fraction = min(fraction, (low - start) / delta)
+        if fraction <= 1e-6:
+            return
+        end = anchor.lerp(end, fraction)
+        if anchor.distanceTo(end) <= 1e-6:
+            return
+        start, end = (end, anchor) if lead_in else (anchor, end)
+        self.partSegmentGroup.validateToolSweep(self.tool.get_segmentgroup(), start, end)
+        group.addSegment(Segment(start, end))
+
+    @staticmethod
+    def _clip(segment, x_min, x_max, z_low, z_high):
+        """Return the part of a line segment inside the X and Z limits, or None."""
+        if segment.bulge != 0:
+            raise ValueError("Containment clipping requires line segments")
+        start, end = segment.start, segment.end
+        t_start, t_end = 0.0, 1.0
+        for delta, room in ((end.X - start.X, x_max - start.X), (start.X - end.X, start.X - x_min),
+                            (end.Z - start.Z, z_high - start.Z), (start.Z - end.Z, start.Z - z_low)):
+            if abs(delta) < 1e-12:
+                if room < 0:
+                    return None
+            elif delta > 0:
+                t_end = min(t_end, room / delta)
+            else:
+                t_start = max(t_start, room / delta)
+        if t_end - t_start <= 1e-9:
+            return None
+        return Segment(start.lerp(end, t_start), start.lerp(end, t_end))
+
+    def _clip_path(self, group):
+        """Clip an offset polyline, keeping disconnected strokes separate."""
+        limits = self.containment
+        strokes = []
+        stroke = SegmentGroup()
+        previous = None
+        for segment in group.getSegments():
+            clipped = self._clip(segment, limits.XMin, limits.XMax, limits.ZMin, limits.ZMax)
+            if clipped is None or (previous is not None and not previous.end.isSame(clipped.start)):
+                if stroke.count():
+                    strokes.append(stroke)
+                    stroke = SegmentGroup()
+            if clipped is not None:
+                stroke.addSegment(clipped)
+            previous = clipped
+        if stroke.count():
+            strokes.append(stroke)
+        return strokes
 
     def addPartSegments(self, partSegments):
         """Add edges to define the part geometry partSegments = array of LibLathe segments"""

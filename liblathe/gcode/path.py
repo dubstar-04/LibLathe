@@ -124,7 +124,7 @@ class Path:
                     and pass_bounds.XMax <= limits.XMax + 1e-5
                     and pass_bounds.ZMin >= limits.ZMin - 1e-5
                     and pass_bounds.ZMax <= limits.ZMax + 1e-5):
-                raise ValueError("Cutting path is outside roughing containment")
+                raise ValueError("Cutting path is outside containment")
         x_clear = max(operation.containment.XMax - tool_bounds.XMin,
                       part_bounds.XMax - tool_bounds.XMin, pass_bounds.XMax) + clearance
         z_clear = max(operation.containment.ZMax - tool_bounds.ZMin,
@@ -234,7 +234,7 @@ class Path:
                 emit('G0', entry)
                 emit('G1', target)
                 return
-            raise ValueError("Cannot approach the pass safely; extend roughing containment beyond stock"
+            raise ValueError("Cannot approach the pass safely; extend containment beyond stock"
                              if contain_feeds else
                              "Cannot approach the pass without crossing the protected part")
 
