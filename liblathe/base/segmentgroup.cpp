@@ -979,7 +979,20 @@ namespace liblathe
             }
         };
         for (size_t i = 0; i < this->boundary.size(); ++i)
+        {
+            if (this->boundary[i].segment.bulge == 0)
+            {
+                const auto &bounds = this->boundaryBounds[i];
+                const double dx = std::max({double(bounds.XMin) - point.X, 0.0,
+                                            double(point.X) - bounds.XMax});
+                const double dz = std::max({double(bounds.ZMin) - point.Z, 0.0,
+                                            double(point.Z) - bounds.ZMax});
+                // Line projections stay inside endpoint bounds; keep ties in traversal order.
+                if (dx * dx + dz * dz >= closestDistance)
+                    continue;
+            }
             consider(this->boundary[i], i < this->originalCount);
+        }
         if (onProfile != nullptr)
             *onProfile = closestOnProfile;
         return closest;
@@ -1107,8 +1120,16 @@ namespace liblathe
             point.Z < bounds.ZMin - margin || point.Z > bounds.ZMax + margin)
             return false;
         int intersections = 0;
-        for (const auto &segment : this->boundary)
+        for (size_t index = 0; index < this->boundary.size(); ++index)
         {
+            const auto &segment = this->boundary[index];
+            if (segment.segment.bulge == 0)
+            {
+                const auto &edgeBounds = this->boundaryBounds[index];
+                if (point.X < edgeBounds.XMin || point.X > edgeBounds.XMax ||
+                    point.Z > edgeBounds.ZMax)
+                    continue;
+            }
             const int count = segment.crossings(point);
             if (count < 0)
                 return true;

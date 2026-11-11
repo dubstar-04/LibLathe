@@ -80,6 +80,12 @@ identifies positions that must still collide, avoiding repeated collision
 queries within that span. The original floating-point scan grid is preserved;
 collision is not assumed to be monotone.
 
+Prepared boundary queries prune straight edges using their existing bounds.
+Nearest-point queries skip a line only when its box cannot improve the current
+distance; ray classification skips lines outside the query's X range or wholly
+below it. Remaining candidates use the same exact calculations. Arc queries,
+boundary inclusion, scan spacing and clearance tolerances are unchanged.
+
 Positions near the boundary still undergo the full insert checks. Connector
 and chord sweeps, clearance tolerances and subdivision limits are unchanged.
 Uncertifiable paths continue to raise an error rather than emitting unchecked

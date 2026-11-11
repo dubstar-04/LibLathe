@@ -1,4 +1,5 @@
 import math
+import random
 import unittest
 
 from liblathe.base.point import Point
@@ -164,3 +165,53 @@ class test_DistanceDomain(unittest.TestCase):
                 with self.subTest(value=value, query=(query.X, query.Z)):
                     with self.assertRaisesRegex(ValueError, 'finite'):
                         group.sdv(query)
+
+    def test_pruned_line_queries_match_exhaustive_boundary_queries(self):
+        rng = random.Random(3917)
+        for scale, shift in ((0.001, 0), (1, 0), (1000, -10000), (1, 100000)):
+            for _ in range(10):
+                angles = sorted(rng.uniform(0, 2 * math.pi) for _ in range(12))
+                points = [Point(shift + scale * rng.uniform(2, 5) * math.cos(angle),
+                                shift + scale * rng.uniform(2, 5) * math.sin(angle))
+                          for angle in angles]
+                # Use a convex hull so the exhaustive parity oracle sees a simple region.
+                ordered = sorted({(point.X, point.Z) for point in points})
+                def cross(a, b, c):
+                    return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+                halves = []
+                for vertices in (ordered, list(reversed(ordered))):
+                    half = []
+                    for vertex in vertices:
+                        while len(half) > 1 and cross(half[-2], half[-1], vertex) <= 0:
+                            half.pop()
+                        half.append(vertex)
+                    halves.append(half[:-1])
+                vertices = halves[0] + halves[1]
+                group = self.profile(vertices + vertices[:1])
+                edges = group.getSegments()
+                queries = [Point(shift + scale * rng.uniform(-7, 7),
+                                 shift + scale * rng.uniform(-7, 7)) for _ in range(100)]
+                queries.extend(edge.start for edge in edges)
+                queries.extend(edge.start.lerp(edge.end, 0.5) for edge in edges)
+                for point in queries:
+                    distance = min(edge.closestPoint(point).distanceTo(point) for edge in edges)
+                    crossings = 0
+                    boundary = False
+                    for edge in edges:
+                        a, b = edge.start, edge.end
+                        dx, dz = b.X - a.X, b.Z - a.Z
+                        if (dx * (point.Z - a.Z) - dz * (point.X - a.X) == 0
+                                and min(a.X, b.X) <= point.X <= max(a.X, b.X)
+                                and min(a.Z, b.Z) <= point.Z <= max(a.Z, b.Z)):
+                            boundary = True
+                        if (a.X > point.X) != (b.X > point.X):
+                            crossings += a.Z + (point.X - a.X) * dz / dx > point.Z
+                    inside = boundary or crossings % 2 != 0
+                    self.assertEqual(group.isInside(point), inside)
+                    self.assertEqual(group.sdv(point), -distance if inside else distance)
+
+    def test_line_pruning_preserves_boundary_ties_and_degenerate_edges(self):
+        group = self.profile([(0, 0), (4, 0), (4, 0), (4, 4), (0, 4), (0, 0)])
+        for x, z, distance in ((2, 2, -2), (0, 2, 0), (4, 4, 0), (5, 5, math.sqrt(2)),
+                               (2, 5, 1), (-1, 2, 1)):
+            self.assertAlmostEqual(group.sdv(Point(x, z)), distance, delta=1e-6)

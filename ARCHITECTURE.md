@@ -46,6 +46,13 @@ must form a simple region.
    uncertifiable contours and detected collapsed, zero-width branches rather
    than returning an inaccurate path.
 
+Prepared geometry prunes straight-edge queries against cached segment bounds.
+A point-to-box squared-distance lower bound rejects lines that cannot improve
+the current nearest-point result, preserving original traversal order on ties.
+Vertical-ray classification skips lines outside the query's X range or below
+its Z coordinate. Arcs retain the existing unpruned narrow-phase calculations;
+no tolerance, scan-grid or sweep-validation changes accompany this optimization.
+
 ## Cutting traversal and routing
 
 `containment` defines the operation's machining limits, set through
