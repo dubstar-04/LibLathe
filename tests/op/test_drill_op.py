@@ -1,4 +1,5 @@
 import math
+from unittest.mock import patch
 
 import pytest
 
@@ -6,8 +7,9 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segmentgroup import StockPreview
 from liblathe.op.drill import DrillOP
+from liblathe.op.base import BaseOP
 from liblathe.tool.drill import Drill
-from liblathe.tool.tool import Tool
+from liblathe.tool.tool import Tool, ToolSide
 
 
 def operation():
@@ -31,6 +33,29 @@ def test_straight_tip_depth_path_and_clearance():
     assert edge.start.isSame(Point(0, 0))
     assert edge.end.isSame(Point(0, -20))
     assert op.tool.point_length == pytest.approx(5 / math.tan(math.radians(59)))
+
+
+def test_shared_lifecycle_retains_centreline_dispatch():
+    assert DrillOP.getGCode is BaseOP.getGCode
+    op = operation()
+    expected = [command.to_string() for command in op.getGCode()]
+    op.tool.side = ToolSide.FAR
+    assert [command.to_string() for command in op.getGCode()] == expected
+
+
+@pytest.mark.parametrize("error", [ValueError, RuntimeError])
+def test_shared_lifecycle_clears_both_path_sets_on_emission_failure(error):
+    op = operation()
+
+    def fail():
+        op.clearing_paths = [op.tool_paths[0]]
+        raise error("Injected emission failure")
+
+    with patch.object(op, "generateGCode", side_effect=fail):
+        with pytest.raises(error, match="Injected emission failure"):
+            op.getGCode()
+    assert op.tool_paths == []
+    assert op.clearing_paths == []
 
 
 @pytest.mark.parametrize("diameter,angle,length", [

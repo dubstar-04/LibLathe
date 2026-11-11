@@ -23,7 +23,8 @@ Insert-based operations inherit the signed-side dispatch in ``BaseOP.getGCode()`
 Supply matching physical tool, stock and part geometry; Far-side inputs and
 outputs use negative X. See :doc:`liblathe_tooling` for the side enum,
 reflection rules and machining limitations.
-Centreline drilling instead uses a symmetric drill at X=0, without side dispatch.
+Centreline drilling shares the base generation lifecycle but uses a symmetric
+drill at X=0, without insert-side dispatch.
 
 Generation and parameters
 -------------------------

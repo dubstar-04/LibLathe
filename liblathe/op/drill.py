@@ -11,7 +11,8 @@ from liblathe.tool.drill import Drill
 
 
 class DrillOP(BaseOP):
-    def getGCode(self):
+    def _get_gcode(self):
+        """Use the shared lifecycle without insert-side dispatch."""
         self.generatePath()
         return self.generateGCode()
 
