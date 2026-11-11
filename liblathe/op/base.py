@@ -1,4 +1,5 @@
 from copy import copy
+from enum import Enum
 
 from liblathe.base.segmentgroup import SegmentGroup
 from liblathe.base.boundbox import BoundBox
@@ -8,6 +9,12 @@ from liblathe.gcode.command import Command
 from liblathe.gcode.path import Path
 from liblathe.tool.tool import ToolSide
 import math
+
+
+class CutDirection(Enum):
+    """Axis used for cutting passes."""
+    RADIAL = "X"
+    AXIAL = "Z"
 
 
 def reflect_x_segments(segments):
@@ -30,6 +37,7 @@ class BaseOP:
         self.clearing_paths = []
 
         self.allow_grooving = False
+        self.cut_direction = CutDirection.RADIAL
         self.pass_offset = 1.5
         self.finish_passes = 1
         self.stock_to_leave = 0
@@ -53,7 +61,7 @@ class BaseOP:
         """Return operations parameters"""
         return {'allow_grooving': self.allow_grooving, 'pass_offset': self.pass_offset,
                 'finish_passes': self.finish_passes, 'stock_to_leave': self.stock_to_leave, 'hfeed': self.hfeed,
-                'vfeed': self.vfeed, 'clearance': self.clearance}
+                'vfeed': self.vfeed, 'clearance': self.clearance, 'cut_direction': self.cut_direction}
 
     def getGCode(self):
         """Base function for all turning operations"""
@@ -172,9 +180,10 @@ class BaseOP:
             return None
         return Segment(start.lerp(end, t_start), start.lerp(end, t_end))
 
-    def _clip_path(self, group):
+    def _clip_path(self, group, limits=None):
         """Clip an offset polyline, keeping disconnected strokes separate."""
-        limits = self.containment
+        if limits is None:
+            limits = self.containment
         strokes = []
         stroke = SegmentGroup()
         previous = None

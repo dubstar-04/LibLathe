@@ -54,6 +54,41 @@ class TestDefeatureBounds(unittest.TestCase):
                 self.assertEqual(self.group(part).intersectsGroup(self.group(tool)),
                                  expected)
 
+    def test_long_near_tangent_rounded_insert_sweep(self):
+        part = self.profile([(0, 100), (20, 100), (30, 80), (30, 50)])
+        part.addSegment(Segment(Point(30, 50), Point(30, 30), -1))
+        part.addSegment(Segment(Point(30, 30), Point(30, 0)))
+        part.addSegment(Segment(Point(30, 0), Point(0, 0)))
+        vertices = [
+            (12.4724569, 1.0546752, 0),
+            (0.4348623, 0.0015221, 0.46630767),
+            (0.0015221, 0.4348623, 0),
+            (1.0546752, 12.4724569, 0.36397022),
+            (1.4182909, 12.8360729, 0),
+            (13.4558859, 13.8892260, 0.46630767),
+            (13.8892260, 13.4558859, 0),
+            (12.8360729, 1.4182909, 0.36397022),
+        ]
+        tool = self.group([
+            Segment(Point(x, z), Point(next_x, next_z), bulge)
+            for (x, z, bulge), (next_x, next_z, _) in
+            zip(vertices, vertices[1:] + vertices[:1])
+        ])
+        for start_x, end_x in ((0.0025, 10.005), (10.005, 0.0025)):
+            part.validateToolSweep(tool, Point(start_x, 100.000084),
+                                   Point(end_x, 100.000084))
+            for z in (100, 99.99, 99):
+                with self.subTest(z=z, start=start_x):
+                    with self.assertRaises(RuntimeError):
+                        part.validateToolSweep(tool, Point(start_x, z), Point(end_x, z))
+        for start_x, end_x in ((29.020634, 30.01), (30.01, 29.020634)):
+            part.validateToolSweep(tool, Point(start_x, 30.017721),
+                                   Point(end_x, 30.017721))
+            for z in (30.01, 30):
+                with self.subTest(z=z, start=start_x):
+                    with self.assertRaises(RuntimeError):
+                        part.validateToolSweep(tool, Point(start_x, z), Point(end_x, z))
+
     def test_arc_extrema_beyond_endpoints_are_not_pruned(self):
         for bulge in (-math.tan(math.pi / 8), math.tan(math.pi / 8),
                       -1, 1, -math.tan(3 * math.pi / 8), math.tan(3 * math.pi / 8)):

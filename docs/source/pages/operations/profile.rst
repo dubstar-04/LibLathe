@@ -46,8 +46,9 @@ intersections lie beyond the current limit. The limit must also leave room for
 the desired axial lead-in length. Extending extraction does not permit feeds
 outside containment.
 The final ``stock_to_leave`` allowance is unchanged.
-Cutting and entry feeds stay inside containment. As with roughing, withdrawals
-feed radially out to stock plus clearance and may leave containment; rapid
-approaches use separate X/Z moves checked against stock and part.
-Set physical stock with ``add_stock(bounds)``; otherwise containment is used as
-a conservative stock envelope. Unsafe entries or withdrawals fail explicitly.
+All feeds, including withdrawals, stay inside containment. Withdrawals feed to
+a stock-clear containment boundary before rapiding to clearance. Rapid approaches
+use separate X/Z moves checked against stock and part.
+Set physical stock with ``add_stock(bounds)``; otherwise the model's bounding
+box is used. Unsafe boundary entries or withdrawals fail explicitly; enlarge
+containment to provide room.

@@ -15,15 +15,17 @@ class FaceOP(liblathe.op.base.BaseOP):
         part_boundbox = self.partSegmentGroup.boundbox()
 
         XMin = self.containment.XMin
-        XMax = self.containment.XMax + self.clearance
-        ZMin = part_boundbox.ZMax + self.stock_to_leave
-        ZMax = math.ceil(self.containment.ZMax) + self.pass_offset
+        XMax = self.containment.XMax
+        ZMin = max(self.containment.ZMin, part_boundbox.ZMax + self.stock_to_leave)
+        ZMax = self.containment.ZMax
         self.clearing_paths = []
+        if not math.isfinite(self.pass_offset) or self.pass_offset <= 0:
+            raise ValueError("Facing pass_offset must be finite and positive")
 
         # TODO: Move the final pass to finishing passes for a slower pass
         # work backwards from ZMin to ZMax at the requested axial depth
         z_pos = ZMin
-        while z_pos < ZMax:
+        while z_pos <= ZMax:
             segmentgroup = SegmentGroup()
             pt1 = Point(XMax, z_pos)
             pt2 = Point(XMin, z_pos)
@@ -34,14 +36,18 @@ class FaceOP(liblathe.op.base.BaseOP):
             leadout = Segment(pt2, pt3)
             segmentgroup.addSegment(leadout)
             z_pos += self.pass_offset
-            self.clearing_paths.append(segmentgroup)
+            self.clearing_paths.extend(self._clip_path(segmentgroup))
 
     def generateGCode(self):
         """Generate Gcode for the op segments"""
 
         path = Path()
 
-        for segmentgroup in reversed(self.clearing_paths):
-            path.fromSegmentGroup(self, segmentgroup)
+        try:
+            for segmentgroup in reversed(self.clearing_paths):
+                path.fromSegmentGroup(self, segmentgroup)
+        except (ValueError, RuntimeError):
+            self.clearing_paths = []
+            raise
 
         return path.commands

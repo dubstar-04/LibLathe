@@ -36,7 +36,7 @@ class test_FaceOP(unittest.TestCase):
 
         # Define containment bounds
         containmentPt1 = Point(0, 15)
-        containmentPt2 = Point(-25, -55)
+        containmentPt2 = Point(25, -55)
         containment_bounds = BoundBox(containmentPt1, containmentPt2)
 
         # set feed rate to test
@@ -62,6 +62,7 @@ class test_FaceOP(unittest.TestCase):
     def test_getGCode(self):
         """run the operation and evaluate the gcode"""
         gcode = self.op.getGCode()
+        self.assertTrue(self.op.clearing_paths)
 
         # check there is a return list
         self.assertTrue(len(gcode))

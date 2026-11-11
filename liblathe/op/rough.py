@@ -27,16 +27,24 @@ class RoughOP(liblathe.op.base.BaseOP):
         # create roughing boundary offset by the stock to leave value
         # include a minimal offset to ensure the roughing passes don't intersect the part
         offset = 0.01 + self.stock_to_leave
-        roughing_boundary = roughing_segmentGroup.offset(offset)
+        roughing_boundary = roughing_segmentGroup.offset(offset, extend_start=True)
 
         # define the x limits for roughing
         XMin = self.containment.XMin
         XMax = self.containment.XMax
         limits = BoundBox(Point(XMin, ZMin), Point(XMax, ZMax))
 
-        # start from a small offset to ensure the roughing passes intersect with the roughing_boundary
-        # TODO: This is a bit hacky, is there a better way?
-        x_pos = XMin + 1e-6
+        # Offset sampling can stop short of the inner radius. Cap its front
+        # endpoint so the innermost pass still has a trimming intersection.
+        boundary_segments = roughing_boundary.getSegments()
+        if boundary_segments and boundary_segments[0].start.X > XMin:
+            front = boundary_segments[0].start
+            boundary = SegmentGroup()
+            boundary.addSegment(Segment(Point(XMin, front.Z), front))
+            boundary.extend(roughing_boundary)
+            roughing_boundary = boundary
+
+        x_pos = XMin
         # Generate passes from the inner limit outward; G-code traverses them in reverse.
         while x_pos < XMax:
             pt1 = Point(x_pos, ZMax)
@@ -114,6 +122,9 @@ class RoughOP(liblathe.op.base.BaseOP):
                     # Debug().draw([segmentgroup, self.partSegmentGroup, roughing_boundary])
                     raise ValueError("Calculated roughing path intersects part")
 
+                for segment in segmentgroup.getSegments():
+                    self.partSegmentGroup.validateToolSweep(
+                        self.tool.get_segmentgroup(), segment.start, segment.end)
                 tool_paths.append(segmentgroup)
 
         self.tool_paths = tool_paths

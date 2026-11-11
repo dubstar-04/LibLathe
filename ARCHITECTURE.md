@@ -53,10 +53,20 @@ must form a simple region.
 `stock` is the optional physical material envelope, set through
 `add_stock(bounds)` for safe clearance routing. These are separate bounds:
 restricting containment must not shrink the stock envelope used for transfers.
+All G1/G2/G3 moves, including approaches and withdrawals, stay inside
+tool-reference containment. Stock-clear G0 moves may leave it for clearance.
+The external router rejects missing stock-clear boundary routes transactionally;
+it never converts a stock-crossing outside feed into a rapid. Without explicit
+stock it uses the model's bounds. Grooving retains its prepared radial-envelope
+assumption and full-model sweep checks. Boring uses separate geometric access
+routing and does not claim stock-opening or holder clearance certification.
 
 All operations inherit `pass_offset` from the base class. It is radial for
 roughing/grooving, axial for facing, normal to the contour for profiling and
-unused for parting. The add-on uses one `PassOffset` property, with descriptive
+unused for parting. `cut_direction` is also stored and reported by `BaseOP`,
+defaulting to `CutDirection.RADIAL` (`liblathe.op.base`); currently only boring uses
+it to select X/Z clearing. Use `CutDirection.AXIAL` for axial clearing, not raw strings.
+The add-on uses one `PassOffset` property, with descriptive
 Radial Pass Offset, Axial Pass Offset or Pass Offset labels; parting hides it.
 Grooving also uses `finish_pass_offset` (`FinishPassOffset` in the add-on)
 between finishing contours. Previous parameter names are not supported;
@@ -85,6 +95,66 @@ retract moves. Long public sweep queries are partitioned into consecutive
 translations no longer than the insert's smaller X/Z extent; each uses the
 existing checker and subdivision budget. This bounds the work of individual
 checks without skipping any travel or relaxing clearance tolerances.
+Swept insert bounds that are separated from the complete part bounds by the
+numerical margin certify clearance directly. This avoids unnecessary subdivision
+for long moves just above a flat face; overlapping envelopes still use the
+adaptive full-insert checks.
+Within those checks, patch bounds are also compared with an arc's supporting
+circle. A patch wholly inside or outside that circle cannot intersect the arc,
+even when its rectangular bounds overlap. This avoids excessive subdivision
+near curved groove shoulders while retaining the numerical clearance margin.
+
+## Internal boring experiment
+
+`BoreOP` reuses defeaturing and positive offsets by mapping the target inner
+contour into a finite external-material frame (`u = reference_radius - x`),
+with reflected tool-relative X. Terminal extensions keep endpoint artefacts
+outside the requested cutting limits. Cutting strokes return to physical X/Z
+before containment clipping. The existing near/far dispatch is independent of
+this material-side transformation.
+
+The experiment confirms reuse for bounded, single-contour examples; it does not
+establish support for arbitrary internal topology. External stock routing is
+not reused: the operation emits a separate geometric feed entry/inward escape
+sequence. Feeds stay within tool-reference containment; rapid positioning and
+return may leave it to reach clearance. TurningAddon extracts coaxial internal
+walls and attached floors automatically and selects one contour using containment.
+There are deliberately no prepared-opening or tool-fit checks.
+Clearing scans the first accessible interval of the compensated allowance region
+in X (default) or Z, with at most `pass_offset` between successive scan lines.
+Radial clearing's first station is containment ZMax, not the model mouth.
+Stations ahead of the mouth reuse its compensated radius without changing
+native extraction bounds or endpoint-limited finishing.
+Separate `clearing_paths` precede `tool_paths`; the latter are reversed finishing
+contours, cutting outward across the floor then toward the mouth. Each stroke
+enters from containment XMin for radial clearing and finishing, feeding down
+before moving outward. Axial clearing instead positions X at the exact
+`containment.ZMax + clearance` plane, approaches ZMax at rapid, and feeds
+axially without an engaged outward positioning feed. The same plane is used
+for every front return; all known approach and return segments are checked
+against target material. Withdrawal
+first disengages perpendicular to the last cut before returning to XMin and
+front clearance. Outward radial cuts lift in +Z (bounded by clearance,
+pass spacing and containment); at the front boundary they rapid axially to
+front clearance before returning inward. Axial clearing skips the inner access
+lane itself, retaining space for inward disengagement. Both cutting and added
+feeds are checked against the target material, not starting stock.
+See [scope and limitations](docs/source/pages/operations/bore.rst).
+
+## Advisory remaining stock
+
+`StockPreview` consumes the physical insert and already-generated cutting feeds.
+Its shared native convex-cell subtraction handles external cuts and bore-created
+cavities without operation dispatch or a reflected internal-material frame.
+Radial/axial boring and near/far sides use the same API; resulting snapshots
+carry forward to following operations without becoming planner input.
+Convexity is required for initial stock and inserts, not for the remaining
+material. Numerically unresolved clipping retains material and reports it;
+this is not an exact or clearance-certified Boolean model.
+TurningAddon starts from the stock's outer rotational envelope, closed to the
+axis, so pre-existing openings are not represented. Generated-feed subtraction
+can create holes; it cannot infer a pilot hole or certify tool access.
+See [remaining-stock guide](docs/source/pages/remaining_stock.rst).
 
 ## Geometry lifetime and debug data
 

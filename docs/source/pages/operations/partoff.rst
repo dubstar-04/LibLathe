@@ -8,7 +8,9 @@ Parting
     :figwidth: 450px
 
 Parting cuts the finished part off the stock. It is a single radial pass from
-outside containment down to its minimum X, positioned just beyond its minimum Z.
+containment's maximum X down to its minimum X, at its minimum Z.
+These are tool-reference coordinates: the insert's width no longer shifts the
+cut beyond the selected minimum Z. Set that limit to the desired reference depth.
 
 Set machining limits with ``add_containment(bounds)`` or
 ``add_containment_from_limits(xmin, xmax, zmin, zmax)``.
@@ -20,3 +22,7 @@ Parameters
 - ``hfeed``: feed rate.
 
 Set the containment's minimum X to zero to part the component off completely.
+Approach and withdrawal feeds also remain inside containment. Only stock-clear
+rapids may leave it to reach clearance. Supply the physical stock with
+``add_stock(bounds)`` and enlarge containment if no stock-clear boundary route
+is available.

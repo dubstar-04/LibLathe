@@ -53,5 +53,9 @@ Use ``add_containment(bounds)`` or
 With ``add_stock(bounds)``, grooving uses the physical stock envelope for local
 radial clearance and safe global entry/exit. Diameter containment assumes
 prepared stock within the selected Z range; the complete model remains
-protected. Feed approaches and withdrawals are retained. Without the optional
-stock envelope, containment-based clearance routing remains.
+protected. All feeds, including approaches and withdrawals, stay inside the
+tool-reference containment. Radial rapids connect its boundary to clearance;
+they cannot replace feeds through unprepared material. The prepared radial
+boundary accounts for the insert's reference offset. Without optional stock,
+the model's bounding box is used for global transfers. If no safe containment
+boundary entry or exit exists, generation fails and requests larger containment.

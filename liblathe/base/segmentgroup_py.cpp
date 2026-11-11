@@ -2,6 +2,7 @@
 #include <pybind11/stl.h>
 
 #include "segmentgroup.h"
+#include "stockstate.h"
 
 namespace py = pybind11;
 
@@ -12,6 +13,42 @@ PYBIND11_MODULE(segmentgroup, m)
 
      // optional module docstring
      m.doc() = "segmentgroup Class";
+
+     py::class_<stock_preview::StockState>(m, "StockPreview")
+         .def(py::init([](const std::vector<std::pair<double, double>>& vertices) {
+              stock_preview::Polygon polygon;
+              for (auto vertex : vertices) polygon.push_back({vertex.first, vertex.second});
+              return stock_preview::StockState(std::move(polygon));
+         }))
+         .def("copy", [](const stock_preview::StockState& state) { return state; })
+         .def("remove_feeds", [](stock_preview::StockState& state,
+                                const std::vector<std::pair<double, double>>& vertices,
+                                const std::vector<std::array<double, 4>>& moves) {
+              stock_preview::Polygon tool;
+              for (auto vertex : vertices) tool.push_back({vertex.first, vertex.second});
+              tool = stock_preview::convex(std::move(tool));
+              auto result = state;
+              for (auto move : moves)
+                   result.sweep(tool, {move[0], move[1]}, {move[2], move[3]});
+              state = std::move(result);
+         }, py::call_guard<py::gil_scoped_release>())
+         .def("polygons", [](const stock_preview::StockState& state) {
+              std::vector<std::vector<std::pair<double, double>>> result;
+              for (const auto& polygon : state.polygons()) {
+                   std::vector<std::pair<double, double>> vertices;
+                   for (auto point : polygon) vertices.emplace_back(point.x, point.z);
+                   result.push_back(std::move(vertices));
+              }
+              return result;
+         })
+         .def("edges", [](const stock_preview::StockState& state) {
+              std::vector<std::array<double, 4>> result;
+              for (auto edge : state.boundary())
+                   result.push_back({edge.start.x, edge.start.z, edge.end.x, edge.end.z});
+              return result;
+         })
+         .def_property_readonly("area", &stock_preview::StockState::materialArea)
+         .def_property_readonly("uncertain_retentions", &stock_preview::StockState::retainedUncertain);
 
      // bindings to segmentgroup class
      py::class_<SegmentGroup>(m, "SegmentGroup")

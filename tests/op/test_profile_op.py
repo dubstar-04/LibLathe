@@ -83,6 +83,8 @@ class test_ProfileOP(unittest.TestCase):
 
     def test_rapids_keep_the_full_insert_outside_original_stock(self):
         operation, passes = self.stock_routing_case()
+        operation.add_stock(operation.containment)
+        operation.add_containment(BoundBox(Point(0, -20), Point(15, 3)))
         path = GCodePath()
         path.fromSegmentGroup(operation, passes, protect_part=True)
         bounds = operation.tool.get_segmentgroup().boundbox()
@@ -95,9 +97,9 @@ class test_ProfileOP(unittest.TestCase):
                    parameters.get("Z", position[1] if position else 0))
             if command.get_movement() == "G0":
                 start = position or end
-                outside_radius = min(start[0], end[0]) + bounds.XMin > operation.containment.XMax
-                above_stock = min(start[1], end[1]) + bounds.ZMin > operation.containment.ZMax
-                below_stock = max(start[1], end[1]) + bounds.ZMax < operation.containment.ZMin
+                outside_radius = min(start[0], end[0]) + bounds.XMin >= operation.stock.XMax - 1e-5
+                above_stock = min(start[1], end[1]) + bounds.ZMin >= operation.stock.ZMax - 1e-5
+                below_stock = max(start[1], end[1]) + bounds.ZMax <= operation.stock.ZMin + 1e-5
                 self.assertTrue(outside_radius or above_stock or below_stock, (start, end))
             position = end
 
@@ -146,6 +148,38 @@ class test_ProfileOP(unittest.TestCase):
             lead = group.getSegments()[0]
             self.assertAlmostEqual(lead.start.X, lead.end.X, places=5)
             self.assertGreater(lead.start.Z, lead.end.Z)
+
+    def test_stock_allowance_preserves_front_face_and_inner_entry(self):
+        operation = ProfileOP()
+        tool = Tool()
+        vertices = [(0, 0), (2, 0), (2, 2), (0, 2), (0, 0)]
+        tool.set_tool_from_segments([
+            Segment(Point(*start), Point(*end))
+            for start, end in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+        operation.add_containment(BoundBox(Point(0, -19), Point(25, 5)))
+        vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
+        operation.addPartSegments([
+            Segment(Point(*start), Point(*end))
+            for start, end in zip(vertices, vertices[1:])])
+        operation.stock_to_leave = 1
+        operation.finish_passes = 3
+        operation.pass_offset = 0.5
+        operation.generatePath()
+        self.assertEqual(len(operation.tool_paths), 3)
+        for index, group in enumerate(operation.tool_paths):
+            radius = index * operation.pass_offset
+            front = [edge for edge in group.getSegments()
+                     if abs(edge.start.X - edge.end.X) > 1
+                     and min(edge.start.Z, edge.end.Z) > 0]
+            self.assertTrue(front, "Profile must retain its front-face cutting segment")
+            self.assertAlmostEqual(front[0].start.X, radius, delta=0.05)
+            for edge in front:
+                for point in (edge.start, edge.end):
+                    self.assertAlmostEqual(point.Z, 1 + radius, delta=0.05)
+            for edge in group.getSegments():
+                operation.partSegmentGroup.validateToolSweep(
+                    operation.tool.get_segmentgroup(), edge.start, edge.end)
 
     def test_fixed_offsets_meet_regularly_spaced_axial_entries(self):
         base = SegmentGroup()

@@ -87,14 +87,14 @@ class test_GrooveOP(unittest.TestCase):
         self.assertEqual(GrooveOP.overlap_percent, 10.0)
         self.assertNotIn('overlap_percent', vars(self.op))
 
-    def test_local_clearance_preserves_cuts_and_reduces_feed_travel(self):
+    def test_local_clearance_preserves_cuts_and_contains_feed_travel(self):
         op = make_op(containment=(0, -30, 8, -10), tool=rounded_tool(),
                      finish_passes=2, finish_pass_offset=0.1)
         points = [(0, 0), (14, 0), (14, -5), (8, -10), (5, -15),
                   (5, -25), (8, -30), (14, -35), (14, -40), (0, -40)]
         op.partSegmentGroup = SegmentGroup()
         op.addPartSegments([Segment(Point(*a), Point(*b)) for a, b in zip(points, points[1:])])
-        before = op.getGCode()
+        op.generatePath()
         geometry = lambda: [[(s.start.X, s.start.Z, s.end.X, s.end.Z)
                               for s in g.getSegments()] for g in op.tool_paths]
         original = geometry()
@@ -103,16 +103,16 @@ class test_GrooveOP(unittest.TestCase):
         self.assertEqual(geometry(), original)
         self.assertAlmostEqual(after[1].getParams()['X'], 23)
         first_feed = next(i for i, c in enumerate(after) if c.get_movement() == 'G1')
-        self.assertAlmostEqual(after[first_feed - 1].getParams()['X'], 11)
+        self.assertAlmostEqual(after[first_feed - 1].getParams()['X'], 8)
         self.assertAlmostEqual(after[first_feed].getParams()['X'], 8)
         self.assertAlmostEqual(after[-1].getParams()['X'], 23)
 
-        def feed_length(commands):
-            return sum(math.hypot(b.getParams()['X'] - a.getParams()['X'],
-                                  b.getParams()['Z'] - a.getParams()['Z'])
-                       for a, b in zip(commands[1:], commands[2:])
-                       if b.get_movement() == 'G1')
-        self.assertLess(feed_length(after), feed_length(before))
+        for a, b in zip(after[1:], after[2:]):
+            if b.get_movement() == 'G1':
+                for command in (a, b):
+                    point = command.getParams()
+                    self.assertTrue(op.containment.XMin - 1e-5 <= point['X'] <= op.containment.XMax + 1e-5)
+                    self.assertTrue(op.containment.ZMin - 1e-5 <= point['Z'] <= op.containment.ZMax + 1e-5)
         bounds = op.tool.get_segmentgroup().boundbox()
         for a, b in zip(after[1:], after[2:]):
             start = Point(a.getParams()['X'], a.getParams()['Z'])
@@ -121,10 +121,10 @@ class test_GrooveOP(unittest.TestCase):
                 op.partSegmentGroup.validateToolSweep(op.tool.get_segmentgroup(), start, end)
                 inside_z = (min(start.Z, end.Z) + bounds.ZMin >= op.containment.ZMin - 1e-5
                             and max(start.Z, end.Z) + bounds.ZMax <= op.containment.ZMax + 1e-5)
-                outside_radius = min(start.X, end.X) + bounds.XMin > (
-                    op.containment.XMax if inside_z else op.stock.XMax)
-                outside_z = (min(start.Z, end.Z) + bounds.ZMin > op.stock.ZMax
-                             or max(start.Z, end.Z) + bounds.ZMax < op.stock.ZMin)
+                radial_limit = op.containment.XMax + bounds.XMin if inside_z else op.stock.XMax
+                outside_radius = min(start.X, end.X) + bounds.XMin >= radial_limit - 1e-5
+                outside_z = (min(start.Z, end.Z) + bounds.ZMin >= op.stock.ZMax - 1e-5
+                             or max(start.Z, end.Z) + bounds.ZMax <= op.stock.ZMin + 1e-5)
                 self.assertTrue(outside_radius or outside_z)
 
     def test_stock_validation(self):
@@ -141,6 +141,18 @@ class test_GrooveOP(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'signed radial'):
                 op.getGCode()
             self.assertEqual(op.tool_paths, [])
+
+    def test_fractional_local_clearance_does_not_return_to_stock_between_passes(self):
+        op = make_op(containment=(0, -30, 30.8700008392334, -10),
+                 tool=rounded_tool(), finish_passes=2)
+        op.add_stock(BoundBox(Point(0, -45), Point(50.087928771972656, 5)))
+        commands = op.getGCode()
+        local = op._local_clearance()
+        first_feed = next(i for i, c in enumerate(commands) if c.get_movement() == 'G1')
+        # The final two rapids deliberately return to global clearance.
+        for command in commands[first_feed:-2]:
+            self.assertLessEqual(command.getParams()['X'], local + 1e-5)
+        self.assertGreater(commands[-1].getParams()['X'], local + 1)
 
     def test_local_clearance_follows_radial_tool_reference(self):
         for shift in (-0.6, 0.6):
@@ -162,11 +174,12 @@ class test_GrooveOP(unittest.TestCase):
                     Segment(Point(s.start.X - shift, s.start.Z),
                             Point(s.end.X - shift, s.end.Z), s.bulge) for s in original])
                 op.add_tool(tool)
+                op.add_containment(BoundBox(Point(shift, -20), Point(12 + shift, -10)))
                 op.add_stock(BoundBox(Point(0, -45), Point(20, 5)))
                 commands = op.generateGCode()
-                self.assertAlmostEqual(op._local_clearance(), 15 + shift, places=5)
                 first_feed = next(i for i, c in enumerate(commands) if c.get_movement() == 'G1')
-                self.assertAlmostEqual(commands[first_feed - 1].getParams()['X'], 15 + shift, places=5)
+                self.assertAlmostEqual(commands[first_feed - 1].getParams()['X'], 12 + shift, places=5)
+                self.assertGreater(op._local_clearance(), 12 + shift)
 
     def test_local_clearance_mirrors_tools_and_nose_references(self):
         for origin in (-2, -1, 0):
@@ -229,7 +242,7 @@ class test_GrooveOP(unittest.TestCase):
             return part.validateToolSweep(tool, start, end)
 
         op.partSegmentGroup.validateToolSweep.side_effect = validate
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(ValueError, "Cannot approach.*containment"):
             op.generateGCode()
         self.assertEqual(op.tool_paths, [])
 
@@ -645,29 +658,20 @@ class test_GrooveOP(unittest.TestCase):
         self.assertGreater(len(strokes), 2)
         op.tool_paths = strokes
         commands = op.generateGCode()[1:]
-        # A forced-direction path visits the outside corner once, then each group
-        # emits a clearance rapid, approach, its contour feeds, and a radial exit.
-        outside = commands.pop(0).getParams()
-        x_clear = outside['X']
+        feeds = [(a, b) for a, b in zip(commands, commands[1:]) if b.get_movement() == 'G1']
         for stroke in strokes:
             segments = stroke.getSegments()
-            entry, approach = commands.pop(0), commands.pop(0)
-            self.assertEqual(entry.get_movement(), 'G0')
-            self.assertAlmostEqual(entry.getParams()['X'], x_clear)
-            self.assertAlmostEqual(entry.getParams()['Z'], segments[0].start.Z)
-            self.assertEqual(approach.get_movement(), 'G1')
-            self.assertAlmostEqual(approach.getParams()['X'], segments[0].start.X)
-            self.assertAlmostEqual(approach.getParams()['Z'], segments[0].start.Z)
             for segment in segments:
-                cut = commands.pop(0)
-                self.assertEqual(cut.get_movement(), 'G1')
-                self.assertAlmostEqual(cut.getParams()['X'], segment.end.X)
-                self.assertAlmostEqual(cut.getParams()['Z'], segment.end.Z)
-            retract = commands.pop(0)
-            self.assertEqual(retract.get_movement(), 'G1')
-            self.assertAlmostEqual(retract.getParams()['X'], x_clear)
-            self.assertAlmostEqual(retract.getParams()['Z'], segments[-1].end.Z)
-        self.assertEqual(commands, [])
+                self.assertTrue(any(
+                    abs(a.getParams()['X'] - segment.start.X) < 1e-5
+                    and abs(a.getParams()['Z'] - segment.start.Z) < 1e-5
+                    and abs(b.getParams()['X'] - segment.end.X) < 1e-5
+                    and abs(b.getParams()['Z'] - segment.end.Z) < 1e-5 for a, b in feeds))
+        for a, b in feeds:
+            for command in (a, b):
+                p = command.getParams()
+                self.assertTrue(op.containment.XMin - 1e-5 <= p['X'] <= op.containment.XMax + 1e-5)
+                self.assertTrue(op.containment.ZMin - 1e-5 <= p['Z'] <= op.containment.ZMax + 1e-5)
 
 
 if __name__ == '__main__':

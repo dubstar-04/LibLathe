@@ -1,6 +1,7 @@
 import unittest
 
-from liblathe.op.base import BaseOP
+from liblathe.op.base import BaseOP, CutDirection
+from liblathe.op.bore import BoreOP
 from liblathe.op.face import FaceOP
 from liblathe.op.groove import GrooveOP
 from liblathe.op.partoff import PartoffOP
@@ -9,6 +10,16 @@ from liblathe.op.rough import RoughOP
 
 
 class CuttingParameterTests(unittest.TestCase):
+    def test_cut_direction_is_a_shared_parameter(self):
+        for operation in (BaseOP, BoreOP, RoughOP, GrooveOP, FaceOP, ProfileOP, PartoffOP):
+            with self.subTest(operation=operation):
+                op = operation()
+                self.assertIs(op.cut_direction, CutDirection.RADIAL)
+                self.assertIs(op.getParams()["cut_direction"], CutDirection.RADIAL)
+                op.setParams({"cut_direction": CutDirection.AXIAL})
+                self.assertIs(op.cut_direction, CutDirection.AXIAL)
+                self.assertIs(op.getParams()["cut_direction"], CutDirection.AXIAL)
+
     def test_pass_offset_parameters(self):
         for operation in (BaseOP, RoughOP, GrooveOP, FaceOP, ProfileOP, PartoffOP):
             with self.subTest(operation=operation):

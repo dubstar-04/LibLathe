@@ -54,7 +54,14 @@ class ProfileOP(liblathe.op.base.BaseOP):
         internalOffset = profileSegmentGroup.offset(-0.1)
 
         # define the base segment group using the stock to leave as a datum
-        base_segmentGroup = profileSegmentGroup.offset(self.stock_to_leave)
+        base_segmentGroup = profileSegmentGroup.offset(self.stock_to_leave, extend_start=True)
+        datum = profileSegmentGroup.getSegments()[0].start.X
+        front = base_segmentGroup.getSegments()[0].start
+        if front.X > datum:
+            extended = SegmentGroup()
+            extended.addSegment(Segment(Point(datum, front.Z), front))
+            extended.extend(base_segmentGroup)
+            base_segmentGroup = extended
         tool = self.tool.get_segmentgroup()
         for offset in self._profile_offsets(base_segmentGroup):
             for stroke in self._clip_path(offset):

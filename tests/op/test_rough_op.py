@@ -122,6 +122,35 @@ class test_RoughOP(unittest.TestCase):
 
         self.assertAlmostEqual(min_z, self.op.containment.ZMin, places=4)
 
+    def test_roughing_reaches_inner_containment_radius(self):
+        for radius in (0, 0.001, 0.5):
+            with self.subTest(radius=radius):
+                self.op.add_containment(BoundBox(Point(radius, -47.5), Point(25, 15)))
+                self.op.generatePath()
+                self.assertTrue(self.op.tool_paths)
+                inner = self.op.tool_paths[0].getSegments()[0]
+                self.assertAlmostEqual(inner.start.X, radius, places=6)
+                self.assertAlmostEqual(inner.end.X, radius, places=6)
+                self.assertGreater(inner.start.Z, inner.end.Z)
+                self.op.partSegmentGroup.validateToolSweep(
+                    self.op.tool.get_segmentgroup(), inner.start, inner.end)
+
+    def test_stock_allowance_is_preserved_at_front_of_inner_passes(self):
+        reference = self.op.partSegmentGroup.defeature(
+            self.op.containment, self.op.tool.get_segmentgroup(), self.op.allow_grooving)
+        ends = []
+        for allowance in (0, 1):
+            self.op.stock_to_leave = allowance
+            self.op.generatePath()
+            ends.append([group.getSegments()[0].end.Z for group in self.op.tool_paths[:2]])
+            if allowance:
+                for group in self.op.tool_paths:
+                    end = group.getSegments()[0].end
+                    if end.Z > self.op.containment.ZMin + 1e-4:
+                        self.assertAlmostEqual(reference.sdv(end), allowance + 0.01, delta=0.05)
+        for bare, remaining in zip(*ends):
+            self.assertGreater(remaining - bare, 0.9)
+
     def test_leads_shorten_without_changing_direction(self):
         self.op.pass_offset = 2
         self.op.partSegmentGroup = Mock()

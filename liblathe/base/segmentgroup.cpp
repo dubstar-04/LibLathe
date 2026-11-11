@@ -597,6 +597,18 @@ namespace liblathe
         const PreparedGeometry &tool, Point start, Point end) const
     {
         // Certify insert clearance throughout a translation, rejecting collisions or unresolved sweeps //
+        const double xmin = std::min(start.X, end.X) + double(tool.bounds.XMin);
+        const double xmax = std::max(start.X, end.X) + double(tool.bounds.XMax);
+        const double zmin = std::min(start.Z, end.Z) + double(tool.bounds.ZMin);
+        const double zmax = std::max(start.Z, end.Z) + double(tool.bounds.ZMax);
+        const double margin = 1e-5 + 4 * std::numeric_limits<float>::epsilon() *
+            std::max({1.0, std::abs(xmin), std::abs(xmax), std::abs(zmin), std::abs(zmax),
+                      std::abs(double(this->bounds.XMin)), std::abs(double(this->bounds.XMax)),
+                      std::abs(double(this->bounds.ZMin)), std::abs(double(this->bounds.ZMax))});
+        // Disjoint swept envelopes prove clearance even for long, near-tangent moves.
+        if (xmin > this->bounds.XMax + margin || xmax < this->bounds.XMin - margin ||
+            zmin > this->bounds.ZMax + margin || zmax < this->bounds.ZMin - margin)
+            return;
         const auto &boundaryBounds = this->boundaryBounds;
         for (const auto &edge : this->boundary)
             if (tool.isInside(Point(edge.segment.start.X - start.X,
@@ -677,13 +689,30 @@ namespace liblathe
             const double zReach = edgeZReach + numerical +
                                   std::abs(moveZ) * (moveEnd - moveStart) / 2;
             bool touchesBoundary = false;
-            for (const auto &bounds : boundaryBounds)
+            for (size_t index = 0; index < boundaryBounds.size(); ++index)
+            {
+                const auto &bounds = boundaryBounds[index];
                 if (!(sample.X + xReach < bounds.XMin || sample.X - xReach > bounds.XMax ||
                       sample.Z + zReach < bounds.ZMin || sample.Z - zReach > bounds.ZMax))
                 {
+                    const auto &target = this->boundary[index];
+                    if (target.segment.bulge != 0)
+                    {
+                        const double dx = std::abs(double(sample.X) - target.arc.centre.X);
+                        const double dz = std::abs(double(sample.Z) - target.arc.centre.Z);
+                        const double nearX = std::max(0.0, dx - xReach);
+                        const double nearZ = std::max(0.0, dz - zReach);
+                        const double nearest = std::hypot(nearX, nearZ);
+                        const double farthest = std::hypot(dx + xReach, dz + zReach);
+                        // A patch entirely inside or outside the supporting circle cannot cross its arc.
+                        if (nearest > target.arc.radius + numerical ||
+                            farthest < target.arc.radius - numerical)
+                            continue;
+                    }
                     touchesBoundary = true;
                     break;
                 }
+            }
             if (!touchesBoundary)
                 return;
             if (alongEdge == edgeStart || alongEdge == edgeEnd ||

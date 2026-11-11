@@ -179,7 +179,15 @@ class GrooveOP(liblathe.op.base.BaseOP):
                     self.partSegmentGroup.validateToolSweep(tool, segment.start, segment.end)
             tool_paths.extend(strokes)
 
-        self.tool_paths = tool_paths
+        for group in tool_paths:
+            clipped = SegmentGroup()
+            for segment in group.getSegments():
+                edge = self._clip(segment, self.containment.XMin, self.containment.XMax,
+                                  self.containment.ZMin, self.containment.ZMax)
+                if edge is not None:
+                    clipped.addSegment(edge)
+            if clipped.count():
+                self.tool_paths.append(clipped)
 
     @staticmethod
     def _get_runs(limits, layer_top, target):

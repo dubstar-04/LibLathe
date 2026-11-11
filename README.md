@@ -49,6 +49,31 @@ The [native memory driver](tests/native/quadtree_memory.cpp) is an optional
 diagnostic for investigating C++ memory issues, not a required test or CI step.
 Its header contains the manual build and sanitizer instructions.
 
+The [native stock tests](tests/native/stock_preview.cpp) cover stock subtraction,
+boundary export and randomized occupancy checks. Build/run instructions are in
+the file header.
+
+## Remaining-stock guide
+
+`StockPreview` calculates advisory 2D remaining stock from already-generated
+straight cutting feeds. It does not affect toolpaths, planning or rapid approval.
+See the [usage and limitations](docs/source/pages/remaining_stock.rst).
+After building the native extensions, run
+`python examples/ex3_rough_op.py --no-show` to plot the roughing result using
+the existing plotting functionality; no separate stock executable is needed.
+
+## Internal boring proof of concept
+
+`BoreOP` experiments with reusing the existing geometry core for internal
+clearing and finishing. X clearing (default) cuts outward at successive depths;
+Z clearing cuts toward the bottom at successive radii. Finishing cuts outward
+across the bottom and follows the wall toward the mouth.
+See [usage and limitations](docs/source/pages/operations/bore.rst)
+and `examples/ex7_bore_op.py`. It performs **no predrilling, prepared-opening,
+tool-fit or starting-stock entry/escape clearance checks**. TurningAddon exposes it as
+**Turn Bore** using automatic model extraction and containment-based region selection.
+This is not hole preparation or certified boring support.
+
 ## Design
 Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts in two geometry steps:
 
@@ -86,11 +111,36 @@ Z-only approaches and retracts. Forced directions do not fall back, and with
 partial commands for that group. The direction does not alter cutting segments.
 Forced directions reposition along their clearance plane between passes and
 use the outside-stock corner only to enter a path.
+Grooving with local clearance stays on that plane between passes, including
+fractional clearance coordinates; it returns to global stock clearance only
+after the final stroke, unless a checked transfer requires the global fallback.
+
+For contained roughing and profile passes, routing first tries the existing
+containment-boundary entries. If these cannot be reached by stock-clear rapids,
+it tries a radial cutting-feed entry from stock clearance to the pass start.
+This entry may cross the outer X containment limit, but stays at the pass
+start's contained Z and must pass the full-insert sweep check against the
+original part. Cutting passes and their containment are unchanged; axial entry
+feeds are not extended beyond containment. If the radial entry cannot be
+certified, routing fails without publishing partial commands for the group.
 
 This conservative routing does not track previously cleared stock. It checks
 the first rapid destination, not travel from an unknown initial machine position,
 and does not certify holders, fixtures, all original cutting moves, or machining
 safety. Reference-equivalent final stock remains a separate validation requirement.
+
+Roughing includes the exact inner containment radius. If sampled offset geometry
+stops short of that radius, its front endpoint is extended radially to provide a
+trimming boundary. All generated roughing segments must pass the full-insert
+sweep check against the original part; an uncertifiable centreline pass fails
+explicitly rather than being silently omitted.
+The stock-to-leave offset retains its extension beyond the original profile's
+front Z before passes are trimmed to containment, preserving the front allowance
+on the inner passes as well as the radial allowance.
+Profiling likewise retains the initial stock-to-leave offset's front extension
+and original inner entry radius before generating its successive contours.
+This keeps front-face cuts present with nonzero allowance; containment can still
+intentionally exclude them.
 
 `SegmentGroup.getRadialContactPoint()` derives a cutting-edge datum from the
 native outline, including arc extrema and the axial midpoint of a flat innermost

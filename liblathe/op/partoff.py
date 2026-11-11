@@ -12,13 +12,9 @@ class PartoffOP(liblathe.op.base.BaseOP):
         """Generate the path for the Part operation"""
 
         self.tool_paths = []
-        toolShape = self.tool.get_segmentgroup()
-        toolBoundbox = toolShape.boundbox()
-        toolWidth = toolBoundbox.XLength()
-
         XMin = self.containment.XMin
-        XMax = self.containment.XMax + self.clearance
-        ZMin = self.containment.ZMin - toolWidth
+        XMax = self.containment.XMax
+        ZMin = self.containment.ZMin
 
         # TODO: Add a chip break / pecking option
 
@@ -36,7 +32,11 @@ class PartoffOP(liblathe.op.base.BaseOP):
 
         path = Path()
 
-        for segmentgroup in self.tool_paths:
-            path.fromSegmentGroup(self, segmentgroup)
+        try:
+            for segmentgroup in self.tool_paths:
+                path.fromSegmentGroup(self, segmentgroup)
+        except (ValueError, RuntimeError):
+            self.tool_paths = []
+            raise
 
         return path.commands

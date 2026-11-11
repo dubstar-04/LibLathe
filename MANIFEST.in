@@ -5,3 +5,4 @@ include liblathe/base/quadtree.h
 include liblathe/base/segment.h
 include liblathe/base/segmentgroup.h
 include liblathe/base/utils.h
+include liblathe/base/stockstate.h
