@@ -13,32 +13,14 @@ from liblathe.op.base import BaseOP, CutDirection
 class BoreOP(BaseOP):
     """Clear a bore in X or Z, then finish from bottom toward mouth."""
 
-    @staticmethod
-    def _reflect(group, radius):
-        result = SegmentGroup()
-        for edge in group.getSegments():
-            result.addSegment(Segment(
-                Point(radius - edge.start.X, edge.start.Z),
-                Point(radius - edge.end.X, edge.end.Z), -edge.bulge))
-        return result
-
     def generatePath(self):
-        self.tool_paths = []
-        self.clearing_paths = []
+        self._begin_generation(pass_offset=True, finish_passes=True, allowance=True)
         if not isinstance(self.cut_direction, CutDirection):
             raise ValueError("Boring cut_direction must be a CutDirection enumeration member")
         edges = self.partSegmentGroup.getSegments()
         if not edges:
             raise ValueError("Boring requires a target bore contour")
-        if self.tool is None or self.containment is None:
-            raise ValueError("Boring requires an insert and tool-reference containment")
-        if (isinstance(self.finish_passes, bool) or not isinstance(self.finish_passes, int)
-                or self.finish_passes < 0):
-            raise ValueError("finish_passes must be a non-negative integer")
-        if not all(math.isfinite(value) for value in (
-                self.pass_offset, self.stock_to_leave, self.clearance)):
-            raise ValueError("Boring parameters must be finite")
-        if self.pass_offset <= 0 or self.stock_to_leave < 0 or self.clearance <= 0:
+        if self.clearance <= 0:
             raise ValueError("Boring requires positive pass offset/clearance and non-negative allowance")
         limits = self.containment
         if (not all(math.isfinite(value) for value in (
@@ -73,8 +55,8 @@ class BoreOP(BaseOP):
         # A translated radial reflection puts exterior bore material on the
         # axis side expected by the existing defeature/positive-offset pipeline.
         radius = max(extended.boundbox().XMax, limits.XMax) + padding
-        material = self._reflect(extended, radius)
-        insert = self._reflect(tool, 0)
+        material = extended.reflectX(radius)
+        insert = tool.reflectX()
         # Model finishing stays endpoint-trimmed; radial clearing starts at ZMax.
         x_min = limits.XMin
         if last.start.Z == last.end.Z:
@@ -87,13 +69,13 @@ class BoreOP(BaseOP):
         scan = BoundBox(Point(0, extended.boundbox().ZMin),
                         Point(radius + padding, extended.boundbox().ZMax))
         compensated = material.defeature(scan, insert, True)
-        boundary = self._reflect(compensated.offset(allowance + 0.01, extend_start=True), radius)
+        boundary = compensated.offset(allowance + 0.01, extend_start=True).reflectX(radius)
         clearing = self._clearing_passes(boundary, cutting_limits, radius)
         paths = []
         for index in range(self.finish_passes):
             distance = self.stock_to_leave + (self.finish_passes - 1 - index) * self.pass_offset
             contour = compensated.offset(distance + 0.01, extend_start=True)
-            for stroke in self._clip_path(self._reflect(contour, radius), cutting_limits):
+            for stroke in self._clip_path(contour.reflectX(radius), cutting_limits):
                 paths.append(stroke.reversed())
         # Certify geometric access against the complete target, not starting stock.
         # Preparation and bar/holder access are deliberately not inferred here.
@@ -110,20 +92,19 @@ class BoreOP(BaseOP):
                 transfers.append((position, point))
                 position = point
             transfers.append((position, Point(limits.XMin, self._front_clearance())))
-            for a, b in (*transfers, *((edge.start, edge.end) for edge in edges)):
-                try:
-                    material.validateToolSweep(
-                        insert, Point(radius - a.X, a.Z), Point(radius - b.X, b.Z))
-                except RuntimeError as error:
-                    raise RuntimeError(
-                        f"Boring target clearance failed for feed "
-                        f"({a.X:.6f}, {a.Z:.6f}) -> ({b.X:.6f}, {b.Z:.6f}): {error}") from error
+            try:
+                material.validateToolSweeps(
+                    insert, [(Point(radius - a.X, a.Z), Point(radius - b.X, b.Z))
+                             for a, b in (*transfers, *((edge.start, edge.end) for edge in edges))])
+            except RuntimeError as error:
+                raise RuntimeError(f"Boring target clearance failed: {error}") from error
         self.clearing_paths = clearing
         self.tool_paths = paths
 
     def _clearing_passes(self, boundary, limits, radius):
         """Scan from the inner reference limit to the first allowance boundary."""
-        reflected = self._reflect(boundary, radius)
+        reflected = boundary.reflectX(radius)
+        boundary_segments = boundary.getSegments()
         radial = self.cut_direction == CutDirection.RADIAL
         low, high = ((limits.ZMin, self.containment.ZMax) if radial else (limits.XMin, limits.XMax))
         count = max(1, math.ceil((high - low) / self.pass_offset))
@@ -142,7 +123,7 @@ class BoreOP(BaseOP):
             if reflected.isInside(Point(radius - start.X, start.Z)):
                 continue
             line = Segment(start, end)
-            intersections = [point for edge in boundary.getSegments() for point in edge.intersect(line)
+            intersections = [point for edge in boundary_segments for point in edge.intersect(line)
                              if point.distanceTo(start) > 1e-6]
             if intersections:
                 end = min(intersections, key=lambda point: point.distanceTo(start))

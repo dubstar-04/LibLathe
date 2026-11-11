@@ -233,6 +233,31 @@ namespace liblathe
         partGeometry.validateToolSweep(toolGeometry, start, end);
     }
 
+    void SegmentGroup::validateToolSweeps(
+        const SegmentGroup &tool, const std::vector<std::pair<Point, Point>> &moves)
+    {
+        if (moves.empty())
+            return;
+        const auto partGeometry = this->prepareGeometry();
+        auto toolSnapshot = tool;
+        const auto toolGeometry = toolSnapshot.prepareGeometry();
+        for (size_t index = 0; index < moves.size(); ++index)
+        {
+            const auto &move = moves[index];
+            try
+            {
+                partGeometry.validateToolSweep(toolGeometry, move.first, move.second);
+            }
+            catch (const std::runtime_error &error)
+            {
+                throw std::runtime_error("Tool sweep " + std::to_string(index) + " (" +
+                                         std::to_string(move.first.X) + ", " + std::to_string(move.first.Z) +
+                                         ") -> (" + std::to_string(move.second.X) + ", " +
+                                         std::to_string(move.second.Z) + "): " + error.what());
+            }
+        }
+    }
+
     void SegmentGroup::PreparedGeometry::validateToolSweep(
         const PreparedGeometry &tool, Point start, Point end) const
     {
@@ -372,7 +397,7 @@ namespace liblathe
         // Build a tool-origin boundary with full-insert clearance and certified connectors //
 
         float ZMin = stock.ZMin;
-        float resolution = 0.01;
+        const float resolution = defeatureResolution;
 
         std::vector<Point> points;
 
@@ -794,6 +819,18 @@ namespace liblathe
         SegmentGroup result;
         for (auto segment = segments.rbegin(); segment != segments.rend(); ++segment)
             result.addSegment(Segment(segment->end, segment->start, -segment->bulge));
+        return result;
+    }
+
+    SegmentGroup SegmentGroup::reflectX(double radius) const
+    {
+        if (!std::isfinite(radius))
+            throw std::invalid_argument("Radial reflection requires a finite reference radius");
+        SegmentGroup result;
+        for (const auto &segment : segments)
+            result.addSegment(Segment(Point(radius - segment.start.X, segment.start.Z),
+                                      Point(radius - segment.end.X, segment.end.Z),
+                                      -segment.bulge));
         return result;
     }
 

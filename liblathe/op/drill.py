@@ -16,8 +16,7 @@ class DrillOP(BaseOP):
         return self.generateGCode()
 
     def generatePath(self):
-        self.tool_paths = []
-        self.clearing_paths = []
+        self._reset_paths()
         if not isinstance(self.tool, Drill):
             raise ValueError("Centreline drilling requires a Drill tool")
         if self.tool.tool_rotation != 0:

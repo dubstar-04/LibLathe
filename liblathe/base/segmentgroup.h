@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <utility>
 
 #include "boundbox.h"
 #include "point.h"
@@ -16,6 +17,7 @@ namespace liblathe
     {
     public:
         static constexpr float offsetTolerance = 0.05f;
+        static constexpr double defeatureResolution = 0.01;
 
         SegmentGroup();
         // Destroy the group and its stored segments //
@@ -25,6 +27,7 @@ namespace liblathe
         void insertSegment(Segment segment, int position);
         std::vector<Segment> getSegments();
         SegmentGroup reversed() const;
+        SegmentGroup reflectX(double radius = 0) const;
         // C++ accessor without copying geometry; throws invalid_argument if empty.
         const Point &getStartPoint() const;
         void extend(SegmentGroup segmentgroup);
@@ -41,6 +44,8 @@ namespace liblathe
         void validateOffsetContour(const std::vector<Point> &points, float offset);
         // Reject colliding or uncertifiable insert translations against this axis-closed region //
         void validateToolSweep(SegmentGroup tool, Point start, Point end);
+        void validateToolSweeps(const SegmentGroup &tool,
+                               const std::vector<std::pair<Point, Point>> &moves);
         SegmentGroup defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving);
         void validate();
         SegmentGroup fromPoints(std::vector<Point> points);

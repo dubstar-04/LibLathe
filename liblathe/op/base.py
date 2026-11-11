@@ -6,7 +6,7 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.gcode.command import Command
-from liblathe.gcode.path import Path
+from liblathe.gcode.path import Path, RoutingDirection
 from liblathe.tool.tool import ToolSide
 import math
 
@@ -18,9 +18,10 @@ class CutDirection(Enum):
 
 
 def reflect_x_segments(segments):
-    return [Segment(Point(-segment.start.X, segment.start.Z),
-                    Point(-segment.end.X, segment.end.Z), -segment.bulge)
-            for segment in segments]
+    group = SegmentGroup()
+    for segment in segments:
+        group.addSegment(segment)
+    return group.reflectX().getSegments()
 
 
 class BaseOP:
@@ -51,11 +52,12 @@ class BaseOP:
     def setParams(self, params):
         """Set operations parameters"""
 
-        for param, value in params.items():
-            if hasattr(self, param):
-                setattr(self, param, value)
-            else:
+        supported = self.getParams().keys() | {"leadin_angle", "leadout_angle"}
+        for param in params:
+            if param not in supported:
                 raise Warning("Attempting to set undefined parameter '%s'" % param)
+        for param, value in params.items():
+            setattr(self, param, value)
 
     def getParams(self):
         """Return operations parameters"""
@@ -66,19 +68,23 @@ class BaseOP:
     def getGCode(self):
         """Base function for all turning operations"""
 
+        self._reset_paths()
+        try:
+            return self._get_gcode()
+        except (ValueError, RuntimeError, Warning):
+            self._reset_paths()
+            raise
+
+    def _get_gcode(self):
         if self.tool is None:
             raise Warning("Tool is unset")
 
         if self.stock is not None:
             if ((self.tool.side == ToolSide.FAR and self.stock.XMax > 1e-4)
                     or (self.tool.side == ToolSide.NEAR and self.stock.XMin < -1e-4)):
-                self.tool_paths = []
-                self.clearing_paths = []
                 raise ValueError("Stock must use the tool side's signed radial coordinates")
 
         if self.tool.side == ToolSide.FAR:
-            self.tool_paths = []
-            self.clearing_paths = []
             if self.containment is None or self.containment.XMax > 1e-4 or self.containment.XMin >= 0:
                 raise ValueError("Far-side containment must use negative X coordinates")
             if self.partSegmentGroup.boundbox().XMax > 1e-4:
@@ -92,13 +98,9 @@ class BaseOP:
                 planning.stock = BoundBox(
                     Point(-self.stock.XMax, self.stock.ZMin),
                     Point(-self.stock.XMin, self.stock.ZMax))
-            planning.partSegmentGroup = SegmentGroup()
-            for segment in reflect_x_segments(self.partSegmentGroup.getSegments()):
-                planning.partSegmentGroup.addSegment(segment)
+            planning.partSegmentGroup = self.partSegmentGroup.reflectX()
             planning.tool = copy(self.tool)
-            planning.tool.segmentGroup = SegmentGroup()
-            for segment in reflect_x_segments(self.tool.get_segmentgroup().getSegments()):
-                planning.tool.segmentGroup.addSegment(segment)
+            planning.tool.segmentGroup = self.tool.get_segmentgroup().reflectX()
             planning.tool.tool_rotation = 0
             planning.tool.side = ToolSide.NEAR
             planning.generatePath()
@@ -115,10 +117,7 @@ class BaseOP:
             for name in ("tool_paths", "clearing_paths"):
                 physical_paths = getattr(self, name)
                 for group in getattr(planning, name):
-                    physical = SegmentGroup()
-                    for segment in reflect_x_segments(group.getSegments()):
-                        physical.addSegment(segment)
-                    physical_paths.append(physical)
+                    physical_paths.append(group.reflectX())
             return result
 
         self.generatePath()
@@ -129,24 +128,76 @@ class BaseOP:
         """Main processing function for each op"""
         pass
 
+    def _reset_paths(self):
+        self.tool_paths = []
+        self.clearing_paths = []
+
+    def _begin_generation(self, *, pass_offset=False, finish_passes=False, allowance=False):
+        """Clear published paths and validate only the parameters this strategy uses."""
+        self._reset_paths()
+        if self.tool is None or self.containment is None:
+            raise ValueError("Operation requires a tool and explicit containment")
+        limits = self.containment
+        if (not all(math.isfinite(value) for value in (
+                limits.XMin, limits.XMax, limits.ZMin, limits.ZMax))
+                or limits.XMin > limits.XMax or limits.ZMin >= limits.ZMax):
+            raise ValueError("Containment must have finite, ordered radial and axial limits")
+        if not math.isfinite(self.clearance) or self.clearance < 0:
+            raise ValueError("Clearance must be finite and non-negative")
+        self._validate_parameters(pass_offset=pass_offset, finish_passes=finish_passes, allowance=allowance)
+
+    def _validate_parameters(self, *, pass_offset=False, finish_passes=False, allowance=False):
+        if pass_offset and (not math.isfinite(self.pass_offset) or self.pass_offset <= 0):
+            raise ValueError("pass_offset must be finite and positive")
+        if finish_passes and (
+                isinstance(self.finish_passes, bool) or not isinstance(self.finish_passes, int)
+                or self.finish_passes < 0):
+            raise ValueError("finish_passes must be a non-negative integer")
+        if allowance and (not math.isfinite(self.stock_to_leave) or self.stock_to_leave < 0):
+            raise ValueError("stock_to_leave must be finite and non-negative")
+
+    @staticmethod
+    def _stations(low, high, step, *, include_end=False):
+        """Retain fixed-increment grids, rejecting increments lost to rounding."""
+        position = low
+        while position < high or (include_end and position == high):
+            yield position
+            if position == high:
+                return
+            following = position + step
+            next_native = Point(following, 0).X
+            if (not math.isfinite(next_native) or following <= position
+                    or next_native <= Point(position, 0).X):
+                raise ValueError("Cannot advance cutting station at coordinate precision")
+            position = following
+
     def _defeature_profile(self, allow_grooving):
         """Cover reference containment without shortening the native contact-space scan."""
         tool = self.tool.get_segmentgroup()
         contact = tool.getRadialContactPoint()
         # Native defeature subtracts contact.Z and excludes its lower endpoint.
-        scan_min = self.containment.ZMin + min(0, contact.Z) - 0.02
+        scan_min = self.containment.ZMin + min(0, contact.Z) - 2 * SegmentGroup.defeatureResolution
         scan = BoundBox(Point(self.containment.XMin, scan_min),
                         Point(self.containment.XMax, self.containment.ZMax))
         return self.partSegmentGroup.defeature(scan, tool, allow_grooving)
 
     def generateGCode(self):
         """Route contained passes from outermost to innermost."""
+        return self._route_paths(reversed(self.tool_paths))
+
+    def _route_paths(self, groups, *, protect_part=True, direction=RoutingDirection.AUTO,
+                     radial_clearance=None):
+        """Route ordered groups without choosing the operation's machining policy."""
         path = Path()
+        groups = tuple(groups)
         try:
-            for group in reversed(self.tool_paths):
-                path.fromSegmentGroup(self, group, protect_part=True, contain_feeds=True)
+            for index, group in enumerate(groups):
+                path.fromSegmentGroup(
+                    self, group, protect_part=protect_part, direction=direction,
+                    radial_clearance=radial_clearance,
+                    return_to_clearance=radial_clearance is not None and index == len(groups) - 1)
         except (ValueError, RuntimeError):
-            self.tool_paths = []
+            self._reset_paths()
             raise
         return path.commands
 

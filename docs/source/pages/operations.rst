@@ -25,6 +25,26 @@ outputs use negative X. See :doc:`liblathe_tooling` for the side enum,
 reflection rules and machining limitations.
 Centreline drilling instead uses a symmetric drill at X=0, without side dispatch.
 
+Generation and parameters
+-------------------------
+
+Generation replaces published paths; failed validation or routing clears both
+``tool_paths`` and ``clearing_paths``. Facing also builds its passes locally so a
+failed later pass cannot expose a partial result.
+
+Operations validate finite containment and clearance, positive finite cutting
+increments and non-negative finite allowances where used. Finishing counts must
+be non-negative integers where used. Unused settings retain their existing
+meaning: parting, for example, ignores ``pass_offset``. Feed rates are passed
+through unchanged. Bore and drill retain their stricter positive-clearance
+requirements.
+
+``setParams`` accepts the parameters reported by ``getParams`` plus the existing
+``leadin_angle`` and ``leadout_angle`` settings. It rejects unsupported names
+before applying any changes; methods and internal path state are not parameters.
+Fixed-increment facing and roughing grids reject steps lost to coordinate
+rounding rather than repeating the same station indefinitely.
+
 Containment and clearance
 -------------------------
 
@@ -63,6 +83,19 @@ Positions near the boundary still undergo the full insert checks. Connector
 and chord sweeps, clearance tolerances and subdivision limits are unchanged.
 Uncertifiable paths continue to raise an error rather than emitting unchecked
 moves.
+
+``SegmentGroup.validateToolSweeps(tool, moves)`` validates an ordered sequence
+of ``(start, end)`` points using one native snapshot of the part and tool.
+It uses the same checks as individual ``validateToolSweep`` calls, stops at
+the first failure and reports its zero-based move index and coordinates.
+An empty sequence is a no-op. Snapshots are rebuilt on every call, so subsequent
+geometry edits are observed. Python calls retain the GIL.
+
+``SegmentGroup.reflectX(radius=0)`` returns an independent contour mapped by
+``X = radius - X``, with arc bulges reflected and traversal order retained.
+Near/Far dispatch and internal boring share this native transformation.
+The read-only ``defeatureResolution`` and ``offsetTolerance`` class attributes
+expose the native sampling and contour tolerances to Python.
 
 If a tool origin's X coordinate is too large for the radial scan step to change
 it in floating point, defeaturing raises a coordinate-precision error. The step

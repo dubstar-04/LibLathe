@@ -14,7 +14,7 @@ class RoughOP(liblathe.op.base.BaseOP):
 
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
-        self.tool_paths = []
+        self._begin_generation(pass_offset=True, allowance=True)
         tool_paths = []
         roughing_segmentGroup = self._defeature_profile(self.allow_grooving)
 
@@ -44,14 +44,15 @@ class RoughOP(liblathe.op.base.BaseOP):
             boundary.extend(roughing_boundary)
             roughing_boundary = boundary
 
-        x_pos = XMin
+        boundary_segments = roughing_boundary.getSegments()
+        boundary_radius = roughing_boundary.boundbox().XMax
         # Generate passes from the inner limit outward; G-code traverses them in reverse.
-        while x_pos < XMax:
+        for x_pos in self._stations(XMin, XMax, self.pass_offset):
             pt1 = Point(x_pos, ZMax)
             pt2 = Point(x_pos, ZMin)
             path_line = Segment(pt1, pt2)
             intersections = []
-            for seg in roughing_boundary.getSegments():
+            for seg in boundary_segments:
                 points = seg.intersect(path_line)
                 if len(points):
                     for p in points:
@@ -64,7 +65,7 @@ class RoughOP(liblathe.op.base.BaseOP):
             if not intersections:
                 seg = path_line
                 # add passes with no intersections only if they're outside the part radius
-                if x_pos >= roughing_boundary.boundbox().XMax:
+                if x_pos >= boundary_radius:
                     segmentgroup.addSegment(seg)
 
             if len(intersections) == 1:
@@ -115,16 +116,14 @@ class RoughOP(liblathe.op.base.BaseOP):
                                 self._add_lead(segmentgroup, intersections[i + 1].point,
                                                self.leadout_angle, limits)
 
-            x_pos += self.pass_offset
-
             if segmentgroup.count():
                 if segmentgroup.intersectsGroup(internalOffset):
                     # Debug().draw([segmentgroup, self.partSegmentGroup, roughing_boundary])
                     raise ValueError("Calculated roughing path intersects part")
 
-                for segment in segmentgroup.getSegments():
-                    self.partSegmentGroup.validateToolSweep(
-                        self.tool.get_segmentgroup(), segment.start, segment.end)
+                self.partSegmentGroup.validateToolSweeps(
+                    self.tool.get_segmentgroup(),
+                    [(segment.start, segment.end) for segment in segmentgroup.getSegments()])
                 tool_paths.append(segmentgroup)
 
         self.tool_paths = tool_paths

@@ -127,7 +127,7 @@ class Path:
                       part_bounds.XMax - tool_bounds.XMin, pass_bounds.XMax) + clearance
         z_clear = max(operation.containment.ZMax - tool_bounds.ZMin,
                       part_bounds.ZMax - tool_bounds.ZMin, pass_bounds.ZMax) + clearance
-        if radial_clearance is not None or (contain_feeds and operation.stock is not None):
+        if operation.stock is not None:
             actual = operation.stock
             x_clear = max(x_clear, actual.XMax - tool_bounds.XMin + clearance)
             z_clear = max(z_clear, actual.ZMax - tool_bounds.ZMin + clearance)
@@ -192,10 +192,10 @@ class Path:
             target = segment.start
             previous = commands[-1] if commands else self.commands[-1]
             position = Point(previous.getParams()['X'], previous.getParams()['Z'])
-            entry_x = operation.containment.XMax if contain_feeds else x_clear
-            entry_z = operation.containment.ZMax if contain_feeds else z_clear
+            entry_x = operation.containment.XMax
+            entry_z = operation.containment.ZMax
             entries = (Point(target.X, entry_z), Point(entry_x, target.Z))
-            if contain_feeds and segment.bulge == 0:
+            if segment.bulge == 0:
                 aligned = boundary_point(target, target.X - segment.end.X,
                                          target.Z - segment.end.Z)
                 entries = (aligned, *entries)
@@ -208,22 +208,21 @@ class Path:
                     clear_feed(entry, target)
                 except RuntimeError:
                     continue
-                if contain_feeds:
-                    corners = (Point(entry.X, position.Z), Point(position.X, entry.Z))
-                    if direction == RoutingDirection.RADIAL:
-                        corners = tuple(reversed(corners))
-                    for corner in corners:
-                        if not (clears_stock(position, corner) and clears_stock(corner, entry)):
-                            continue
-                        try:
-                            clear_feed(position, corner)
-                            clear_feed(corner, entry)
-                        except RuntimeError:
-                            continue
-                        break
-                    else:
+                corners = (Point(entry.X, position.Z), Point(position.X, entry.Z))
+                if direction == RoutingDirection.RADIAL:
+                    corners = tuple(reversed(corners))
+                for corner in corners:
+                    if not (clears_stock(position, corner) and clears_stock(corner, entry)):
                         continue
-                    emit('G0', corner)
+                    try:
+                        clear_feed(position, corner)
+                        clear_feed(corner, entry)
+                    except RuntimeError:
+                        continue
+                    break
+                else:
+                    continue
+                emit('G0', corner)
                 emit('G0', entry)
                 emit('G1', target)
                 return
@@ -232,8 +231,8 @@ class Path:
 
         def retract(segment):
             origin = segment.end
-            exit_x = operation.containment.XMax if contain_feeds else x_clear
-            exit_z = operation.containment.ZMax if contain_feeds else z_clear
+            exit_x = operation.containment.XMax
+            exit_z = operation.containment.ZMax
             exits = (Point(exit_x, origin.Z), Point(origin.X, exit_z))
             if direction == RoutingDirection.RADIAL:
                 exits = (Point(limits.XMax, origin.Z),)
@@ -282,7 +281,7 @@ class Path:
         if direction == RoutingDirection.AUTO or len(self.commands) == 1:
             emit('G0', outside)
         for index, seg in enumerate(segments):
-            if index == 0 or not self.previous_segment_connected(segments, seg):
+            if index == 0 or not segments[index - 1].end.isSame(seg.start):
                 if index:
                     retract(segments[index - 1])
                 approach(seg)

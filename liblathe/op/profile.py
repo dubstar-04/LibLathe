@@ -1,5 +1,3 @@
-import math
-
 import liblathe.op.base
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
@@ -31,11 +29,8 @@ class ProfileOP(liblathe.op.base.BaseOP):
 
     def _profile_offsets(self, base):
         """Generate fixed normal offsets meeting regularly spaced axial entries."""
-        step = float(self.pass_offset)
-        if not math.isfinite(step) or step <= 0:
-            raise ValueError("pass_offset must be finite and positive")
-        if isinstance(self.finish_passes, bool) or not isinstance(self.finish_passes, int) or self.finish_passes < 0:
-            raise ValueError("finish_passes must be a non-negative integer")
+        self._validate_parameters(pass_offset=True, finish_passes=True)
+        step = self.pass_offset
         if not self.finish_passes:
             return
         datum = base.getSegments()[0].start.X
@@ -46,7 +41,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
 
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
-        self.tool_paths = []
+        self._begin_generation(pass_offset=True, finish_passes=True, allowance=True)
         tool_paths = []
         # get the defeature part profile
         profileSegmentGroup = self._defeature_profile(self.allow_grooving)
@@ -74,8 +69,8 @@ class ProfileOP(liblathe.op.base.BaseOP):
                                self.containment)
                 if segmentgroup.intersectsGroup(internalOffset):
                     raise ValueError("Calculated profile path intersects part")
-                for segment in segmentgroup.getSegments():
-                    self.partSegmentGroup.validateToolSweep(tool, segment.start, segment.end)
+                self.partSegmentGroup.validateToolSweeps(
+                    tool, [(segment.start, segment.end) for segment in segmentgroup.getSegments()])
                 tool_paths.append(segmentgroup)
 
         self.tool_paths = tool_paths

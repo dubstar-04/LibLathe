@@ -78,6 +78,19 @@ non-mutating geometry operation that reverses segment order, endpoints and arc
 bulges without changing the curve. It does not choose an operation's strategy
 or rebuild its lead-in/out.
 
+`BaseOP` owns shared input/parameter validation, path-state reset and an ordered
+routing wrapper. Each strategy still chooses its groups, traversal order and
+routing policy explicitly. Facing and parting remain unprotected stock-removal
+cuts; parting explicitly requests radial withdrawal through the kerf.
+Boring and centreline drilling retain separate access routing. Generation
+publishes complete path sets only; validation and routing failures clear both
+published collections. Unused cutting parameters are not validated, and feed
+rates remain pass-through.
+
+`SegmentGroup.reflectX(radius=0)` provides the common native transformation
+`X = radius - X` for side dispatch and boring's material frame. It preserves
+segment order, reverses arc bulges and does not mutate its input.
+
 Grooving partitions its clipped finishing polyline at radial direction changes
 and gaps, reversing outward runs so each stroke cuts inward. Constant-X floor
 segments remain, and the existing radial router provides clearance moves
@@ -103,6 +116,15 @@ Within those checks, patch bounds are also compared with an arc's supporting
 circle. A patch wholly inside or outside that circle cannot intersect the arc,
 even when its rectangular bounds overlap. This avoids excessive subdivision
 near curved groove shoulders while retaining the numerical clearance margin.
+
+`SegmentGroup.validateToolSweeps(tool, moves)` batches ordered straight
+translations against one immutable part/tool snapshot. It uses the scalar
+checker without reducing tolerances or skipping moves, and identifies the first
+failed move by index and coordinates. Profile, rough, groove and bore generation
+use batches; routing keeps individual queries because candidate selection
+depends on each result. Both APIs retain the GIL. Snapshots live only for the
+call, avoiding mutable cross-call caches. Rebuild the native modules together
+before using the Python operation changes.
 
 ## Internal boring experiment
 

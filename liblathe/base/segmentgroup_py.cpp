@@ -53,11 +53,19 @@ PYBIND11_MODULE(segmentgroup, m)
      // bindings to segmentgroup class
      py::class_<SegmentGroup>(m, "SegmentGroup")
          .def(py::init<>())
+         .def_property_readonly_static("defeatureResolution", [](py::object) {
+              return SegmentGroup::defeatureResolution;
+         })
+         .def_property_readonly_static("offsetTolerance", [](py::object) {
+              return SegmentGroup::offsetTolerance;
+         })
          .def("addSegment", &SegmentGroup::addSegment)
          .def("insertSegment", &SegmentGroup::insertSegment)
          .def("getSegments", &SegmentGroup::getSegments)
          .def("reversed", &SegmentGroup::reversed,
               "Return an independent group with reversed segment order, endpoints and arc bulges.")
+         .def("reflectX", &SegmentGroup::reflectX, py::arg("radius") = 0,
+              "Return an independent group mapped by X = radius - X, reversing arc bulges.")
          .def("extend", &SegmentGroup::extend)
          .def("count", &SegmentGroup::count)
          .def("boundbox", &SegmentGroup::boundbox)
@@ -75,6 +83,9 @@ PYBIND11_MODULE(segmentgroup, m)
          .def("validateToolSweep", &SegmentGroup::validateToolSweep,
               "Certify full-insert clearance throughout a straight translation. "
               "Raise RuntimeError for collisions or uncertifiable sweeps.")
+         .def("validateToolSweeps", &SegmentGroup::validateToolSweeps,
+              "Certify ordered (start, end) translations using one part/tool snapshot. "
+              "Raise on the first collision or uncertifiable sweep; an empty list is a no-op.")
          .def("validate", &SegmentGroup::validate)
          .def("fromPoints", &SegmentGroup::fromPoints)
          .def("reduce", &SegmentGroup::reduce)

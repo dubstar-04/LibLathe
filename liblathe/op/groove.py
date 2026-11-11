@@ -4,7 +4,7 @@ import liblathe.op.base
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
-from liblathe.gcode.path import Path, RoutingDirection
+from liblathe.gcode.path import RoutingDirection
 
 
 class GrooveOP(liblathe.op.base.BaseOP):
@@ -12,9 +12,9 @@ class GrooveOP(liblathe.op.base.BaseOP):
     followed by inward finishing contours with optional progressive offsets."""
 
     # matches the defeature scan resolution
-    sample_resolution = 0.01
+    sample_resolution = SegmentGroup.defeatureResolution
     # matches the native SegmentGroup::offsetTolerance contour accuracy limit
-    offset_tolerance = 0.05
+    offset_tolerance = SegmentGroup.offsetTolerance
     # overlap between adjacent plunges as a percentage of the tool's axial width
     overlap_percent = 10.0
     finish_pass_offset = 0.0
@@ -50,10 +50,10 @@ class GrooveOP(liblathe.op.base.BaseOP):
         increment = z_range / count
         return [z_high - i * increment for i in range(count)] + [z_low]
 
-    def _radial_limit(self, boundary, z, x_top, x_min):
+    def _radial_limit(self, boundary, segments, z, x_top, x_min):
         """Return the first accessible tool-origin X travelling inward from x_top at z."""
         path_line = Segment(Point(x_top, z), Point(x_min, z))
-        hits = [point.X for seg in boundary.getSegments() for point in seg.intersect(path_line)]
+        hits = [point.X for seg in segments for point in seg.intersect(path_line)]
         if hits:
             return max(max(hits), x_min)
         if boundary.isInside(Point(x_min, z)):
@@ -87,12 +87,8 @@ class GrooveOP(liblathe.op.base.BaseOP):
 
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
-        self.tool_paths = []
-        radial_step = float(self.pass_offset)
-        if not math.isfinite(radial_step) or radial_step <= 0:
-            raise ValueError("pass_offset must be finite and positive")
-        if isinstance(self.finish_passes, bool) or not isinstance(self.finish_passes, int) or self.finish_passes < 0:
-            raise ValueError("finish_passes must be a non-negative integer")
+        self._begin_generation(pass_offset=True, finish_passes=True, allowance=True)
+        radial_step = self.pass_offset
         finish_pass_offset = float(self.finish_pass_offset)
         if not math.isfinite(finish_pass_offset) or finish_pass_offset < 0:
             raise ValueError("finish_pass_offset must be finite and non-negative")
@@ -108,6 +104,7 @@ class GrooveOP(liblathe.op.base.BaseOP):
         groove_profile = self._defeature_profile(True)
         internal_offset = groove_profile.offset(-0.1)
         boundary = groove_profile.offset(rough_offset)
+        boundary_segments = boundary.getSegments()
 
         x_top = self.containment.XMax - contact.X
         x_min = self.containment.XMin - contact.X
@@ -119,7 +116,7 @@ class GrooveOP(liblathe.op.base.BaseOP):
 
         def limit_at(z):
             if z not in limits:
-                limits[z] = self._radial_limit(boundary, z, x_top, x_min)
+                limits[z] = self._radial_limit(boundary, boundary_segments, z, x_top, x_min)
             return limits[z]
 
         # sample the accessible depth at the defeature resolution to find groove walls
@@ -137,11 +134,15 @@ class GrooveOP(liblathe.op.base.BaseOP):
         layer_top = x_top
         while True:
             target = layer_top - radial_step
+            if (not math.isfinite(target) or target >= layer_top
+                    or Point(target, 0).X >= Point(layer_top, 0).X):
+                raise ValueError("Cannot advance grooving layer at coordinate precision")
             runs = self._get_runs(class_limits, layer_top, target)
             if not runs:
                 break
 
             layer = SegmentGroup()
+            sweeps = []
             for first, last in runs:
                 # runs are classified with a window either side, so search up to two windows inward
                 high = self._region_end(sample_limits, first, last, 1, 2 * wall_window)
@@ -152,10 +153,11 @@ class GrooveOP(liblathe.op.base.BaseOP):
                         continue
                     end = max(target, limit)
                     # certify the plunge and withdrawal against the full part
-                    self.partSegmentGroup.validateToolSweep(tool, Point(x_clear, z), Point(end, z))
+                    sweeps.append((Point(x_clear, z), Point(end, z)))
                     layer.addSegment(Segment(Point(layer_top, z), Point(end, z)))
 
             if layer.count():
+                self.partSegmentGroup.validateToolSweeps(tool, sweeps)
                 if layer.intersectsGroup(internal_offset):
                     raise ValueError("Calculated grooving path intersects part")
                 tool_paths.append(layer)
@@ -174,11 +176,12 @@ class GrooveOP(liblathe.op.base.BaseOP):
             if finish.intersectsGroup(internal_offset):
                 raise ValueError("Calculated grooving finish path intersects part")
             strokes = self._get_finish_strokes(finish)
-            for stroke in strokes:
-                for segment in stroke.getSegments():
-                    self.partSegmentGroup.validateToolSweep(tool, segment.start, segment.end)
+            self.partSegmentGroup.validateToolSweeps(
+                tool, [(segment.start, segment.end)
+                       for stroke in strokes for segment in stroke.getSegments()])
             tool_paths.extend(strokes)
 
+        clipped_paths = []
         for group in tool_paths:
             clipped = SegmentGroup()
             for segment in group.getSegments():
@@ -187,7 +190,8 @@ class GrooveOP(liblathe.op.base.BaseOP):
                 if edge is not None:
                     clipped.addSegment(edge)
             if clipped.count():
-                self.tool_paths.append(clipped)
+                clipped_paths.append(clipped)
+        self.tool_paths = clipped_paths
 
     @staticmethod
     def _get_runs(limits, layer_top, target):
@@ -228,20 +232,13 @@ class GrooveOP(liblathe.op.base.BaseOP):
 
     def generateGCode(self):
         """Route plunges and inward finishing strokes with radial approach and retract."""
-        path = Path()
         try:
             local_clearance = self._local_clearance() if self.stock is not None and self.tool_paths else None
-            for index, segmentgroup in enumerate(self.tool_paths):
-                path.fromSegmentGroup(self, segmentgroup, protect_part=True,
-                                      direction=RoutingDirection.RADIAL,
-                                      radial_clearance=local_clearance,
-                                      return_to_clearance=local_clearance is not None
-                                      and index == len(self.tool_paths) - 1)
+            return self._route_paths(self.tool_paths, direction=RoutingDirection.RADIAL,
+                                     radial_clearance=local_clearance)
         except (ValueError, RuntimeError):
-            self.tool_paths = []
+            self._reset_paths()
             raise
-
-        return path.commands
 
     def _local_clearance(self):
         tool = self.tool.get_segmentgroup()

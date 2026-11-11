@@ -1,31 +1,24 @@
-import math
-
 import liblathe.op.base
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
-from liblathe.gcode.path import Path
-
-
 class FaceOP(liblathe.op.base.BaseOP):
 
     def generatePath(self):
-        """Generate the path for the profile operation"""
+        """Generate inward facing passes, publishing only a complete result."""
+        self._begin_generation(pass_offset=True, allowance=True)
         part_boundbox = self.partSegmentGroup.boundbox()
 
         XMin = self.containment.XMin
         XMax = self.containment.XMax
         ZMin = max(self.containment.ZMin, part_boundbox.ZMax + self.stock_to_leave)
         ZMax = self.containment.ZMax
-        self.clearing_paths = []
-        if not math.isfinite(self.pass_offset) or self.pass_offset <= 0:
-            raise ValueError("Facing pass_offset must be finite and positive")
+        clearing_paths = []
 
         # TODO: Move the final pass to finishing passes for a slower pass
         # work backwards from ZMin to ZMax at the requested axial depth
-        z_pos = ZMin
-        while z_pos <= ZMax:
+        for z_pos in self._stations(ZMin, ZMax, self.pass_offset, include_end=True):
             segmentgroup = SegmentGroup()
             pt1 = Point(XMax, z_pos)
             pt2 = Point(XMin, z_pos)
@@ -35,19 +28,10 @@ class FaceOP(liblathe.op.base.BaseOP):
             pt3 = pt2.project(self.leadout_angle, self.pass_offset)
             leadout = Segment(pt2, pt3)
             segmentgroup.addSegment(leadout)
-            z_pos += self.pass_offset
-            self.clearing_paths.extend(self._clip_path(segmentgroup))
+            clearing_paths.extend(self._clip_path(segmentgroup))
+        self.clearing_paths = clearing_paths
 
     def generateGCode(self):
         """Generate Gcode for the op segments"""
 
-        path = Path()
-
-        try:
-            for segmentgroup in reversed(self.clearing_paths):
-                path.fromSegmentGroup(self, segmentgroup)
-        except (ValueError, RuntimeError):
-            self.clearing_paths = []
-            raise
-
-        return path.commands
+        return self._route_paths(reversed(self.clearing_paths), protect_part=False)

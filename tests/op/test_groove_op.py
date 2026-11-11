@@ -574,11 +574,11 @@ class test_GrooveOP(unittest.TestCase):
         op = make_op(finish_passes=1)
         part = op.partSegmentGroup
         op.partSegmentGroup = Mock(wraps=part)
-        def validate(tool, start, end):
-            if abs(end.Z - start.Z) > 1e-6:
+        def validate(tool, moves):
+            if any(abs(end.Z - start.Z) > 1e-6 for start, end in moves):
                 raise RuntimeError("Uncertified finishing move")
-            return part.validateToolSweep(tool, start, end)
-        op.partSegmentGroup.validateToolSweep.side_effect = validate
+            return part.validateToolSweeps(tool, moves)
+        op.partSegmentGroup.validateToolSweeps.side_effect = validate
         with self.assertRaisesRegex(RuntimeError, 'Uncertified finishing'):
             op.getGCode()
         self.assertEqual(op.tool_paths, [])
@@ -586,7 +586,7 @@ class test_GrooveOP(unittest.TestCase):
     def test_failed_finish_routing_leaves_no_paths(self):
         op = make_op(finish_passes=1)
         op.generatePath()
-        with patch('liblathe.op.groove.Path.fromSegmentGroup',
+        with patch('liblathe.op.base.Path.fromSegmentGroup',
                    side_effect=ValueError("Cannot approach")):
             with self.assertRaisesRegex(ValueError, 'Cannot approach'):
                 op.generateGCode()
