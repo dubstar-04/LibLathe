@@ -143,6 +143,13 @@ See [scope and limitations](docs/source/pages/operations/bore.rst).
 
 ## Advisory remaining stock
 
+`DrillOP` is a separate centreline routing strategy, not an insert offsetting
+operation. It inherits the shared parameter/geometry storage but bypasses signed
+tool-side dispatch, model extraction and external routing: X stays zero and
+explicit G0/G1 commands use drill-tip depths. `Drill` supplies a symmetric
+convex meridional footprint. It therefore uses the same stock subtraction API
+as insert operations without a drilling-specific Boolean engine.
+
 `StockPreview` consumes the physical insert and already-generated cutting feeds.
 Its shared native convex-cell subtraction handles external cuts and bore-created
 cavities without operation dispatch or a reflected internal-material frame.

@@ -9,8 +9,17 @@ LibLathe Tooling
 
 Turning inserts
 ++++++++++++++++++++++++++++++++++++++++
-LibLathe tools describe turning inserts. For insert codes and dimensions,
+Insert-based LibLathe tools describe turning inserts. For insert codes and dimensions,
 refer to :doc:`turning_inserts`.
+
+Centreline drills
+-----------------
+
+``liblathe.tool.drill.Drill`` describes a symmetric pointed drill with diameter,
+included tip angle and overall length. Its datum is the tip and its body extends
+along positive Z. ``DrillOP`` uses it at X=0, without Front/Rear dispatch or
+insert-code interpretation. See :doc:`operations/drill` for depth conventions
+and the distinction between overall reach and usable flute length.
 
 Native outlines and origins
 ----------------------------------------

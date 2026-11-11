@@ -2,9 +2,10 @@ Lathe Operations
 ================
 
 The current operation modules provide facing, roughing, profiling, grooving
-and parting, plus an experimental internal clearing/finishing ``BoreOP``.
-Grooving is external and radial only. Chamfering,
-threading and drilling are not separate supported operation classes. In
+and parting, plus experimental internal clearing/finishing ``BoreOP`` and
+straight centreline ``DrillOP``.
+Grooving is external and radial only. Chamfering
+and threading are not separate supported operation classes. In
 particular, selecting the Far tool side does not enable internal boring.
 
 .. toctree::
@@ -16,11 +17,13 @@ particular, selecting the Far tool side does not enable internal boring.
    operations/groove
    operations/partoff
    operations/bore
+   operations/drill
 
-All operations inherit the signed-side dispatch in ``BaseOP.getGCode()``.
+Insert-based operations inherit the signed-side dispatch in ``BaseOP.getGCode()``.
 Supply matching physical tool, stock and part geometry; Far-side inputs and
 outputs use negative X. See :doc:`liblathe_tooling` for the side enum,
 reflection rules and machining limitations.
+Centreline drilling instead uses a symmetric drill at X=0, without side dispatch.
 
 Containment and clearance
 -------------------------

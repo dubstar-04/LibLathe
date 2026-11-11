@@ -74,6 +74,16 @@ tool-fit or starting-stock entry/escape clearance checks**. TurningAddon exposes
 **Turn Bore** using automatic model extraction and containment-based region selection.
 This is not hole preparation or certified boring support.
 
+## Centreline drilling proof of concept
+
+`DrillOP` and `Drill` add straight axial drilling at X=0 using explicit G0/G1
+moves and a drill-tip datum. Final depth is **tip depth**, not full-diameter
+hole depth. The shared stock preview subtracts the pointed drill sweep.
+See [usage and limits](docs/source/pages/operations/drill.rst).
+TurningAddon supports native FreeCAD Drill ToolBits through **Turn Drill**.
+No pecking, canned cycles, automatic breakthrough, flute-length or holder checks
+are implemented.
+
 ## Design
 Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts in two geometry steps:
 
