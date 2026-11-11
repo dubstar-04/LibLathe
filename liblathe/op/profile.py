@@ -49,7 +49,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
         self.tool_paths = []
         tool_paths = []
         # get the defeature part profile
-        profileSegmentGroup = self.partSegmentGroup.defeature(self.containment, self.tool.get_segmentgroup(), self.allow_grooving)
+        profileSegmentGroup = self._defeature_profile(self.allow_grooving)
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internalOffset = profileSegmentGroup.offset(-0.1)
 

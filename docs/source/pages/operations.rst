@@ -33,6 +33,11 @@ insert footprint or the physical stock. Every feed move (G1/G2/G3), including
 entry, lead-in, lead-out and withdrawal, stays inside it. Only rapid moves may
 leave containment to reach clearance.
 
+Profile, roughing and grooving extend the native contact-space defeature scan
+to cover the reference-space lower Z limit, including a two-sample (0.02 mm)
+margin. This does not enlarge cutting containment or change the native API;
+the generated passes still use their operation's cutting limits.
+
 External operations require a stock-clear route between clearance and the
 containment boundary. Set the physical stock separately with ``add_stock(bounds)``;
 without it the model's bounding box is used. If a valid boundary entry or exit

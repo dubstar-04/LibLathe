@@ -105,7 +105,7 @@ class GrooveOP(liblathe.op.base.BaseOP):
         tool_bounds = tool.boundbox()
         contact = tool.getRadialContactPoint()
 
-        groove_profile = self.partSegmentGroup.defeature(self.containment, tool, True)
+        groove_profile = self._defeature_profile(True)
         internal_offset = groove_profile.offset(-0.1)
         boundary = groove_profile.offset(rough_offset)
 

@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import pytest
 
 from liblathe.base.boundbox import BoundBox
@@ -10,6 +12,61 @@ from liblathe.op.partoff import PartoffOP
 from liblathe.op.profile import ProfileOP
 from liblathe.op.rough import RoughOP
 from liblathe.tool.tool import Tool, ToolSide
+
+
+@pytest.mark.parametrize("axial_shift", [-2, 0, 2])
+@pytest.mark.parametrize("operation_type", [ProfileOP, RoughOP, GrooveOP])
+def test_defeature_scan_covers_reference_depth(operation_type, axial_shift):
+    operation = operation_type()
+    operation.add_containment(BoundBox(Point(0, -15), Point(15, 5)))
+    vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
+    operation.addPartSegments([Segment(Point(*a), Point(*b))
+                               for a, b in zip(vertices, vertices[1:])])
+    vertices = [(0, -2), (0, 0), (2, 0), (2, -2), (0, -2)]
+    tool = Tool()
+    tool.set_tool_from_segments([
+        Segment(Point(a[0], a[1] + axial_shift), Point(b[0], b[1] + axial_shift))
+        for a, b in zip(vertices, vertices[1:])])
+    operation.add_tool(tool)
+    original = operation.partSegmentGroup
+    contours = []
+
+    def observe(bounds, insert, allow_grooving):
+        result = original.defeature(bounds, insert, allow_grooving)
+        contours.append(result)
+        return result
+
+    operation.partSegmentGroup = Mock(wraps=original)
+    operation.partSegmentGroup.defeature.side_effect = observe
+    operation.generatePath()
+    assert len(contours) == 1
+    required_depth = min(-15, -15 - tool.get_segmentgroup().boundbox().ZMin)
+    assert contours[0].boundbox().ZMin <= required_depth
+    assert operation.tool_paths
+    if operation_type is ProfileOP:
+        assert min(group.boundbox().ZMin for group in operation.tool_paths) == pytest.approx(-15)
+    assert operation.containment.ZMin == -15
+    assert operation.containment.ZMax == 5
+
+
+def test_roughing_reaches_taper_below_old_scan_endpoint():
+    operation = RoughOP()
+    operation.setParams({"pass_offset": 0.25, "allow_grooving": True})
+    operation.add_containment(BoundBox(Point(0, -15), Point(15, 5)))
+    vertices = [(0, 0), (10, 0), (10, -10), (6, -20), (0, -20)]
+    operation.addPartSegments([Segment(Point(*a), Point(*b))
+                               for a, b in zip(vertices, vertices[1:])])
+    vertices = [(0, -2), (0, 0), (2, 0), (2, -2), (0, -2)]
+    tool = Tool()
+    tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                 for a, b in zip(vertices, vertices[1:])])
+    operation.add_tool(tool)
+    operation.generatePath()
+    assert any(abs(segment.start.X - 8.25) < 1e-5
+               and abs(segment.end.X - 8.25) < 1e-5
+               and segment.start.Z < -14
+               and abs(segment.end.Z + 15) < 1e-5
+               for group in operation.tool_paths for segment in group.getSegments())
 
 
 @pytest.mark.parametrize("operation_type", [FaceOP, RoughOP, ProfileOP, GrooveOP, PartoffOP, BoreOP])

@@ -16,7 +16,7 @@ class RoughOP(liblathe.op.base.BaseOP):
         """Replace toolpaths on success; leave no published paths on failure."""
         self.tool_paths = []
         tool_paths = []
-        roughing_segmentGroup = self.partSegmentGroup.defeature(self.containment, self.tool.get_segmentgroup(), self.allow_grooving)
+        roughing_segmentGroup = self._defeature_profile(self.allow_grooving)
 
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
         internalOffset = roughing_segmentGroup.offset(-0.1)

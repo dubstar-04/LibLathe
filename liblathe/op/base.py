@@ -129,6 +129,16 @@ class BaseOP:
         """Main processing function for each op"""
         pass
 
+    def _defeature_profile(self, allow_grooving):
+        """Cover reference containment without shortening the native contact-space scan."""
+        tool = self.tool.get_segmentgroup()
+        contact = tool.getRadialContactPoint()
+        # Native defeature subtracts contact.Z and excludes its lower endpoint.
+        scan_min = self.containment.ZMin + min(0, contact.Z) - 0.02
+        scan = BoundBox(Point(self.containment.XMin, scan_min),
+                        Point(self.containment.XMax, self.containment.ZMax))
+        return self.partSegmentGroup.defeature(scan, tool, allow_grooving)
+
     def generateGCode(self):
         """Route contained passes from outermost to innermost."""
         path = Path()
