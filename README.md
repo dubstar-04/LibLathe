@@ -53,175 +53,33 @@ The [native stock tests](tests/native/stock_preview.cpp) cover stock subtraction
 boundary export and randomized occupancy checks. Build/run instructions are in
 the file header.
 
+## Design
+
+Part profiles are lines and arcs in X (radius) and Z (axis). The C++ geometry
+core is exposed to Python with pybind11. Shared geometry facilities include
+tool-footprint defeaturing, signed-distance offsets, adaptive sampling and
+sweep validation.
+
+Tool outlines use coordinates relative to the caller's chosen tool datum.
+The caller supplies the physical orientation and coordinate frame; generated
+paths position that datum.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for design details and trade-offs, and
+the [tooling manual](docs/source/pages/liblathe_tooling.rst) for coordinate
+conventions and tool geometry.
+
 ## Remaining-stock guide
 
-`StockPreview` calculates advisory 2D remaining stock from already-generated
-straight cutting feeds. It does not affect toolpaths, planning or rapid approval.
-See the [usage and limitations](docs/source/pages/remaining_stock.rst).
-After building the native extensions, run
-`python examples/ex3_rough_op.py --no-show` to plot the roughing result using
-the existing plotting functionality; no separate stock executable is needed.
+An advisory 2D preview shows predicted material remaining after generated cuts.
+It does not change toolpaths or verify clearance.
+See the [remaining-stock documentation](docs/source/pages/remaining_stock.rst).
 
-## Internal boring proof of concept
+## Limitations
 
-`BoreOP` experiments with reusing the existing geometry core for internal
-clearing and finishing. X clearing (default) cuts outward at successive depths;
-Z clearing cuts toward the bottom at successive radii. Finishing cuts outward
-across the bottom and follows the wall toward the mouth.
-See [usage and limitations](docs/source/pages/operations/bore.rst)
-and `examples/ex7_bore_op.py`. It performs **no predrilling, prepared-opening,
-tool-fit or starting-stock entry/escape clearance checks**. TurningAddon exposes it as
-**Turn Bore** using automatic model extraction and containment-based region selection.
-This is not hole preparation or certified boring support.
-
-## Centreline drilling proof of concept
-
-`DrillOP` and `Drill` add straight axial drilling at X=0 using explicit G0/G1
-moves and a drill-tip datum. Final depth is **tip depth**, not full-diameter
-hole depth. The shared stock preview subtracts the pointed drill sweep.
-See [usage and limits](docs/source/pages/operations/drill.rst).
-TurningAddon supports native FreeCAD Drill ToolBits through **Turn Drill**.
-No pecking, canned cycles, automatic breakthrough, flute-length or holder checks
-are implemented.
-
-## Design
-Part profiles are lines and arcs in X (radius) and Z (axis). LibLathe plans cuts in two geometry steps:
-
-1. **Defeature:** the tool is moved along the part and only the area it can actually reach is kept, removing features that can't be turned, such as undercuts.
-2. **Offset:** a signed distance field (SDF) gives the distance from any point to the profile. A quadtree samples it, refining only near the target distance. Points at that distance are collected, ordered and simplified with the Ramer-Douglas-Peucker (RDP) algorithm into the offset path.
-
-The operations (face, rough, profile, groove and part-off) combine these steps into toolpaths and gcode. The geometry core is C++ exposed to Python with pybind11.
-
-Defeature retains the complete line/arc insert footprint and checks containment
-as well as edge crossings. Returned points are tool origins, not contact points.
-Connecting moves and simplified chords must pass an adaptive full-footprint
-sweep check against the original part. Unsafe direct connectors use a verified
-axis-aligned route; geometry that cannot be certified within coordinate
-precision or the subdivision limit raises an error instead of returning an
-unchecked move. This checks the defeature envelope only, not subsequent offsets,
-operation paths, or stock clearance on entry and retract moves.
-
-G-code entry and retract routing uses the complete rotated insert bounds to keep
-rapid moves outside the original stock envelope. The `clearance` parameter must
-be finite and non-negative; routing applies a minimum clearance of 0.01 model
-units. Approaches and escapes use feed moves at `hfeed`, so these moves may remove
-stock. With `protect_part=True`, the added feeds are certified against the
-original part with `SegmentGroup.validateToolSweep`; an uncertifiable approach
-or escape raises an error instead of publishing partial commands for that group.
-Without it, routing still keeps rapids clear of the stock but approaches may
-cut the original part region. Rebuild the native extensions for the new sweep
-validation binding before using the updated Python routing code.
-
-`Path.fromSegmentGroup()` accepts an internal `direction` argument using
-`RoutingDirection` from `liblathe.gcode.path`. `AUTO` (default) retains axial-first
-entry and radial-first exit, trying the other axis if a protected feed cannot
-be certified. `RADIAL` forces X-only approaches and retracts; `AXIAL` forces
-Z-only approaches and retracts. Forced directions do not fall back, and with
-`protect_part=True` an uncertifiable route raises an error without publishing
-partial commands for that group. The direction does not alter cutting segments.
-Forced directions reposition along their clearance plane between passes and
-use the outside-stock corner only to enter a path.
-Grooving with local clearance stays on that plane between passes, including
-fractional clearance coordinates; it returns to global stock clearance only
-after the final stroke, unless a checked transfer requires the global fallback.
-
-For contained roughing and profile passes, routing first tries the existing
-containment-boundary entries. If these cannot be reached by stock-clear rapids,
-it tries a radial cutting-feed entry from stock clearance to the pass start.
-This entry may cross the outer X containment limit, but stays at the pass
-start's contained Z and must pass the full-insert sweep check against the
-original part. Cutting passes and their containment are unchanged; axial entry
-feeds are not extended beyond containment. If the radial entry cannot be
-certified, routing fails without publishing partial commands for the group.
-
-This conservative routing does not track previously cleared stock. It checks
-the first rapid destination, not travel from an unknown initial machine position,
-and does not certify holders, fixtures, all original cutting moves, or machining
-safety. Reference-equivalent final stock remains a separate validation requirement.
-
-Roughing includes the exact inner containment radius. If sampled offset geometry
-stops short of that radius, its front endpoint is extended radially to provide a
-trimming boundary. All generated roughing segments must pass the full-insert
-sweep check against the original part; an uncertifiable centreline pass fails
-explicitly rather than being silently omitted.
-The stock-to-leave offset retains its extension beyond the original profile's
-front Z before passes are trimmed to containment, preserving the front allowance
-on the inner passes as well as the radial allowance.
-Profiling likewise retains the initial stock-to-leave offset's front extension
-and original inner entry radius before generating its successive contours.
-This keeps front-face cuts present with nonzero allowance; containment can still
-intentionally exclude them.
-
-`SegmentGroup.getRadialContactPoint()` derives a cutting-edge datum from the
-native outline, including arc extrema and the axial midpoint of a flat innermost
-edge. Operations use it to express physical stock limits in tool-origin
-coordinates. It requires rebuilt native bindings.
-
-The SDF uses the profile closed back to X = 0: sign and distance include the
-same boundary. Artificial closing edges do not generate offset candidates;
-faces explicitly included in the profile remain eligible. The existing
-start-Z clip is retained. In LibLathe's plotted view, Z is horizontal and X
-increases downward from the centreline.
-
-Offset extraction retains nearest-neighbour ordering when it passes the contour
-certificate. If that ordering fails, the same candidate points are reordered
-along the original profile, including corner arcs, and checked again against
-the unchanged 0.05 model-unit accuracy limit. Uncertifiable or collapsed contours
-still raise an error; chord failures report their endpoints and midpoint error.
-
-See [ARCHITECTURE.md](ARCHITECTURE.md) for the trade-offs and alternative approaches.
-
-## Spindle Side
-
-`Tool.side` requires a `ToolSide` enumeration member from
-`liblathe.tool.tool`: `ToolSide.NEAR` (default, positive X) or
-`ToolSide.FAR` (negative X). Strings are rejected. This development API
-requires an updated build; an older package reporting 0.0.8 may lack the enum.
-Supply the tool outline in its actual physical orientation. For Far, supply
-negative-X part and stock geometry too; positive-X stock or part inputs are
-rejected. `BaseOP.getGCode()` plans on reflected copies of all three inputs,
-then returns physical signed commands, `tool_paths` and `clearing_paths`. Reflection reverses
-segment bulges, G2/G3 and I offsets, including rapid and retract X positions.
-Original inputs are not modified, and near-side behavior is unchanged.
-
-The returned Far-side commands remain negative X. X positions and I arc-centre
-offsets are negated; G2/G3 are swapped. Z, K and feed values are unchanged.
-Side does not choose spindle speed, M3/M4, tool handedness or controller G41/G42.
-The machine integration must match this signed-X contract to its controller.
-
-This selects the spindle side, not inside/outside machining. Internal boring
-requires separate operation support. Full operation-path safety and native-tool
-precision sensitivity remain unresolved; signed-side output is experimental
-and is not machining approval.
-
-## Native Tool Geometry
-
-`Tool.set_tool_from_segments()` accepts the actual XZ insert outline, including
-rounded nose arcs. Outline coordinates are relative to the selected tool origin;
-returned paths position that origin, not a separately calculated contact point.
-The caller supplies the physical pose and datum. LibLathe does not have a
-Compensation selector or automatically recenter an imported insert.
-
-Leave `tool_rotation` at zero for geometry that is already rotated. Its optional
-rotation acts around the supplied origin; it is not the add-on's absolute insert
-angle or a controller Q orientation. Changing `side` does not rotate the stored
-insert or select its active nose.
-
-See the [tooling manual](docs/source/pages/liblathe_tooling.rst) for the API,
-coordinate conventions and side-planning details.
-
-## Examples
-### Facing:
-![Facing Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/FacingOp.jpeg)
-
-### Roughing:
-![Roughing Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/RoughingOp.jpeg)
-
-### Profiling:
-![Profiling Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/ProfilingOp.jpeg)
-
-### Parting:
-![Parting Example](https://github.com/dubstar-04/LibLathe/blob/master/docs/source/LL_static/images/PartingOp.jpeg)
+Generated geometry, toolpaths and stock previews are experimental, not machining
+approval. They do not certify complete machine, holder or fixture clearance,
+travel from an unknown initial position, or machining safety. The caller must
+validate tool setup, cutting parameters and postprocessed output for the machine.
 
 ## Links
 * Docs: https://liblathe.readthedocs.io/en/latest
