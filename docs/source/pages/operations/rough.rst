@@ -40,10 +40,11 @@ against the part. Feed approaches also stay inside containment.
 Approaches follow the first cutting or lead-in direction where safe.
 Rapid approaches use separate X and Z moves, positioning radially at axial
 clearance before approaching in Z where safe.
-After the lead-out, the tool feeds to a stock-clear containment boundary,
+After the lead-out, the tool feeds to the containment boundary,
 then rapids to clearance. All feeds stay inside containment; automatic
 withdrawal never reverses along the last cut. Withdrawals are checked against
-the full part and rapid transfers against both stock and part.
-Set physical stock with ``add_stock(bounds)``; otherwise the model's bounding
-box is used. If no safe boundary entry or withdrawal exists, generation fails
-explicitly and requests larger containment.
+the full part, as are rapid transfers. Rapids may cross the original stock
+envelope outside containment; users must assess remaining stock before machining.
+Set physical stock with ``add_stock(bounds)`` for initial clearance positioning;
+otherwise model bounds are used. If no part-clear boundary entry or withdrawal
+exists, generation fails explicitly.

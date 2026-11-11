@@ -25,6 +25,6 @@ Set the containment's minimum X to zero to part the component off completely.
 Approach and withdrawal feeds also remain inside containment. The tool withdraws
 radially through the kerf after the cut; axial repositioning
 occurs at radial stock clearance, never as a feed through the component.
-Only stock-clear rapids may leave containment to reach clearance. Supply the physical stock with
-``add_stock(bounds)`` and enlarge containment if no stock-clear boundary route
-is available.
+Rapids connect the containment boundary to clearance and may cross the original
+stock envelope. Users must assess remaining stock before machining. Supply
+physical stock with ``add_stock(bounds)`` for initial clearance positioning.

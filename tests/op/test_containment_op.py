@@ -71,13 +71,14 @@ def test_roughing_reaches_taper_below_old_scan_endpoint():
 
 @pytest.mark.parametrize("operation_type", [FaceOP, RoughOP, ProfileOP, GrooveOP, PartoffOP, BoreOP])
 @pytest.mark.parametrize("sign", [1, -1])
-def test_every_operation_contains_all_feeds(operation_type, sign):
+@pytest.mark.parametrize("stock_radius", [12, 20])
+def test_every_operation_contains_all_feeds(operation_type, sign, stock_radius):
     operation = operation_type()
     operation.setParams({"pass_offset": 1, "finish_passes": 2, "clearance": 1})
     if operation_type is GrooveOP:
         operation.setParams({"finish_pass_offset": 0.1})
     operation.add_containment(BoundBox(Point(0, -25), Point(sign * 15, 3)))
-    operation.add_stock(BoundBox(Point(0, -25), Point(sign * 12, 1)))
+    operation.add_stock(BoundBox(Point(0, -25), Point(sign * stock_radius, 1)))
     vertices = [(10, 0), (10, -20)] if operation_type is BoreOP else [
         (0, 0), (10, 0), (10, -20), (0, -20)]
     operation.addPartSegments([Segment(Point(sign * x, z), Point(sign * u, v))

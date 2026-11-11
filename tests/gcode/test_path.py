@@ -47,14 +47,12 @@ class test_Path(unittest.TestCase):
         self.assertEqual([command.to_string() for command in self.path.commands],
                          [command.to_string() for command in explicit.commands])
 
-    def test_contained_feeds_and_stock_safe_rapids(self):
+    def test_contained_feeds_and_rapids_outside_containment(self):
         self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 4)))
         self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
         self.path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True,
                                    contain_feeds=True)
         moves = self.path.commands[1:]
-        tool = self.operation.tool.get_segmentgroup().boundbox()
-        stock = self.operation.stock
         limits = self.operation.containment
         for previous, current in zip(moves, moves[1:]):
             start, end = previous.getParams(), current.getParams()
@@ -64,17 +62,26 @@ class test_Path(unittest.TestCase):
                     self.assertTrue(limits.ZMin <= position['Z'] <= limits.ZMax)
             else:
                 self.assertTrue(
-                    min(start['X'], end['X']) + tool.XMin >= stock.XMax - 1e-5
-                    or min(start['Z'], end['Z']) + tool.ZMin >= stock.ZMax - 1e-5
-                    or max(start['Z'], end['Z']) + tool.ZMax <= stock.ZMin + 1e-5)
+                    min(start['X'], end['X']) >= limits.XMax - 1e-5
+                    or min(start['Z'], end['Z']) >= limits.ZMax - 1e-5
+                    or max(start['Z'], end['Z']) <= limits.ZMin + 1e-5)
         self.assertEqual(moves[2].getParams()['Z'], limits.ZMax)
 
-    def test_containment_inside_stock_rejects_outside_feed_entry_atomically(self):
+    def test_containment_inside_stock_allows_user_assessed_access(self):
         self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
-        before = list(self.path.commands)
-        with self.assertRaisesRegex(ValueError, "Enlarge containment"):
-            self.path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True)
-        self.assertEqual(self.path.commands, before)
+        for direction in RoutingDirection:
+            with self.subTest(direction=direction):
+                path = Path()
+                path.fromSegmentGroup(self.operation, self.axial_passes(),
+                                      protect_part=True, direction=direction)
+                self.assertGreater(len(path.commands), 1)
+                for previous, current in zip(path.commands[1:], path.commands[2:]):
+                    if current.get_movement() == 'G1':
+                        for command in (previous, current):
+                            position = command.getParams()
+                            self.assertTrue(0 <= position['X'] <= 12)
+                            self.assertTrue(-20 <= position['Z'] <= 1)
+                self.assertTrue(self.sweep.called)
 
     def test_radial_feed_entry_rejects_full_insert_collision_atomically(self):
         self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
@@ -104,7 +111,7 @@ class test_Path(unittest.TestCase):
         self.operation.add_containment(BoundBox(Point(0, -22), Point(15, 1)))
         self.operation.add_stock(BoundBox(Point(0, -20), Point(12, 1)))
         self.path.fromSegmentGroup(self.operation, self.axial_passes(), protect_part=True,
-                                   contain_feeds=True)
+                                   contain_feeds=True, direction=RoutingDirection.RADIAL)
         self.assertEqual(self.path.commands[3].getParams()['X'], 15)
 
     def test_roughing_rapids_move_one_axis_at_a_time(self):
@@ -230,14 +237,16 @@ class test_Path(unittest.TestCase):
             if current.get_movement() == 'G1' and b['X'] > a['X']:
                 self.fail("Automatic radial cut must not reverse along itself")
 
-    def test_withdrawal_without_stock_clear_boundary_fails_atomically(self):
+    def test_withdrawal_inside_original_stock_reaches_containment_boundary(self):
         self.operation.add_containment(BoundBox(Point(0, -20), Point(19.9487, 1.4)))
         self.operation.add_stock(BoundBox(Point(0, -20), Point(20, 1)))
         passes = SegmentGroup()
         passes.addSegment(Segment(Point(19, 1.4), Point(19, -20)))
-        with self.assertRaisesRegex(ValueError, "Cannot retract.*containment"):
-            self.path.fromSegmentGroup(self.operation, passes, protect_part=True)
-        self.assertEqual(len(self.path.commands), 1)
+        self.path.fromSegmentGroup(self.operation, passes, protect_part=True)
+        withdrawal = next(command for command in reversed(self.path.commands)
+                          if command.get_movement() == 'G1')
+        self.assertAlmostEqual(withdrawal.getParams()['X'], self.operation.containment.XMax)
+        self.assertEqual(self.path.commands[-1].get_movement(), 'G0')
 
     def test_auto_prefers_cut_aligned_boundary_entry(self):
         self.route(RoutingDirection.AUTO)
@@ -400,15 +409,15 @@ class test_Path(unittest.TestCase):
                                   direction=RoutingDirection.RADIAL, radial_clearance=15.4)
         self.assertEqual(len(path.commands), 1)
 
-    def test_local_rapid_outside_prepared_region_is_rejected(self):
+    def test_local_rapid_to_boundary_inside_original_stock_is_allowed(self):
         self.operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
         group = SegmentGroup()
         group.addSegment(Segment(Point(12, -20), Point(10.5, -20)))
         path = Path()
-        with self.assertRaisesRegex(ValueError, 'Cannot approach.*containment'):
-            path.fromSegmentGroup(self.operation, group, protect_part=True,
-                                  direction=RoutingDirection.RADIAL, radial_clearance=15.5)
-        self.assertEqual(len(path.commands), 1)
+        path.fromSegmentGroup(self.operation, group, protect_part=True,
+                              direction=RoutingDirection.RADIAL, radial_clearance=15.5)
+        self.assertGreater(len(path.commands), 1)
+        self.assertTrue(self.sweep.called)
 
     def test_reversed_arc_uses_new_start_and_exchanges_g2_g3(self):
         self.operation.add_containment(BoundBox(Point(0, -20), Point(16, 3)))

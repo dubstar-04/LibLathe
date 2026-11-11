@@ -59,12 +59,13 @@ to cover the reference-space lower Z limit, including a two-sample (0.02 mm)
 margin. This does not enlarge cutting containment or change the native API;
 the generated passes still use their operation's cutting limits.
 
-External operations require a stock-clear route between clearance and the
-containment boundary. Set the physical stock separately with ``add_stock(bounds)``;
-without it the model's bounding box is used. If a valid boundary entry or exit
-cannot be found, generation fails without publishing a partial path. Enlarge
-containment to include a stock-clear entry and withdrawal rather than replacing
-a stock-crossing feed with a rapid.
+External operations rapid to and from the tool-reference containment boundary,
+even when it lies inside the original stock. Users must evaluate these transfers
+against remaining stock before machining; the remaining-stock preview is advisory,
+not automatic route approval. Set physical stock with ``add_stock(bounds)`` to
+choose initial clearance outside its envelope; otherwise model bounds are used.
+Protected routes retain full-insert checks against the finished part. If no valid
+entry or withdrawal exists, generation fails without publishing a partial path.
 
 Grooving can use a prepared radial envelope within the selected Z range, with
 the complete insert kept clear of the model. This is not a rest-stock simulation.

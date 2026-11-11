@@ -65,7 +65,7 @@ class Path:
     def fromSegmentGroup(self, operation, segmentGroup, *, protect_part=False,
                          direction=RoutingDirection.AUTO, radial_clearance=None,
                          return_to_clearance=False, contain_feeds=True):
-        """Route rapids outside original stock and feed through approach/escape moves.
+        """Route rapids outside containment and feed through approach/escape moves.
 
         Profile and roughing callers certify the added feeds against the part.
         Facing and parting may intentionally cut that region.
@@ -74,11 +74,11 @@ class Path:
         returns to the outside-stock corner between passes.
         Forced directions never fall back to another axis and reposition along
         their clearance plane, visiting the corner only at the start of the path.
-        Local radial clearance uses prepared stock inside the selected Z range
-        and actual stock elsewhere; all rapid transfers are certified.
+        Local radial clearance uses a prepared radial repositioning plane.
         All feeds, including approach and withdrawal, stay inside tool-reference
-        containment. Rapids must clear physical stock (or the model envelope
-        when stock is not supplied). Missing boundary access is an error.
+        containment. Rapids may cross original stock outside containment;
+        the user must evaluate remaining stock before machining. Protected
+        routes still certify full-insert sweeps against the finished part.
         """
 
         if not isinstance(direction, RoutingDirection):
@@ -140,18 +140,10 @@ class Path:
             x_clear = radial_clearance
         commands = []
 
-        def clears_stock(start, end):
-            stock = operation.stock if operation.stock is not None else part_bounds
-            radial_limit = stock.XMax
-            if radial_clearance is not None:
-                low = min(start.Z, end.Z) + tool_bounds.ZMin
-                high = max(start.Z, end.Z) + tool_bounds.ZMax
-                if low >= limits.ZMin - 1e-5 and high <= limits.ZMax + 1e-5:
-                    stock = limits
-                    radial_limit = limits.XMax + tool_bounds.XMin
-            return (min(start.X, end.X) + tool_bounds.XMin >= radial_limit - 1e-5
-                    or min(start.Z, end.Z) + tool_bounds.ZMin >= stock.ZMax - 1e-5
-                    or max(start.Z, end.Z) + tool_bounds.ZMax <= stock.ZMin + 1e-5)
+        def clears_containment(start, end):
+            return (min(start.X, end.X) >= limits.XMax - 1e-5
+                    or min(start.Z, end.Z) >= limits.ZMax - 1e-5
+                    or max(start.Z, end.Z) <= limits.ZMin + 1e-5)
 
         def emit(movement, point):
             previous = commands[-1] if commands else self.commands[-1]
@@ -164,10 +156,8 @@ class Path:
                                 and limits.ZMin - 1e-5 <= endpoint.Z <= limits.ZMax + 1e-5):
                             raise ValueError("Feed move is outside containment")
                 elif movement == 'G0':
-                    if not clears_stock(start, point):
-                        raise ValueError("Rapid transfer crosses stock outside the prepared groove region"
-                                         if radial_clearance is not None else
-                                         "Rapid transfer crosses stock")
+                    if not clears_containment(start, point):
+                        raise ValueError("Rapid transfer crosses cutting containment")
                     clear_feed(start, point)
             commands.append(Command(movement, {'X': point.X, 'Z': point.Z, 'F': operation.hfeed}))
 
@@ -212,7 +202,7 @@ class Path:
                 if direction == RoutingDirection.RADIAL:
                     corners = tuple(reversed(corners))
                 for corner in corners:
-                    if not (clears_stock(position, corner) and clears_stock(corner, entry)):
+                    if not (clears_containment(position, corner) and clears_containment(corner, entry)):
                         continue
                     try:
                         clear_feed(position, corner)
@@ -226,8 +216,7 @@ class Path:
                 emit('G0', entry)
                 emit('G1', target)
                 return
-            raise ValueError("Cannot approach within containment from stock clearance. "
-                             "Enlarge containment to include a stock-clear feed entry.")
+            raise ValueError("Cannot approach containment without intersecting the part.")
 
         def retract(segment):
             origin = segment.end
@@ -254,7 +243,8 @@ class Path:
                 try:
                     clear_feed(origin, exit_point)
                     for corner in corners:
-                        if not (clears_stock(exit_point, corner) and clears_stock(corner, destination)):
+                        if not (clears_containment(exit_point, corner)
+                                and clears_containment(corner, destination)):
                             continue
                         try:
                             clear_feed(exit_point, corner)
@@ -274,8 +264,7 @@ class Path:
                     emit('G0', point)
                     exit_point = point
                 return
-            raise ValueError("Cannot retract within containment to stock clearance. "
-                             "Enlarge containment to include a stock-clear feed withdrawal.")
+            raise ValueError("Cannot retract from containment without intersecting the part.")
 
         # forced directions stay on their clearance plane, so the corner is only needed to enter the path
         if direction == RoutingDirection.AUTO or len(self.commands) == 1:

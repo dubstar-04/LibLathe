@@ -15,9 +15,10 @@ Passes are spaced by ``pass_offset`` along Z, from the end of the part plus
 ``stock_to_leave`` up to the containment's maximum Z, and are cut starting
 from that limit.
 No pass extends below containment's minimum Z. All entry and withdrawal feeds
-also stay inside containment; only stock-clear rapids may reach clearance outside
-it. Set physical stock separately with ``add_stock(bounds)`` and enlarge
-containment if it provides no stock-clear boundary entry or exit.
+also stay inside containment. Rapids connect its boundary to clearance, including
+through the original stock envelope. Users must assess remaining stock before
+machining. Set physical stock separately with ``add_stock(bounds)`` for initial
+clearance positioning.
 
 Set machining limits with ``add_containment(bounds)`` or
 ``add_containment_from_limits(xmin, xmax, zmin, zmax)``.

@@ -51,11 +51,11 @@ Retracts are exempt from the inward cutting-direction rule.
 Use ``add_containment(bounds)`` or
 ``add_containment_from_limits(xmin, xmax, zmin, zmax)`` to set the machining limits.
 With ``add_stock(bounds)``, grooving uses the physical stock envelope for local
-radial clearance and safe global entry/exit. Diameter containment assumes
+radial clearance and global entry/exit clearance positions. Diameter containment assumes
 prepared stock within the selected Z range; the complete model remains
 protected. All feeds, including approaches and withdrawals, stay inside the
 tool-reference containment. Radial rapids connect its boundary to clearance;
-they cannot replace feeds through unprepared material. The prepared radial
-boundary accounts for the insert's reference offset. Without optional stock,
-the model's bounding box is used for global transfers. If no safe containment
-boundary entry or exit exists, generation fails and requests larger containment.
+they may cross the original stock envelope outside containment. Users must
+assess remaining stock before machining. Without optional stock, model bounds
+are used for global clearance positions. Part-obstructed containment boundary
+entries or exits fail explicitly.

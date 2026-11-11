@@ -58,14 +58,15 @@ no tolerance, scan-grid or sweep-validation changes accompany this optimization.
 `containment` defines the operation's machining limits, set through
 `add_containment(bounds)` or `add_containment_from_limits(xmin, xmax, zmin, zmax)`.
 `stock` is the optional physical material envelope, set through
-`add_stock(bounds)` for safe clearance routing. These are separate bounds:
-restricting containment must not shrink the stock envelope used for transfers.
+`add_stock(bounds)` for initial clearance positioning. These are separate bounds.
 All G1/G2/G3 moves, including approaches and withdrawals, stay inside
-tool-reference containment. Stock-clear G0 moves may leave it for clearance.
-The external router rejects missing stock-clear boundary routes transactionally;
-it never converts a stock-crossing outside feed into a rapid. Without explicit
-stock it uses the model's bounds. Grooving retains its prepared radial-envelope
-assumption and full-model sweep checks. Boring uses separate geometric access
+tool-reference containment. G0 transfers stay outside its interior, but may
+cross the original stock envelope to reach its boundary. Users evaluate remaining
+stock before machining; advisory previews do not approve routes. Protected
+routes retain full-insert finished-part sweep checks, and missing boundary access
+fails transactionally. Without explicit stock, initial clearance uses model bounds.
+Grooving retains its local radial clearance and full-model sweep checks.
+Boring uses separate geometric access
 routing and does not claim stock-opening or holder clearance certification.
 
 All operations inherit `pass_offset` from the base class. It is radial for

@@ -353,9 +353,9 @@ class test_ProfileOP(unittest.TestCase):
                             self.assertTrue(abs(a['X'] - b['X']) < 1e-4
                                             or abs(a['Z'] - b['Z']) < 1e-4)
                             self.assertTrue(
-                                min(sign * a['X'], sign * b['X']) >= 12 - 1e-4
-                                or min(a['Z'], b['Z']) + origin >= -1e-4
-                                or max(a['Z'], b['Z']) + origin + 2 <= -20 + 1e-4)
+                                min(sign * a['X'], sign * b['X']) >= 14 - 1e-4
+                                or min(a['Z'], b['Z']) >= -5 - 1e-4
+                                or max(a['Z'], b['Z']) <= -15 + 1e-4)
                         elif current.get_movement() == 'G1':
                             if sign * b['X'] > 14 + 1e-4:
                                 self.assertGreater(sign * b['X'], sign * a['X'])
