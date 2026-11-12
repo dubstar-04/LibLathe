@@ -1,4 +1,4 @@
-"""Straight single-start external threading with LinuxCNC G33 passes."""
+"""Straight single-start external threading with spindle-synchronized G33 passes."""
 
 import math
 from numbers import Real

@@ -174,7 +174,7 @@ See [scope and limitations](docs/source/pages/operations/bore.rst).
 ## External threading
 
 `ThreadOP` reuses the base lifecycle and signed-side dispatch, but emits explicit
-LinuxCNC G33 strokes rather than using the ordinary feed router. Radial passes
+spindle-synchronized G33 strokes rather than using the ordinary feed router. Radial passes
 share a synchronized Z start/end and K lead; spring passes repeat the final depth.
 G18/G90/G8 make the generated radius-coordinate program explicit. Spindle settings
 and synchronization hardware remain the caller's responsibility.

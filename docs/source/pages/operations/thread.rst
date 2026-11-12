@@ -1,8 +1,8 @@
-External threading (LinuxCNC)
-=============================
+External threading
+==================
 
 ``liblathe.op.thread.ThreadOP`` generates straight, single-start external
-threads using explicit LinuxCNC ``G33`` passes. Infeed is radial, from the
+threads using explicit spindle-synchronized ``G33`` passes. Infeed is radial, from the
 crest towards the root; every pass traverses the same ZMax-to-ZMin stroke.
 Tapered threads, multi-start threads, compound infeed and ``G76`` cycles are
 not implemented.
@@ -68,8 +68,8 @@ external operations, original-stock access and remaining-stock preparation
 remain the user's responsibility. Checks do not certify holders, fixtures,
 machine travel or the first move from an unknown machine position.
 
-LinuxCNC setup
---------------
+Machine setup
+-------------
 
 Output explicitly selects ``G18`` (XZ), ``G90`` (absolute) and ``G8`` (radius
 mode); these modes remain active afterwards. The caller selects units, work and
@@ -78,15 +78,12 @@ with controller cutter/nose compensation disabled (``G40``).
 Do not pass the resulting X radii through a diameter conversion while retaining
 ``G8``. No spindle, tool-change or program-end commands are added by the operation.
 
-The operation uses LinuxCNC's default spindle 0. Configure its encoder/index and
-at-speed signals for synchronized motion. Every pass uses the same start Z and
+The operation uses the controller's default spindle. Configure its encoder/index
+and at-speed signals for synchronized motion. Every pass uses the same start Z and
 waits for spindle synchronization;
 thread hand depends on the spindle direction and the negative-Z cutting direction.
 The caller must validate spindle speed, axis velocity/acceleration and the actual
 machine setup. An offline interpreter check cannot verify these.
-
-See the `LinuxCNC G33 specification
-<https://linuxcnc.org/docs/stable/html/gcode/g-code.html#gcode:g33>`_.
 
 Example
 -------

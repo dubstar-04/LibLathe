@@ -3,7 +3,7 @@ Lathe Operations
 
 The current operation modules provide facing, roughing, profiling, grooving
 and parting, plus experimental internal clearing/finishing ``BoreOP``,
-straight centreline ``DrillOP`` and LinuxCNC external ``ThreadOP``.
+straight centreline ``DrillOP`` and external ``ThreadOP``.
 Grooving is external and radial only. Threading currently supports straight,
 single-start threads with radial infeed. Chamfering is not a separate operation. In
 particular, selecting the Far tool side does not enable internal boring.
