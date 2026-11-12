@@ -101,7 +101,13 @@ inline Polygon clip(const Polygon& polygon, Point a, Point b, bool inside) {
         const bool keepAfter = inside ? after >= 0 : after <= 0;
         if (keepBefore != keepAfter) {
             const double t = static_cast<double>(before / (before - after));
-            result.push_back(previous + (current - previous) * t);
+            Point intersection = previous + (current - previous) * t;
+            // Preserve exact axis-aligned boundaries despite interpolation rounding.
+            if (a.x == b.x)
+                intersection.x = a.x;
+            if (a.z == b.z)
+                intersection.z = a.z;
+            result.push_back(intersection);
         }
         if (keepAfter)
             result.push_back(current);

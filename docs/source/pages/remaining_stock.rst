@@ -100,6 +100,9 @@ The shared C++14 core in ``liblathe/base/stockstate.h`` represents stock as
 disjoint convex polygon cells. A straight convex insert sweep is the convex hull
 of its endpoint positions. Half-plane subtraction partitions intersected cells;
 bounds and intersection rejection avoid unnecessary fragmentation.
+Axis-aligned clipping preserves the exact boundary coordinate rather than its
+interpolated approximation, avoiding artificial slivers from floating-point
+contraction.
 
 - Initial stock and inserts must be convex. Concave inputs and imported stock
   holes are unsupported; subtraction can produce holes and disconnected stock.

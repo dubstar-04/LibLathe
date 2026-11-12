@@ -38,6 +38,17 @@ def test_preview_does_not_fill_nonconvex_input():
         StockPreview([(0, 0), (4, 0), (1, 1), (0, 4)])
 
 
+def test_axis_aligned_clipping_preserves_exact_boundaries():
+    state = StockPreview([(0, 0), (40, 0), (40, 40), (0, 40)])
+    tool = [(0, 0), (1, 0), (1, 1), (0, 1)]
+    for index, (x, z) in enumerate(((2, 8), (2, 2), (5, 8)), start=1):
+        state.remove_feeds(tool, [(x, z, x, z)])
+        assert state.area == 1600 - index
+        assert state.uncertain_retentions == 0
+        assert all(x == int(x) and z == int(z)
+                   for polygon in state.polygons() for x, z in polygon)
+
+
 def test_shared_preview_threaded_removals_and_readers():
     state = StockPreview([(0, 0), (40, 0), (40, 40), (0, 40)])
     tool = [(0, 0), (1, 0), (1, 1), (0, 1)]
