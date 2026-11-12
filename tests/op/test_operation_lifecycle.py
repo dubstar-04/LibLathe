@@ -14,12 +14,14 @@ from liblathe.op.groove import GrooveOP
 from liblathe.op.partoff import PartoffOP
 from liblathe.op.profile import ProfileOP
 from liblathe.op.rough import RoughOP
+from liblathe.op.thread import ThreadOP
 from liblathe.tool.tool import Tool, ToolSide
 from tests.op.test_bore_op import operation as bore
 from tests.op.test_drill_op import operation as drill
+from tests.op.test_thread_op import operation as thread
 
 
-OPERATIONS = (FaceOP, RoughOP, ProfileOP, GrooveOP, PartoffOP, BoreOP, DrillOP)
+OPERATIONS = (FaceOP, RoughOP, ProfileOP, GrooveOP, PartoffOP, BoreOP, DrillOP, ThreadOP)
 
 
 def operation(operation_type, sign=1):
@@ -27,6 +29,8 @@ def operation(operation_type, sign=1):
         return drill()
     if operation_type is BoreOP:
         return bore(sign=sign)
+    if operation_type is ThreadOP:
+        return thread(sign=sign)
     op = operation_type()
     op.pass_offset = 1
     op.finish_passes = 2
@@ -62,7 +66,7 @@ def test_invalid_inputs_clear_both_path_sets(operation_type, method, field, valu
     assert op.clearing_paths == []
 
 
-@pytest.mark.parametrize("operation_type", [FaceOP, RoughOP, ProfileOP, GrooveOP, BoreOP])
+@pytest.mark.parametrize("operation_type", [FaceOP, RoughOP, ProfileOP, GrooveOP, BoreOP, ThreadOP])
 @pytest.mark.parametrize("step", [0, -1, math.nan, math.inf])
 def test_used_increments_are_validated_before_geometry(operation_type, step):
     op = operation(operation_type)

@@ -44,6 +44,10 @@ rapid moves. Track position through both rapids and feeds when extracting moves
 from generated commands. Resolve modal coordinates and units first, and reject
 unsupported motion rather than silently ignoring it. Arc motion is not supported.
 
+Threading ``G33`` passes are not axisymmetric material removal. Do not pass them
+to ``remove_feeds`` as ordinary revolved sweeps: that would erase the material
+between thread turns. Thread geometry is not represented by this preview.
+
 Plotting
 --------
 

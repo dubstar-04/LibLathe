@@ -59,7 +59,7 @@ no tolerance, scan-grid or sweep-validation changes accompany this optimization.
 `add_containment(bounds)` or `add_containment_from_limits(xmin, xmax, zmin, zmax)`.
 `stock` is the optional physical material envelope, set through
 `add_stock(bounds)` for initial clearance positioning. These are separate bounds.
-All G1/G2/G3 moves, including approaches and withdrawals, stay inside
+All G1/G2/G3/G33 moves, including approaches and withdrawals, stay inside
 tool-reference containment. G0 transfers stay outside its interior, but may
 cross the original stock envelope to reach its boundary. Users evaluate remaining
 stock before machining; advisory previews do not approve routes. Protected
@@ -70,7 +70,7 @@ Boring uses separate geometric access
 routing and does not claim stock-opening or holder clearance certification.
 
 All operations inherit `pass_offset` from the base class. It is radial for
-roughing/grooving, axial for facing, normal to the contour for profiling and
+roughing/grooving/threading, axial for facing, normal to the contour for profiling and
 unused for parting. `cut_direction` is also stored and reported by `BaseOP`,
 defaulting to `CutDirection.RADIAL` (`liblathe.op.base`); currently only boring uses
 it to select X/Z clearing. Use `CutDirection.AXIAL` for axial clearing, not raw strings.
@@ -170,6 +170,23 @@ front clearance before returning inward. Axial clearing skips the inner access
 lane itself, retaining space for inward disengagement. Both cutting and added
 feeds are checked against the target material, not starting stock.
 See [scope and limitations](docs/source/pages/operations/bore.rst).
+
+## External threading
+
+`ThreadOP` reuses the base lifecycle and signed-side dispatch, but emits explicit
+LinuxCNC G33 strokes rather than using the ordinary feed router. Radial passes
+share a synchronized Z start/end and K lead; spring passes repeat the final depth.
+G18/G90/G8 make the generated radius-coordinate program explicit. Spindle settings
+and synchronization hardware remain the caller's responsibility.
+
+Containment specifies tool-reference crest/root radii and the complete synchronized
+stroke, including prepared run-in/out space. Full-insert checks certify the deepest
+radial entry against the unthreaded part, and the deepest pass and withdrawal against
+the part with the containment thread band removed; the threading cuts intentionally
+enter the unthreaded model and do not claim final-thread surface certification.
+The ordinary XZ plot displays pass projections only. Axisymmetric stock subtraction
+cannot represent helical threads and must not consume G33 as ordinary turning feeds.
+See [threading setup and limitations](docs/source/pages/operations/thread.rst).
 
 ## Advisory remaining stock
 

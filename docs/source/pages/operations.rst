@@ -2,10 +2,10 @@ Lathe Operations
 ================
 
 The current operation modules provide facing, roughing, profiling, grooving
-and parting, plus experimental internal clearing/finishing ``BoreOP`` and
-straight centreline ``DrillOP``.
-Grooving is external and radial only. Chamfering
-and threading are not separate supported operation classes. In
+and parting, plus experimental internal clearing/finishing ``BoreOP``,
+straight centreline ``DrillOP`` and LinuxCNC external ``ThreadOP``.
+Grooving is external and radial only. Threading currently supports straight,
+single-start threads with radial infeed. Chamfering is not a separate operation. In
 particular, selecting the Far tool side does not enable internal boring.
 
 .. toctree::
@@ -18,6 +18,7 @@ particular, selecting the Far tool side does not enable internal boring.
    operations/partoff
    operations/bore
    operations/drill
+   operations/thread
 
 Insert-based operations inherit the signed-side dispatch in ``BaseOP.getGCode()``.
 Supply matching physical tool, stock and part geometry; Far-side inputs and
@@ -38,7 +39,8 @@ increments and non-negative finite allowances where used. Finishing counts must
 be non-negative integers where used. Unused settings retain their existing
 meaning: parting, for example, ignores ``pass_offset``. Feed rates are passed
 through unchanged. Bore and drill retain their stricter positive-clearance
-requirements.
+requirements. Threading also requires positive clearance and uses pitch rather
+than F-word feeds; its supported parameters are listed in :doc:`operations/thread`.
 
 ``setParams`` accepts the parameters reported by ``getParams`` plus the existing
 ``leadin_angle`` and ``leadout_angle`` settings. It rejects unsupported names
@@ -50,7 +52,7 @@ Containment and clearance
 -------------------------
 
 Containment is a rectangle for the programmed **tool reference**, not the whole
-insert footprint or the physical stock. Every feed move (G1/G2/G3), including
+insert footprint or the physical stock. Every feed move (G1/G2/G3/G33), including
 entry, lead-in, lead-out and withdrawal, stays inside it. Only rapid moves may
 leave containment to reach clearance.
 

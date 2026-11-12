@@ -68,6 +68,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for design details and trade-offs, and
 the [tooling manual](docs/source/pages/liblathe_tooling.rst) for coordinate
 conventions and tool geometry.
 
+Straight, single-start external threading is available through
+[`ThreadOP`](docs/source/pages/operations/thread.rst), using LinuxCNC G33 passes,
+radial infeed and optional spring passes. It requires configured spindle
+synchronization and prepared entry/exit clearance. FreeCAD integration and
+threaded-stock simulation are not included.
+
 ## Remaining-stock guide
 
 An advisory 2D preview shows predicted material remaining after generated cuts.
