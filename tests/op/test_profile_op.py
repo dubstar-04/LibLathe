@@ -1,6 +1,7 @@
 import unittest
 
-from liblathe.op.profile import ProfileDirection, ProfileOP
+from liblathe.op.base import Direction
+from liblathe.op.profile import ProfileOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
@@ -150,7 +151,7 @@ class test_ProfileOP(unittest.TestCase):
             self.assertGreater(lead.start.Z, lead.end.Z)
 
     def test_positive_z_reverses_profile_strokes(self):
-        self.op.direction = ProfileDirection.POSITIVE_Z
+        self.op.direction = Direction.POSITIVE_Z
 
         self.assertTrue(self.op.getGCode())
         self.assertTrue(any(abs(segment.start.X - segment.end.X) < 1e-5
@@ -159,7 +160,7 @@ class test_ProfileOP(unittest.TestCase):
                             for segment in group.getSegments()))
 
     def test_inward_finishing_splits_and_orients_every_stroke(self):
-        self.op.direction = ProfileDirection.RADIAL
+        self.op.direction = Direction.RADIAL
 
         self.assertTrue(self.op.getGCode())
         segments = [segment for group in self.op.tool_paths for segment in group.getSegments()]
@@ -385,7 +386,7 @@ class test_ProfileOP(unittest.TestCase):
 
     def test_radial_grooving_repositions_just_above_the_containment(self):
         operation = ProfileOP()
-        operation.setParams({"direction": ProfileDirection.RADIAL, "allow_grooving": True,
+        operation.setParams({"direction": Direction.RADIAL, "allow_grooving": True,
                              "pass_offset": 1, "finish_passes": 2, "clearance": 1})
         operation.add_containment(BoundBox(Point(8, -22), Point(18, -8)))
         operation.add_stock(BoundBox(Point(0, -40), Point(40, 0)))

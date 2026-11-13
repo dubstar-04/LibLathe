@@ -13,9 +13,9 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.debug.debug import Debug
 from liblathe.debug.plot import Plot
-from liblathe.op.base import MachiningMode
-from liblathe.op.profile import ProfileDirection, ProfileOP
-from liblathe.op.rough import RoughDirection, RoughOP
+from liblathe.op.base import Direction, MachiningMode
+from liblathe.op.profile import ProfileOP
+from liblathe.op.rough import RoughOP
 from liblathe.tool.tool import Tool
 
 parser = argparse.ArgumentParser(description=__doc__)
@@ -40,7 +40,7 @@ tool.set_tool_from_segments([
 rough = RoughOP()
 rough.setParams({
     "mode": MachiningMode.INTERNAL,
-    "direction": RoughDirection.RADIAL,
+    "direction": Direction.RADIAL,
     "allow_grooving": True,
     "pass_offset": 0.5,
     "stock_to_leave": 0.2,
@@ -55,7 +55,7 @@ rough_code = rough.getGCode()
 profile = ProfileOP()
 profile.setParams({
     "mode": MachiningMode.INTERNAL,
-    "direction": ProfileDirection.RADIAL,
+    "direction": Direction.RADIAL,
     "pass_offset": 0.5,
     "finish_passes": 3,
     "clearance": 2,

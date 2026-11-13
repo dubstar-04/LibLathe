@@ -2,7 +2,8 @@ import unittest
 import math
 from unittest.mock import Mock
 
-from liblathe.op.rough import RoughDirection, RoughOP
+from liblathe.op.base import Direction
+from liblathe.op.rough import RoughOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
@@ -136,8 +137,8 @@ class test_RoughOP(unittest.TestCase):
                     self.op.tool.get_segmentgroup(), inner.start, inner.end)
 
     def test_axial_direction_controls_pass_orientation(self):
-        for direction, sign in ((RoughDirection.NEGATIVE_Z, -1),
-                                (RoughDirection.POSITIVE_Z, 1)):
+        for direction, sign in ((Direction.NEGATIVE_Z, -1),
+                                (Direction.POSITIVE_Z, 1)):
             with self.subTest(direction=direction):
                 self.op.direction = direction
                 self.assertTrue(self.op.getGCode())
@@ -151,7 +152,7 @@ class test_RoughOP(unittest.TestCase):
 
     def test_radial_direction_plunges_full_strokes_into_grooves(self):
         operation = RoughOP()
-        operation.setParams({"direction": RoughDirection.RADIAL,
+        operation.setParams({"direction": Direction.RADIAL,
                              "allow_grooving": True, "pass_offset": 1.5})
         operation.add_containment(BoundBox(Point(0, -30), Point(18, 0)))
         vertices = [(0, 0), (15, 0), (15, -10), (10, -10), (10, -20),
@@ -184,7 +185,7 @@ class test_RoughOP(unittest.TestCase):
 
     def test_radial_direction_faces_stock_in_front_of_the_part(self):
         operation = RoughOP()
-        operation.setParams({"direction": RoughDirection.RADIAL, "pass_offset": 1.0})
+        operation.setParams({"direction": Direction.RADIAL, "pass_offset": 1.0})
         vertices = [(0, 0), (10, 0), (10, -30), (0, -30)]
         operation.addPartSegments([Segment(Point(*a), Point(*b))
                                    for a, b in zip(vertices, vertices[1:])])
@@ -220,7 +221,7 @@ class test_RoughOP(unittest.TestCase):
         for stock_radius, tool_x_shift in ((30, 0), (45, -0.6), (None, 0)):
             with self.subTest(stock_radius=stock_radius, tool_x_shift=tool_x_shift):
                 operation = RoughOP()
-                operation.setParams({"direction": RoughDirection.RADIAL,
+                operation.setParams({"direction": Direction.RADIAL,
                                      "allow_grooving": True, "pass_offset": 2,
                                      "stock_to_leave": 0.25, "clearance": 1})
                 operation.add_containment(BoundBox(Point(8, -20), Point(18, -8)))
@@ -281,7 +282,7 @@ class test_RoughOP(unittest.TestCase):
 
     def test_radial_grooving_reaches_the_floor_against_both_groove_walls(self):
         operation = RoughOP()
-        operation.setParams({"direction": RoughDirection.RADIAL,
+        operation.setParams({"direction": Direction.RADIAL,
                              "allow_grooving": True, "pass_offset": 1})
         operation.add_containment(BoundBox(Point(0, 25), Point(30, 30)))
         vertices = [(0, 50), (30, 50), (30, 30), (25, 30), (25, 25),
@@ -305,7 +306,7 @@ class test_RoughOP(unittest.TestCase):
 
     def test_radial_grooving_rejects_a_blocked_local_clearance_lane(self):
         operation = RoughOP()
-        operation.setParams({"direction": RoughDirection.RADIAL,
+        operation.setParams({"direction": Direction.RADIAL,
                              "allow_grooving": True, "pass_offset": 2, "clearance": 1})
         operation.add_containment(BoundBox(Point(0, -22), Point(18, -8)))
         operation.add_stock(BoundBox(Point(0, -40), Point(30, 0)))

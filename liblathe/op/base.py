@@ -16,6 +16,13 @@ class MachiningMode(Enum):
     INTERNAL = "Internal"
 
 
+class Direction(Enum):
+    """Cutting direction shared by Rough and Profile."""
+    NEGATIVE_Z = "-Z"
+    POSITIVE_Z = "+Z"
+    RADIAL = "Radial"
+
+
 def reflect_x_segments(segments):
     group = SegmentGroup()
     for segment in segments:

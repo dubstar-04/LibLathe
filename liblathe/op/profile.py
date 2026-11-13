@@ -1,6 +1,6 @@
-from enum import Enum
 
 import liblathe.op.base
+from liblathe.op.base import Direction
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
@@ -11,18 +11,12 @@ from liblathe.gcode.path import RoutingDirection
 _OFFSET_RESOLUTION = 0.01
 
 
-class ProfileDirection(Enum):
-    NEGATIVE_Z = "-Z"
-    POSITIVE_Z = "+Z"
-    RADIAL = "Radial"
-
-
 class ProfileOP(liblathe.op.base.BaseOP):
 
     def __init__(self):
         super().__init__()
         self.leadin_angle = 0
-        self.direction = ProfileDirection.NEGATIVE_Z
+        self.direction = Direction.NEGATIVE_Z
 
     def getParams(self):
         return {**super().getParams(), "direction": self.direction, "mode": self.mode}
@@ -63,8 +57,8 @@ class ProfileOP(liblathe.op.base.BaseOP):
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
         self._begin_generation(pass_offset=True, finish_passes=True, allowance=True)
-        if not isinstance(self.direction, ProfileDirection):
-            raise ValueError("Profile direction must be a ProfileDirection enumeration member")
+        if not isinstance(self.direction, Direction):
+            raise ValueError("Profile direction must be a Direction enumeration member")
         tool_paths = []
         profile_contour = self._defeature_profile(self.allow_grooving)
         if self.mode == liblathe.op.base.MachiningMode.INTERNAL:
@@ -82,13 +76,13 @@ class ProfileOP(liblathe.op.base.BaseOP):
         tool = self.tool.get_segmentgroup()
         internal = self.mode == liblathe.op.base.MachiningMode.INTERNAL
         # Internal radial passes retrace the -Z pass from the bore floor out through the mouth.
-        reverse_pass = self.direction == ProfileDirection.RADIAL and internal
-        add_leads = self.direction != ProfileDirection.RADIAL or internal
+        reverse_pass = self.direction == Direction.RADIAL and internal
+        add_leads = self.direction != Direction.RADIAL or internal
         for offset in self._profile_offsets(base_contour):
             for clipped_stroke in self._clip_path(offset):
-                if self.direction == ProfileDirection.RADIAL and not internal:
+                if self.direction == Direction.RADIAL and not internal:
                     strokes = self._inward_strokes(clipped_stroke)
-                elif self.direction == ProfileDirection.POSITIVE_Z:
+                elif self.direction == Direction.POSITIVE_Z:
                     strokes = [clipped_stroke.reversed()]
                 else:
                     strokes = [clipped_stroke]
@@ -97,7 +91,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
                     segment_group = SegmentGroup()
                     segments = stroke.getSegments()
                     if add_leads:
-                        if self.direction == ProfileDirection.POSITIVE_Z:
+                        if self.direction == Direction.POSITIVE_Z:
                             leadin_angle, leadout_angle = self.leadout_angle, self.leadin_angle
                         else:
                             leadin_angle, leadout_angle = self.leadin_angle, self.leadout_angle
@@ -134,7 +128,7 @@ class ProfileOP(liblathe.op.base.BaseOP):
         return result
 
     def generateGCode(self):
-        if self.direction == ProfileDirection.RADIAL:
+        if self.direction == Direction.RADIAL:
             return self._route_paths(reversed(self.tool_paths), direction=RoutingDirection.RADIAL,
                                      radial_clearance=self._grooving_clearance())
         return self._route_paths(reversed(self.tool_paths))

@@ -6,9 +6,9 @@ Roughing
 Rough removes material between the prepared stock and the target profile.
 Direction selects the pass axis:
 
-* ``RoughDirection.NEGATIVE_Z`` and ``POSITIVE_Z`` make axial passes at
+* ``Direction.NEGATIVE_Z`` and ``POSITIVE_Z`` make axial passes at
   successive X stations.
-* ``RoughDirection.RADIAL`` steps along -Z, cutting one full radial stroke
+* ``Direction.RADIAL`` steps along -Z, cutting one full radial stroke
   into the material at each station: toward the axis externally, toward the
   bore wall internally. Station spacing is capped by the tool width,
   and extra stations are added at faces and against both groove walls.
@@ -37,7 +37,7 @@ Set machining limits with ``add_containment(bounds)`` or
 Parameters
 ----------
 
-- ``direction``: a ``RoughDirection`` member; defaults to ``NEGATIVE_Z``.
+- ``direction``: a ``liblathe.op.base.Direction`` member; defaults to ``NEGATIVE_Z``.
 - ``mode``: ``MachiningMode.EXTERNAL`` or ``MachiningMode.INTERNAL``.
 - ``pass_offset``: axial spacing between Radial strokes; for axial directions it is
   the radial spacing between passes.

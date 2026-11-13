@@ -13,9 +13,9 @@ Set machining limits with ``add_containment(bounds)`` or
 Directions
 ----------
 
-* ``ProfileDirection.NEGATIVE_Z`` and ``POSITIVE_Z`` traverse each clipped
+* ``Direction.NEGATIVE_Z`` and ``POSITIVE_Z`` traverse each clipped
   contour in the selected axial direction.
-* ``ProfileDirection.RADIAL`` splits contours at gaps and radial reversals and
+* ``Direction.RADIAL`` splits contours at gaps and radial reversals and
   orients each run toward its floor. In Internal mode it traverses each
   connected bore contour from the bottom toward the mouth, retracing the ``-Z``
   pass and its leads so each pass exits axially through the mouth. With
@@ -26,7 +26,7 @@ Directions
 Parameters
 ----------
 
-- ``direction``: a ``ProfileDirection`` member; defaults to ``NEGATIVE_Z``.
+- ``direction``: a ``liblathe.op.base.Direction`` member; defaults to ``NEGATIVE_Z``.
 - ``mode``: ``MachiningMode.EXTERNAL`` or ``MachiningMode.INTERNAL``.
 - ``finish_passes``: number of profile offsets (no intermediate passes are
   added).

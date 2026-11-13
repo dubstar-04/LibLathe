@@ -11,8 +11,9 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.debug.debug import Debug
 from liblathe.debug.plot import Plot
-from liblathe.op.profile import ProfileDirection, ProfileOP
-from liblathe.op.rough import RoughDirection, RoughOP
+from liblathe.op.base import Direction
+from liblathe.op.profile import ProfileOP
+from liblathe.op.rough import RoughOP
 from liblathe.tool.tool import Tool
 
 vertices = [(0, 0), (15, 0), (15, -10), (10, -10), (10, -20),
@@ -34,7 +35,7 @@ tool.set_tool_from_segments([
 
 rough = RoughOP()
 rough.setParams({
-    "direction": RoughDirection.RADIAL,
+    "direction": Direction.RADIAL,
     "pass_offset": 1.5,
     "allow_grooving": True,
     "stock_to_leave": 0.2,
@@ -48,7 +49,7 @@ rough_code = rough.getGCode()
 
 profile = ProfileOP()
 profile.setParams({
-    "direction": ProfileDirection.RADIAL,
+    "direction": Direction.RADIAL,
     "pass_offset": 0.5,
     "finish_passes": 2,
     "allow_grooving": True,

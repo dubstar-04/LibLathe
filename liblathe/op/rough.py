@@ -1,7 +1,7 @@
 import math
-from enum import Enum
 
 import liblathe.op.base
+from liblathe.op.base import Direction
 from liblathe.base.point import Point
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.segment import Segment
@@ -10,17 +10,11 @@ from liblathe.gcode.path import RoutingDirection
 from liblathe.op.reachable_profile import ReachableProfile
 
 
-class RoughDirection(Enum):
-    NEGATIVE_Z = "-Z"
-    POSITIVE_Z = "+Z"
-    RADIAL = "Radial"
-
-
 class RoughOP(liblathe.op.base.BaseOP):
 
     def __init__(self):
         super().__init__()
-        self.direction = RoughDirection.NEGATIVE_Z
+        self.direction = Direction.NEGATIVE_Z
 
     def getParams(self):
         return {**super().getParams(), "direction": self.direction, "mode": self.mode}
@@ -28,8 +22,8 @@ class RoughOP(liblathe.op.base.BaseOP):
     def generatePath(self):
         """Replace toolpaths on success; leave no published paths on failure."""
         self._begin_generation(pass_offset=True, allowance=True)
-        if not isinstance(self.direction, RoughDirection):
-            raise ValueError("Rough direction must be a RoughDirection enumeration member")
+        if not isinstance(self.direction, Direction):
+            raise ValueError("Rough direction must be a Direction enumeration member")
         tool_paths = []
         defeature_result = self._defeature_profile_with_samples(self.allow_grooving)
         roughing_contour = defeature_result.contour
@@ -40,7 +34,7 @@ class RoughOP(liblathe.op.base.BaseOP):
         # Keep the tool-origin limit reachable from outside the part and leave
         # the requested allowance using the sampled defeature profile.
         profile = ReachableProfile(defeature_result.samples).offset(0.01 + self.stock_to_leave)
-        if self.direction == RoughDirection.RADIAL:
+        if self.direction == Direction.RADIAL:
             tool_paths = self._generate_radial_paths(profile, internal_offset)
         else:
             tool_paths = self._generate_axial_paths(profile, internal_offset)
@@ -69,7 +63,7 @@ class RoughOP(liblathe.op.base.BaseOP):
                 if high_z - low_z < self.pass_offset:
                     continue
 
-                if self.direction == RoughDirection.NEGATIVE_Z:
+                if self.direction == Direction.NEGATIVE_Z:
                     start, end = Point(x_pos, high_z), Point(x_pos, low_z)
                     entry_is_contained = high_z < z_max - 1e-6
                     exit_is_contained = low_z > z_min + 1e-6
@@ -200,7 +194,7 @@ class RoughOP(liblathe.op.base.BaseOP):
         return stations
 
     def generateGCode(self):
-        if self.direction == RoughDirection.RADIAL:
+        if self.direction == Direction.RADIAL:
             return self._route_paths(self.tool_paths, direction=RoutingDirection.RADIAL,
                                      radial_clearance=self._grooving_clearance())
         return self._route_paths(reversed(self.tool_paths))

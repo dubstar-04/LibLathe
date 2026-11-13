@@ -4,9 +4,9 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import StockPreview
-from liblathe.op.base import MachiningMode
-from liblathe.op.profile import ProfileDirection, ProfileOP
-from liblathe.op.rough import RoughDirection, RoughOP
+from liblathe.op.base import Direction, MachiningMode
+from liblathe.op.profile import ProfileOP
+from liblathe.op.rough import RoughOP
 from liblathe.tool.tool import Tool, ToolSide
 
 
@@ -18,7 +18,7 @@ def _contains(snapshot, x, z):
 
 @pytest.mark.parametrize(
     ("operation_type", "direction"),
-    ((ProfileOP, ProfileDirection.RADIAL), (RoughOP, RoughDirection.NEGATIVE_Z)),
+    ((ProfileOP, Direction.RADIAL), (RoughOP, Direction.NEGATIVE_Z)),
 )
 @pytest.mark.parametrize(("sign", "side"), ((1, ToolSide.NEAR), (-1, ToolSide.FAR)))
 def test_internal_frame_routes_from_the_axis_side(operation_type, direction, sign, side):
@@ -81,8 +81,8 @@ def _blind_bore_profile(direction):
 
 
 def test_internal_radial_profile_retraces_the_axial_pass_out_through_the_mouth():
-    radial = _blind_bore_profile(ProfileDirection.RADIAL)
-    axial = _blind_bore_profile(ProfileDirection.NEGATIVE_Z)
+    radial = _blind_bore_profile(Direction.RADIAL)
+    axial = _blind_bore_profile(Direction.NEGATIVE_Z)
 
     mouth = radial.partSegmentGroup.boundbox().ZMax
     assert len(radial.tool_paths) == radial.finish_passes
@@ -98,7 +98,7 @@ def test_internal_radial_profile_retraces_the_axial_pass_out_through_the_mouth()
 
 def test_internal_radial_roughing_clears_from_axis_toward_bore_wall():
     operation = RoughOP()
-    operation.setParams({"mode": MachiningMode.INTERNAL, "direction": RoughDirection.RADIAL,
+    operation.setParams({"mode": MachiningMode.INTERNAL, "direction": Direction.RADIAL,
                          "allow_grooving": True, "pass_offset": 0.5})
     operation.addPartSegments([Segment(Point(10, 0), Point(10, -20))])
     operation.add_containment(BoundBox(Point(0, -20), Point(15, 3)))
@@ -121,7 +121,7 @@ def test_internal_radial_roughing_clears_from_axis_toward_bore_wall():
 
 def test_internal_roughing_stock_preview_uses_physical_path_coordinates():
     operation = RoughOP()
-    operation.setParams({"mode": MachiningMode.INTERNAL, "direction": RoughDirection.RADIAL,
+    operation.setParams({"mode": MachiningMode.INTERNAL, "direction": Direction.RADIAL,
                          "allow_grooving": True, "pass_offset": 0.5})
     operation.addPartSegments([Segment(Point(10, 0), Point(10, -20))])
     operation.add_containment(BoundBox(Point(0, -20), Point(15, 3)))
