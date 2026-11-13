@@ -147,13 +147,15 @@ class RoughOP(liblathe.op.base.BaseOP):
         """
         limits = self.containment
         minimum = SegmentGroup.defeatureResolution
-        for angle in (self.leadout_angle, math.pi / 2):
+        for angle in (self.leadout_angle, 0.0):
             target = end.project(angle, self.pass_offset)
             if target.Z - end.Z <= 1e-9:
                 continue
             fraction = min(1.0, (limits.ZMax - end.Z) / (target.Z - end.Z))
             if target.X > end.X:
                 fraction = min(fraction, (limits.XMax - end.X) / (target.X - end.X))
+            elif target.X < end.X:
+                fraction = min(fraction, (limits.XMin - end.X) / (target.X - end.X))
             length = fraction * self.pass_offset
             while length >= minimum:
                 candidate = end.project(angle, length)
