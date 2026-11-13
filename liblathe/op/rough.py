@@ -52,7 +52,8 @@ class RoughOP(liblathe.op.base.BaseOP):
             segment_group = SegmentGroup()
             intervals = profile.intervals_below(x_pos)
             first_z = min(profile.samples[0].Z, z_max)
-            if intervals and intervals[0][0] <= first_z + 1e-6:
+            # extend only an interval open at the start; a deeper groove interval stays behind its shoulder
+            if intervals and intervals[0][0] >= first_z - 1e-6:
                 intervals[0] = (z_max, intervals[0][1])
             elif first_z < z_max - 1e-6:
                 intervals.insert(0, (z_max, first_z))
