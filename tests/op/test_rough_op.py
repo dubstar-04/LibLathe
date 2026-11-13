@@ -304,6 +304,26 @@ class test_RoughOP(unittest.TestCase):
         self.assertAlmostEqual(min(stroke.end.Z for stroke in floor_strokes), 25, delta=0.05)
         self.assertAlmostEqual(max(stroke.end.Z for stroke in floor_strokes) + 2, 30, delta=0.05)
 
+    def test_axial_band_shorter_than_pass_offset_is_still_cut(self):
+        operation = RoughOP()
+        operation.setParams({"pass_offset": 1.5})
+        vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        operation.add_containment(BoundBox(Point(10, -10), Point(20, -9)))
+        vertices = [(0, 0), (2, 0), (2, 1), (0, 1), (0, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        self.assertTrue(operation.getGCode())
+
+        self.assertTrue(operation.tool_paths)
+        for group in operation.tool_paths:
+            self.assertAlmostEqual(group.boundbox().ZMin, -10, delta=1e-5)
+            self.assertAlmostEqual(group.boundbox().ZMax, -9, delta=1e-5)
+
     def test_axial_grooving_keeps_groove_passes_behind_the_shoulder(self):
         operation = RoughOP()
         operation.setParams({"direction": Direction.NEGATIVE_Z,
