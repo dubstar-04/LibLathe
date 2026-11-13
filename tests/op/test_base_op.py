@@ -1,6 +1,6 @@
 import unittest
 
-from liblathe.op.base import BaseOP, CutDirection
+from liblathe.op.base import BaseOP
 from liblathe.base.point import Point
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.segment import Segment
@@ -18,7 +18,7 @@ class test_BaseOP(unittest.TestCase):
                          'stock_to_leave': 0.25, 'hfeed': 10, 'vfeed': 10, 'clearance': 4}
         self.getProps = {'allow_grooving': False, 'pass_offset': 1.5, 'finish_passes': 1,
                          'stock_to_leave': 0, 'hfeed': 100, 'vfeed': 50, 'clearance': 3,
-                         'cut_direction': CutDirection.RADIAL}
+                         }
 
     def test_setParams(self):
         self.baseop.setParams(self.setProps)

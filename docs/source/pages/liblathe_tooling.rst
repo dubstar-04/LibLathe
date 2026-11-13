@@ -87,9 +87,8 @@ Side does not select spindle speed, M3/M4, tool handedness, or G41/G42.
 In FreeCAD, spindle settings belong to the Tool Controller. Physical post
 alone is insufficient to infer the required spindle direction.
 
-Near/Far is not outside/inside machining. Internal boring requires separate
-operation support. Signed-side planning remains experimental. Existing sweep
-and clearance checks do not certify holders, fixtures, unknown initial-position
-travel or complete machining safety, and do not establish reference-equivalent
-Profile final stock. See the repository README for the current guarantees and
-limitations, and :doc:`operations` for the available operation classes.
+Near/Far is independent of External/Internal machining mode. Internal mode is
+available on Rough and Profile, but selected-contour sweep checks do not certify
+a prepared opening, bar/holder fit, fixtures, unknown initial-position travel
+or complete machining safety. See the repository README for current guarantees
+and limitations, and :doc:`operations` for available operation classes.

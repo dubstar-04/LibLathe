@@ -64,7 +64,7 @@ class Path:
 
     def fromSegmentGroup(self, operation, segmentGroup, *, protect_part=False,
                          direction=RoutingDirection.AUTO, radial_clearance=None,
-                         return_to_clearance=False, contain_feeds=True):
+                         return_to_clearance=False, contain_feeds=True, inside_access=False):
         """Route rapids outside containment and feed through approach/escape moves.
 
         Profile and roughing callers certify the added feeds against the part.
@@ -74,7 +74,10 @@ class Path:
         returns to the outside-stock corner between passes.
         Forced directions never fall back to another axis and reposition along
         their clearance plane, visiting the corner only at the start of the path.
-        Local radial clearance uses a prepared radial repositioning plane.
+        Local radial clearance uses a prepared radial repositioning plane between
+        passes; the operation's final pass can return to the global clearance corner.
+        Inside access uses the transformed containment boundary as the radial
+        access lane for protected internal operations.
         All feeds, including approach and withdrawal, stay inside tool-reference
         containment. Rapids may cross original stock outside containment;
         the user must evaluate remaining stock before machining. Protected
@@ -85,10 +88,12 @@ class Path:
             raise ValueError("Direction must be a RoutingDirection enumeration member")
         if radial_clearance is not None and (
                 direction != RoutingDirection.RADIAL or not protect_part
-                or not math.isfinite(radial_clearance) or operation.stock is None):
-            raise ValueError("Local radial clearance requires protected radial routing and actual stock")
+                or not math.isfinite(radial_clearance) or inside_access):
+            raise ValueError("Local radial clearance requires protected external radial routing")
         if return_to_clearance and radial_clearance is None:
             raise ValueError("Returning to clearance requires local radial routing")
+        if inside_access and not protect_part:
+            raise ValueError("Inside access requires protected routing")
         if not contain_feeds:
             raise ValueError("Feed containment cannot be disabled")
 
@@ -131,6 +136,8 @@ class Path:
             actual = operation.stock
             x_clear = max(x_clear, actual.XMax - tool_bounds.XMin + clearance)
             z_clear = max(z_clear, actual.ZMax - tool_bounds.ZMin + clearance)
+        if inside_access:
+            x_clear = limits.XMax
         if not all(math.isfinite(value) for value in (x_clear, z_clear)):
             raise ValueError("Containment, stock and tool clearance coordinates must be finite")
         outside = Point(x_clear, z_clear)

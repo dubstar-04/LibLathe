@@ -5,9 +5,6 @@ import pytest
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.op.bore import BoreOP
-from liblathe.op.face import FaceOP
-from liblathe.op.groove import GrooveOP
 from liblathe.op.partoff import PartoffOP
 from liblathe.op.profile import ProfileOP
 from liblathe.op.rough import RoughOP
@@ -15,7 +12,7 @@ from liblathe.tool.tool import Tool, ToolSide
 
 
 @pytest.mark.parametrize("axial_shift", [-2, 0, 2])
-@pytest.mark.parametrize("operation_type", [ProfileOP, RoughOP, GrooveOP])
+@pytest.mark.parametrize("operation_type", [ProfileOP, RoughOP])
 def test_defeature_scan_covers_reference_depth(operation_type, axial_shift):
     operation = operation_type()
     operation.add_containment(BoundBox(Point(0, -15), Point(15, 5)))
@@ -29,19 +26,19 @@ def test_defeature_scan_covers_reference_depth(operation_type, axial_shift):
         for a, b in zip(vertices, vertices[1:])])
     operation.add_tool(tool)
     original = operation.partSegmentGroup
-    contours = []
+    results = []
 
     def observe(bounds, insert, allow_grooving):
-        result = original.defeature(bounds, insert, allow_grooving)
-        contours.append(result)
+        result = original.defeatureWithSamples(bounds, insert, allow_grooving)
+        results.append(result)
         return result
 
     operation.partSegmentGroup = Mock(wraps=original)
-    operation.partSegmentGroup.defeature.side_effect = observe
+    operation.partSegmentGroup.defeatureWithSamples.side_effect = observe
     operation.generatePath()
-    assert len(contours) == 1
+    assert len(results) == 1
     required_depth = min(-15, -15 - tool.get_segmentgroup().boundbox().ZMin)
-    assert contours[0].boundbox().ZMin <= required_depth
+    assert results[0].contour.boundbox().ZMin <= required_depth
     assert operation.tool_paths
     if operation_type is ProfileOP:
         assert min(group.boundbox().ZMin for group in operation.tool_paths) == pytest.approx(-15)
@@ -69,18 +66,15 @@ def test_roughing_reaches_taper_below_old_scan_endpoint():
                for group in operation.tool_paths for segment in group.getSegments())
 
 
-@pytest.mark.parametrize("operation_type", [FaceOP, RoughOP, ProfileOP, GrooveOP, PartoffOP, BoreOP])
+@pytest.mark.parametrize("operation_type", [RoughOP, ProfileOP, PartoffOP])
 @pytest.mark.parametrize("sign", [1, -1])
 @pytest.mark.parametrize("stock_radius", [12, 20])
 def test_every_operation_contains_all_feeds(operation_type, sign, stock_radius):
     operation = operation_type()
     operation.setParams({"pass_offset": 1, "finish_passes": 2, "clearance": 1})
-    if operation_type is GrooveOP:
-        operation.setParams({"finish_pass_offset": 0.1})
     operation.add_containment(BoundBox(Point(0, -25), Point(sign * 15, 3)))
     operation.add_stock(BoundBox(Point(0, -25), Point(sign * stock_radius, 1)))
-    vertices = [(10, 0), (10, -20)] if operation_type is BoreOP else [
-        (0, 0), (10, 0), (10, -20), (0, -20)]
+    vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
     operation.addPartSegments([Segment(Point(sign * x, z), Point(sign * u, v))
                                for (x, z), (u, v) in zip(vertices, vertices[1:])])
     vertices = [(-0.4, -0.4), (-0.4, 2), (2, 2), (2, -0.4), (-0.4, -0.4)]

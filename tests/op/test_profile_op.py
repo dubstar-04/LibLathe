@@ -1,6 +1,6 @@
 import unittest
 
-from liblathe.op.profile import ProfileOP
+from liblathe.op.profile import ProfileDirection, ProfileOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
@@ -148,6 +148,24 @@ class test_ProfileOP(unittest.TestCase):
             lead = group.getSegments()[0]
             self.assertAlmostEqual(lead.start.X, lead.end.X, places=5)
             self.assertGreater(lead.start.Z, lead.end.Z)
+
+    def test_positive_z_reverses_profile_strokes(self):
+        self.op.direction = ProfileDirection.POSITIVE_Z
+
+        self.assertTrue(self.op.getGCode())
+        self.assertTrue(any(abs(segment.start.X - segment.end.X) < 1e-5
+                            and segment.end.Z > segment.start.Z
+                            for group in self.op.tool_paths
+                            for segment in group.getSegments()))
+
+    def test_inward_finishing_splits_and_orients_every_stroke(self):
+        self.op.direction = ProfileDirection.RADIAL
+
+        self.assertTrue(self.op.getGCode())
+        segments = [segment for group in self.op.tool_paths for segment in group.getSegments()]
+        self.assertTrue(segments)
+        self.assertTrue(any(segment.end.X < segment.start.X - 1e-5 for segment in segments))
+        self.assertTrue(all(segment.end.X <= segment.start.X + 1e-5 for segment in segments))
 
     def test_stock_allowance_preserves_front_face_and_inner_entry(self):
         operation = ProfileOP()
@@ -364,6 +382,32 @@ class test_ProfileOP(unittest.TestCase):
                                 for point in (a, b):
                                     self.assertTrue(-1e-4 <= sign * point['X'] <= 14 + 1e-4)
                                     self.assertTrue(-15 - 1e-4 <= point['Z'] <= -5 + 1e-4)
+
+    def test_radial_grooving_repositions_just_above_the_containment(self):
+        operation = ProfileOP()
+        operation.setParams({"direction": ProfileDirection.RADIAL, "allow_grooving": True,
+                             "pass_offset": 1, "finish_passes": 2, "clearance": 1})
+        operation.add_containment(BoundBox(Point(8, -22), Point(18, -8)))
+        operation.add_stock(BoundBox(Point(0, -40), Point(40, 0)))
+        vertices = [(0, 0), (15, 0), (15, -10), (10, -12), (10, -18),
+                    (15, -20), (15, -40), (0, -40)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        tool_vertices = [(0, 0), (0, -2), (2, -2), (2, 0), (0, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(tool_vertices, tool_vertices[1:])])
+        operation.add_tool(tool)
+
+        moves = [command for command in operation.getGCode() if "X" in command.getParams()]
+        local_x = operation.containment.XMax + operation.clearance
+        global_x = 40 + operation.clearance
+        between = moves[2:-2]
+        rapid_x = {round(m.getParams()["X"], 6) for m in between
+                   if m.get_movement() == "G0" and m.getParams()["X"] > operation.containment.XMax}
+        self.assertEqual(rapid_x, {local_x})
+        for move in moves[:2] + moves[-2:]:
+            self.assertAlmostEqual(move.getParams()["X"], global_x)
 
 
 if __name__ == '__main__':

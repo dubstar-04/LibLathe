@@ -46,8 +46,8 @@ tool reach, spindle direction and all machine/fixture clearances.
 
 The same native ``StockPreview`` can subtract the drill's generated feed sweep,
 including its conical point. Neither peck retractions nor rapid moves should
-be subtracted. This preview is advisory and does not become boring access
-approval or planner input. See :doc:`../remaining_stock`.
+be subtracted. This preview is advisory and does not approve internal machining
+access or become planner input. See :doc:`../remaining_stock`.
 
 Example
 -------

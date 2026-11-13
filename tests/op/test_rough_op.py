@@ -2,12 +2,12 @@ import unittest
 import math
 from unittest.mock import Mock
 
-from liblathe.op.rough import RoughOP
+from liblathe.op.rough import RoughDirection, RoughOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.base.segmentgroup import SegmentGroup
+from liblathe.base.segmentgroup import SegmentGroup, StockPreview
 from liblathe.tool.tool import Tool, ToolSide
 
 
@@ -134,6 +134,195 @@ class test_RoughOP(unittest.TestCase):
                 self.assertGreater(inner.start.Z, inner.end.Z)
                 self.op.partSegmentGroup.validateToolSweep(
                     self.op.tool.get_segmentgroup(), inner.start, inner.end)
+
+    def test_axial_direction_controls_pass_orientation(self):
+        for direction, sign in ((RoughDirection.NEGATIVE_Z, -1),
+                                (RoughDirection.POSITIVE_Z, 1)):
+            with self.subTest(direction=direction):
+                self.op.direction = direction
+                self.assertTrue(self.op.getGCode())
+                first_pass = self.op.tool_paths[0]
+                cut = next(
+                    segment for segment in first_pass.getSegments()
+                    if abs(segment.start.X - segment.end.X) < 1e-6
+                    and abs(segment.start.Z - segment.end.Z) > 1e-6
+                )
+                self.assertGreater(sign * (cut.end.Z - cut.start.Z), 0)
+
+    def test_radial_direction_plunges_full_strokes_into_grooves(self):
+        operation = RoughOP()
+        operation.setParams({"direction": RoughDirection.RADIAL,
+                             "allow_grooving": True, "pass_offset": 1.5})
+        operation.add_containment(BoundBox(Point(0, -30), Point(18, 0)))
+        vertices = [(0, 0), (15, 0), (15, -10), (10, -10), (10, -20),
+                    (15, -20), (15, -30), (0, -30), (0, 0)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        tool = Tool()
+        vertices = [(0, 0), (0, -2), (2, -2), (2, 0), (0, 0)]
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        commands = operation.getGCode()
+
+        self.assertTrue(commands)
+        strokes = [group.getSegments() for group in operation.tool_paths]
+        self.assertTrue(all(len(segments) == 1 for segments in strokes))
+        strokes = [segments[0] for segments in strokes]
+        self.assertTrue(all(stroke.start.X == operation.containment.XMax
+                            and stroke.start.X > stroke.end.X
+                            and stroke.start.Z == stroke.end.Z for stroke in strokes))
+        self.assertTrue(any(-20 < stroke.start.Z < -10 and stroke.end.X < 11
+                            for stroke in strokes))
+        stations = [stroke.start.Z for stroke in strokes]
+        self.assertEqual(stations, sorted(stations, reverse=True))
+        tool_width = tool.get_segmentgroup().boundbox().ZLength()
+        groove_stations = [z for z in stations if -20 < z < -10]
+        self.assertLessEqual(max(a - b for a, b in zip(groove_stations, groove_stations[1:])),
+                             tool_width + 1e-5)
+
+    def test_radial_direction_faces_stock_in_front_of_the_part(self):
+        operation = RoughOP()
+        operation.setParams({"direction": RoughDirection.RADIAL, "pass_offset": 1.0})
+        vertices = [(0, 0), (10, 0), (10, -30), (0, -30)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        operation.add_containment(BoundBox(Point(0, 0), Point(12, 5)))
+        vertices = [(-2, 0), (0, 0), (0, 2), (-2, 2), (-2, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        self.assertTrue(operation.getGCode())
+
+        strokes = [group.getSegments()[0] for group in operation.tool_paths]
+        self.assertEqual([round(stroke.start.Z, 2) for stroke in strokes],
+                         [4.29, 3.43, 2.58, 1.72, 0.86, 0.03])
+        for stroke in strokes:
+            self.assertAlmostEqual(stroke.start.X, 12, delta=1e-5)
+            self.assertAlmostEqual(stroke.end.X, 2, delta=0.01)
+        for group in operation.tool_paths:
+            cut, lead_out = group.getSegments()
+            self.assertGreater(lead_out.end.X, cut.end.X)
+            self.assertGreater(lead_out.end.Z, cut.end.Z)
+            self.assertLessEqual(lead_out.end.Z, operation.containment.ZMax + 1e-6)
+        commands = operation.getGCode()
+        feeds = [(command.getParams()["X"], command.getParams()["Z"])
+                 for command in commands if command.get_movement() == "G1"]
+        for group in operation.tool_paths:
+            cut = group.getSegments()[0]
+            withdrawal = feeds[feeds.index((cut.end.X, cut.end.Z)) + 2]
+            self.assertGreater(withdrawal[1], cut.end.Z)
+
+    def test_radial_grooving_retracts_through_the_plunge_and_uses_local_clearance(self):
+        for stock_radius, tool_x_shift in ((30, 0), (45, -0.6), (None, 0)):
+            with self.subTest(stock_radius=stock_radius, tool_x_shift=tool_x_shift):
+                operation = RoughOP()
+                operation.setParams({"direction": RoughDirection.RADIAL,
+                                     "allow_grooving": True, "pass_offset": 2,
+                                     "stock_to_leave": 0.25, "clearance": 1})
+                operation.add_containment(BoundBox(Point(8, -20), Point(18, -8)))
+                if stock_radius is not None:
+                    operation.add_stock(BoundBox(Point(0, -40), Point(stock_radius, 0)))
+                vertices = [(0, 0), (15, 0), (15, -10), (10, -10), (10, -20),
+                            (15, -20), (15, -40), (0, -40)]
+                operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                           for a, b in zip(vertices, vertices[1:])])
+                tool_vertices = [(tool_x_shift, 0), (tool_x_shift, -2),
+                                 (2 + tool_x_shift, -2), (2 + tool_x_shift, 0)]
+                tool = Tool()
+                tool.set_tool_from_segments([
+                    Segment(Point(*a), Point(*b))
+                    for a, b in zip(tool_vertices, tool_vertices[1:] + tool_vertices[:1])])
+                operation.add_tool(tool)
+
+                commands = operation.getGCode()
+                moves = [command for command in commands if "X" in command.getParams()]
+                local_x = operation.containment.XMax - tool_x_shift + operation.clearance
+                global_x = max(stock_radius or 0, 18) - tool_x_shift + operation.clearance
+                snapshot = StockPreview([(0, -40), (stock_radius or 30, -40),
+                                         (stock_radius or 30, 0), (0, 0)])
+                cut_indices = []
+                for group in operation.tool_paths:
+                    cut = group.getSegments()[0]
+                    cut_index = next(
+                        index for index, command in enumerate(moves)
+                        if command.get_movement() == "G1"
+                        and Point(command.getParams()["X"], command.getParams()["Z"]).isSame(cut.end))
+                    cut_indices.append(cut_index)
+                    withdrawal = moves[cut_index + 1].getParams()
+                    self.assertEqual(moves[cut_index + 1].get_movement(), "G1")
+                    self.assertAlmostEqual(withdrawal["Z"], cut.end.Z)
+                    self.assertAlmostEqual(withdrawal["X"], operation.containment.XMax)
+                    snapshot.remove_feeds(
+                        tool_vertices, [(cut.start.X, cut.start.Z, cut.end.X, cut.end.Z)])
+                    remaining = snapshot.area
+                    snapshot.remove_feeds(
+                        tool_vertices, [(cut.end.X, cut.end.Z, withdrawal["X"], withdrawal["Z"])])
+                    self.assertAlmostEqual(snapshot.area, remaining, delta=1e-9)
+                    self.assertAlmostEqual(moves[cut_index + 2].getParams()["X"], local_x, delta=1e-5)
+
+                self.assertGreater(len(cut_indices), 2)
+                axial_transfers = 0
+                for previous, command in zip(
+                        moves[cut_indices[0]:cut_indices[-1]],
+                        moves[cut_indices[0] + 1:cut_indices[-1] + 1]):
+                    start, end = previous.getParams(), command.getParams()
+                    if abs(start["Z"] - end["Z"]) > 1e-6:
+                        axial_transfers += 1
+                        self.assertEqual(command.get_movement(), "G0")
+                        self.assertAlmostEqual(start["X"], local_x, delta=1e-5)
+                        self.assertAlmostEqual(end["X"], local_x, delta=1e-5)
+                self.assertEqual(axial_transfers, len(cut_indices) - 1)
+                self.assertAlmostEqual(moves[0].getParams()["X"], global_x, delta=1e-5)
+                self.assertEqual(moves[-1].getParams(), moves[0].getParams())
+
+    def test_radial_grooving_reaches_the_floor_against_both_groove_walls(self):
+        operation = RoughOP()
+        operation.setParams({"direction": RoughDirection.RADIAL,
+                             "allow_grooving": True, "pass_offset": 1})
+        operation.add_containment(BoundBox(Point(0, 25), Point(30, 30)))
+        vertices = [(0, 50), (30, 50), (30, 30), (25, 30), (25, 25),
+                    (30, 25), (30, 0), (0, 0)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        # The insert extends +Z from its reference, so the +Z wall limits the last full-depth station.
+        vertices = [(0, 0), (12, 0), (12, 2), (0, 2), (0, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        self.assertTrue(operation.getGCode())
+
+        # Only the roughing allowance may remain beside each wall.
+        floor_strokes = [group.getSegments()[0] for group in operation.tool_paths
+                         if group.getSegments()[0].end.X < 25.05]
+        self.assertAlmostEqual(min(stroke.end.Z for stroke in floor_strokes), 25, delta=0.05)
+        self.assertAlmostEqual(max(stroke.end.Z for stroke in floor_strokes) + 2, 30, delta=0.05)
+
+    def test_radial_grooving_rejects_a_blocked_local_clearance_lane(self):
+        operation = RoughOP()
+        operation.setParams({"direction": RoughDirection.RADIAL,
+                             "allow_grooving": True, "pass_offset": 2, "clearance": 1})
+        operation.add_containment(BoundBox(Point(0, -22), Point(18, -8)))
+        operation.add_stock(BoundBox(Point(0, -40), Point(30, 0)))
+        vertices = [(0, 0), (15, 0), (15, -10), (10, -10), (10, -14),
+                    (25, -14), (25, -18), (10, -18), (10, -22), (15, -22),
+                    (15, -40), (0, -40)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        vertices = [(0, 0), (0, -2), (2, -2), (2, 0), (0, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        with self.assertRaisesRegex(ValueError, "Cannot approach|Cannot retract"):
+            operation.getGCode()
+        self.assertEqual(operation.tool_paths, [])
 
     def test_stock_allowance_is_preserved_at_front_of_inner_passes(self):
         reference = self.op.partSegmentGroup.defeature(

@@ -3,53 +3,49 @@ Profiling
 
 ``liblathe.op.profile.ProfileOP``
 
-.. figure:: /LL_static/images/ProfilingOp.jpeg
-    :align: center
-    :figwidth: 450px
-
-Profiling follows the shape of the part to produce the finished surface. Each
-pass is an offset of the part profile with bounded lead-in and lead-out moves.
+Profile follows the tool-accessible part contour. The final pass is offset from
+the target by ``stock_to_leave``; additional passes are offset further out and
+are cut first.
 
 Set machining limits with ``add_containment(bounds)`` or
 ``add_containment_from_limits(xmin, xmax, zmin, zmax)``.
 
-The final pass is offset from the part by ``stock_to_leave``. Additional passes
-are offset further out by ``pass_offset`` and are cut first, finishing on the
-pass closest to the part.
+Directions
+----------
+
+* ``ProfileDirection.NEGATIVE_Z`` and ``POSITIVE_Z`` traverse each clipped
+  contour in the selected axial direction.
+* ``ProfileDirection.RADIAL`` splits contours at gaps and radial reversals and
+  orients each run toward its floor. In Internal mode it traverses each
+  connected bore contour from the bottom toward the mouth, retracing the ``-Z``
+  pass and its leads so each pass exits axially through the mouth. With
+  ``allow_grooving`` in External mode, passes reposition at the same local
+  lane as Rough grooving (containment upper radius plus clearance); only
+  operation entry and final return use the global stock/model clearance.
 
 Parameters
 ----------
 
-- ``finish_passes``: number of profile offsets (no intermediate passes are added).
-- ``pass_offset`` (Pass Offset): fixed normal increment between profile offsets
-  and fixed X increment between their axial lead-in lines.
-- ``stock_to_leave``: material left on the part.
-- ``allow_grooving``: allow the profile to follow grooves and undercuts the
-  tool can reach.
-- ``clearance``: distance kept between the tool and the stock on rapid moves.
+- ``direction``: a ``ProfileDirection`` member; defaults to ``NEGATIVE_Z``.
+- ``mode``: ``MachiningMode.EXTERNAL`` or ``MachiningMode.INTERNAL``.
+- ``finish_passes``: number of profile offsets (no intermediate passes are
+  added).
+- ``pass_offset``: normal spacing between profile offsets.
+- ``stock_to_leave``: material left on the finished profile.
+- ``allow_grooving``: permit the profile to follow tool-accessible grooves.
+- ``clearance``: distance used by rapid routing.
 - ``hfeed``: feed rate.
 
-Approach and retract moves are checked against the part.
+Internal mode maps selected inner-profile radii into the shared external
+planning frame, reflects the tool-relative X coordinates, then maps paths back
+to physical X. Near/Far reflection is applied independently. Internal access
+uses the axis-side containment boundary; selected-profile and protected-feed
+checks do not certify a pre-existing opening or bar/holder fit.
 
-Each offset pass is clipped to the tool-reference X/Z containment before leads
-are added. Excluded regions split the contour into separate strokes; offsets
-wholly outside containment are omitted.
-Profile lead-ins feed axially in Z at constant X.
-Profile extraction retains the SDF contour beyond the original starting Z.
-Each fixed-offset contour is trimmed at its first intersection with an axial
-lead-in line. These lines start at the base profile's starting X and increase
-by ``pass_offset`` per contour. This retains normal contour spacing near a
-rounded nose without inserting extra passes. Containment can shorten or omit
-these entries and can split one offset into several strokes.
-Containment remains strict: increase its starting Z to retain entries whose
-intersections lie beyond the current limit. The limit must also leave room for
-the desired axial lead-in length. Extending extraction does not permit feeds
-outside containment.
-The final ``stock_to_leave`` allowance is unchanged.
-All feeds, including withdrawals, stay inside containment. Withdrawals feed to
-the containment boundary before rapiding to clearance. Rapid approaches use
-separate X/Z moves checked against the part. They may cross the original stock
-envelope outside containment; users must assess remaining stock before machining.
-Set physical stock with ``add_stock(bounds)`` for initial clearance positioning;
-otherwise model bounds are used. Part-obstructed boundary entries or withdrawals
-fail explicitly.
+Each offset is clipped to tool-reference containment before routing; excluded
+regions split it into strokes and offsets outside containment are omitted.
+Protected approaches and withdrawals are checked against the part. Feed moves
+stay inside containment. External rapid transfers may cross the physical stock
+envelope outside containment; assess remaining stock before machining. With
+physical stock supplied through ``add_stock(bounds)``, its envelope is used for
+external clearance positioning.

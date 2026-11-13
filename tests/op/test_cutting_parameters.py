@@ -1,27 +1,25 @@
 import unittest
 
-from liblathe.op.base import BaseOP, CutDirection
-from liblathe.op.bore import BoreOP
-from liblathe.op.face import FaceOP
-from liblathe.op.groove import GrooveOP
+from liblathe.op.base import BaseOP, MachiningMode
 from liblathe.op.partoff import PartoffOP
 from liblathe.op.profile import ProfileOP
 from liblathe.op.rough import RoughOP
 
 
 class CuttingParameterTests(unittest.TestCase):
-    def test_cut_direction_is_a_shared_parameter(self):
-        for operation in (BaseOP, BoreOP, RoughOP, GrooveOP, FaceOP, ProfileOP, PartoffOP):
+    def test_internal_mode_is_exposed_by_rough_and_profile_only(self):
+        for operation in (RoughOP, ProfileOP):
             with self.subTest(operation=operation):
                 op = operation()
-                self.assertIs(op.cut_direction, CutDirection.RADIAL)
-                self.assertIs(op.getParams()["cut_direction"], CutDirection.RADIAL)
-                op.setParams({"cut_direction": CutDirection.AXIAL})
-                self.assertIs(op.cut_direction, CutDirection.AXIAL)
-                self.assertIs(op.getParams()["cut_direction"], CutDirection.AXIAL)
+                self.assertIs(op.getParams()["mode"], MachiningMode.EXTERNAL)
+                op.setParams({"mode": MachiningMode.INTERNAL})
+                self.assertIs(op.getParams()["mode"], MachiningMode.INTERNAL)
+        for operation in (BaseOP, PartoffOP):
+            with self.subTest(operation=operation):
+                self.assertNotIn("mode", operation().getParams())
 
     def test_pass_offset_parameters(self):
-        for operation in (BaseOP, RoughOP, GrooveOP, FaceOP, ProfileOP, PartoffOP):
+        for operation in (BaseOP, RoughOP, ProfileOP, PartoffOP):
             with self.subTest(operation=operation):
                 op = operation()
                 self.assertEqual(op.pass_offset, 1.5)
@@ -31,15 +29,8 @@ class CuttingParameterTests(unittest.TestCase):
                 op.pass_offset = 0.25
                 self.assertEqual(op.getParams()["pass_offset"], 0.25)
 
-    def test_finish_pass_offset(self):
-        op = GrooveOP()
-        self.assertEqual(op.finish_pass_offset, 0)
-        op.setParams({"finish_pass_offset": 0.1})
-        self.assertEqual(op.finish_pass_offset, 0.1)
-        self.assertEqual(op.getParams()["finish_pass_offset"], 0.1)
-
     def test_old_parameter_names_are_not_supported(self):
-        for operation in (BaseOP, RoughOP, GrooveOP, FaceOP, ProfileOP, PartoffOP):
+        for operation in (BaseOP, RoughOP, ProfileOP, PartoffOP):
             op = operation()
             for name in ("step_over", "radial_depth", "axial_depth", "finish_stepdown",
                          "radial_pass_offset", "axial_pass_offset"):

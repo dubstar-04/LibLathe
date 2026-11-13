@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import Mock, patch
 
-import test_face_op
 import test_partoff_op
 import test_profile_op
 import test_rough_op
@@ -11,7 +10,6 @@ from liblathe.base.segmentgroup import SegmentGroup
 
 class test_PathRegeneration(unittest.TestCase):
     fixtures = (
-        test_face_op.test_FaceOP,
         test_partoff_op.test_PartoffOP,
         test_profile_op.test_ProfileOP,
         test_rough_op.test_RoughOP,
@@ -29,8 +27,6 @@ class test_PathRegeneration(unittest.TestCase):
         ]
 
     def paths(self, operation):
-        if isinstance(operation, test_face_op.FaceOP):
-            return operation.clearing_paths
         return operation.tool_paths
 
     def test_repeated_generation(self):

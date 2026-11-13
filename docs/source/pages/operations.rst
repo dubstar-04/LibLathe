@@ -1,22 +1,19 @@
 Lathe Operations
 ================
 
-The current operation modules provide facing, roughing, profiling, grooving
-and parting, plus experimental internal clearing/finishing ``BoreOP``,
-straight centreline ``DrillOP`` and external ``ThreadOP``.
-Grooving is external and radial only. Threading currently supports straight,
-single-start threads with radial infeed. Chamfering is not a separate operation. In
-particular, selecting the Far tool side does not enable internal boring.
+The operation modules provide ``RoughOP`` and ``ProfileOP`` strategies for
+external and internal turning, plus parting, straight centreline drilling and
+threading. Facing is Rough in the Radial direction; groove roughing and finishing
+are separate Rough and Profile operations. Threading currently supports
+straight, single-start threads with radial infeed. Chamfering is not a separate
+operation.
 
 .. toctree::
    :maxdepth: 1
 
-   operations/face
    operations/rough
    operations/profile
-   operations/groove
    operations/partoff
-   operations/bore
    operations/drill
    operations/thread
 
@@ -26,26 +23,32 @@ outputs use negative X. See :doc:`liblathe_tooling` for the side enum,
 reflection rules and machining limitations.
 Centreline drilling shares the base generation lifecycle but uses a symmetric
 drill at X=0, without insert-side dispatch.
+Rough and Profile additionally expose ``MachiningMode.EXTERNAL`` and
+``MachiningMode.INTERNAL``. Internal mode transforms selected internal profile
+geometry into the shared external planning frame and reflects the resulting
+paths back into physical X coordinates; it is independent of Near/Far tool
+side. Internal access enters from the axis side and is checked against the
+selected contour, but does not certify a pre-existing opening, bar/holder fit
+or machine clearance.
 
 Generation and parameters
 -------------------------
 
 Generation replaces published paths; failed validation or routing clears both
-``tool_paths`` and ``clearing_paths``. Facing also builds its passes locally so a
-failed later pass cannot expose a partial result.
+``tool_paths`` and ``clearing_paths``.
 
 Operations validate finite containment and clearance, positive finite cutting
 increments and non-negative finite allowances where used. Finishing counts must
 be non-negative integers where used. Unused settings retain their existing
 meaning: parting, for example, ignores ``pass_offset``. Feed rates are passed
-through unchanged. Bore and drill retain their stricter positive-clearance
-requirements. Threading also requires positive clearance and uses pitch rather
-than F-word feeds; its supported parameters are listed in :doc:`operations/thread`.
+through unchanged. Drill retains its stricter positive-clearance requirement.
+Threading also requires positive clearance and uses pitch rather than F-word
+feeds; its supported parameters are listed in :doc:`operations/thread`.
 
 ``setParams`` accepts the parameters reported by ``getParams`` plus the existing
 ``leadin_angle`` and ``leadout_angle`` settings. It rejects unsupported names
 before applying any changes; methods and internal path state are not parameters.
-Fixed-increment facing and roughing grids reject steps lost to coordinate
+Fixed-increment roughing grids reject steps lost to coordinate
 rounding rather than repeating the same station indefinitely.
 
 Containment and clearance
@@ -56,7 +59,7 @@ insert footprint or the physical stock. Every feed move (G1/G2/G3/G33), includin
 entry, lead-in, lead-out and withdrawal, stays inside it. Only rapid moves may
 leave containment to reach clearance.
 
-Profile, roughing and grooving extend the native contact-space defeature scan
+Profile and roughing extend the native contact-space defeature scan
 to cover the reference-space lower Z limit, including a two-sample (0.02 mm)
 margin. This does not enlarge cutting containment or change the native API;
 the generated passes still use their operation's cutting limits.
@@ -69,10 +72,18 @@ choose initial clearance outside its envelope; otherwise model bounds are used.
 Protected routes retain full-insert checks against the finished part. If no valid
 entry or withdrawal exists, generation fails without publishing a partial path.
 
-Grooving can use a prepared radial envelope within the selected Z range, with
-the complete insert kept clear of the model. This is not a rest-stock simulation.
-Boring has the same feed-containment rule but deliberately does not certify
-opening, bar/holder fit or access; see :doc:`operations/bore`.
+In Rough, Radial steps along -Z through the whole containment, cutting one full
+radial stroke into the material at each station. It also represents facing and
+groove roughing. Use ``allow_grooving`` when the tool is intended to enter
+grooves; enabled Radial strokes retract radially through the plunge before moving
+axially at the containment-based local clearance. Operation entry and final
+return retain global stock/model clearance. The local lane must be prepared;
+it is checked against the finished part, not automatically approved against
+remaining stock. Profile's Radial direction splits disconnected and reversing contours
+so cuts proceed toward each groove floor, using the same local lane when
+``allow_grooving`` is enabled; it also finishes internal profiles
+from the bottom toward the mouth, exiting axially through the mouth like a
+reversed ``-Z`` pass.
 
 Performance and Safety
 ----------------------
@@ -103,7 +114,7 @@ geometry edits are observed. Python calls retain the GIL.
 
 ``SegmentGroup.reflectX(radius=0)`` returns an independent contour mapped by
 ``X = radius - X``, with arc bulges reflected and traversal order retained.
-Near/Far dispatch and internal boring share this native transformation.
+Near/Far dispatch and Internal mode share this native transformation.
 The read-only ``defeatureResolution`` and ``offsetTolerance`` class attributes
 expose the native sampling and contour tolerances to Python.
 

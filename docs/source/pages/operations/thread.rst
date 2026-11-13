@@ -38,7 +38,7 @@ Parameters
 * ``clearance``: positive radial/axial clearance; default 3 model units.
 
 There is no F-word feed for threading: ``G33 K<pitch>`` controls synchronization.
-``hfeed``, ``vfeed``, ``finish_passes``, ``stock_to_leave`` and ``cut_direction``
+``hfeed``, ``vfeed``, ``finish_passes`` and ``stock_to_leave``
 are not threading parameters. Each cutting pass is also published as its own
 straight ``tool_paths`` group; failed generation clears the published paths.
 

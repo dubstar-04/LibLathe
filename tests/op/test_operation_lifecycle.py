@@ -7,28 +7,22 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.op.base import BaseOP
-from liblathe.op.bore import BoreOP
 from liblathe.op.drill import DrillOP
-from liblathe.op.face import FaceOP
-from liblathe.op.groove import GrooveOP
 from liblathe.op.partoff import PartoffOP
 from liblathe.op.profile import ProfileOP
 from liblathe.op.rough import RoughOP
 from liblathe.op.thread import ThreadOP
 from liblathe.tool.tool import Tool, ToolSide
-from tests.op.test_bore_op import operation as bore
 from tests.op.test_drill_op import operation as drill
 from tests.op.test_thread_op import operation as thread
 
 
-OPERATIONS = (FaceOP, RoughOP, ProfileOP, GrooveOP, PartoffOP, BoreOP, DrillOP, ThreadOP)
+OPERATIONS = (RoughOP, ProfileOP, PartoffOP, DrillOP, ThreadOP)
 
 
 def operation(operation_type, sign=1):
     if operation_type is DrillOP:
         return drill()
-    if operation_type is BoreOP:
-        return bore(sign=sign)
     if operation_type is ThreadOP:
         return thread(sign=sign)
     op = operation_type()
@@ -66,7 +60,7 @@ def test_invalid_inputs_clear_both_path_sets(operation_type, method, field, valu
     assert op.clearing_paths == []
 
 
-@pytest.mark.parametrize("operation_type", [FaceOP, RoughOP, ProfileOP, GrooveOP, BoreOP, ThreadOP])
+@pytest.mark.parametrize("operation_type", [RoughOP, ProfileOP, ThreadOP])
 @pytest.mark.parametrize("step", [0, -1, math.nan, math.inf])
 def test_used_increments_are_validated_before_geometry(operation_type, step):
     op = operation(operation_type)
@@ -89,27 +83,6 @@ def test_generation_replaces_paths_and_preserves_commands(operation_type, sign):
     assert sum(counts) > 0
     assert [command.to_string() for command in op.getGCode()] == expected
     assert (len(op.tool_paths), len(op.clearing_paths)) == counts
-
-
-@pytest.mark.parametrize("method", ["generatePath", "getGCode"])
-def test_facing_clipping_failure_publishes_no_partial_paths(method):
-    op = operation(FaceOP)
-    original = op._clip_path
-    count = 0
-
-    def clip(group):
-        nonlocal count
-        count += 1
-        if count == 2:
-            raise ValueError("Injected clipping failure")
-        return original(group)
-
-    with patch.object(op, "_clip_path", side_effect=clip):
-        with pytest.raises(ValueError, match="Injected clipping failure"):
-            getattr(op, method)()
-    assert count == 2
-    assert op.tool_paths == []
-    assert op.clearing_paths == []
 
 
 def test_fixed_increment_stations_preserve_grid():

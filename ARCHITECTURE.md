@@ -65,20 +65,22 @@ cross the original stock envelope to reach its boundary. Users evaluate remainin
 stock before machining; advisory previews do not approve routes. Protected
 routes retain full-insert finished-part sweep checks, and missing boundary access
 fails transactionally. Without explicit stock, initial clearance uses model bounds.
-Grooving retains its local radial clearance and full-model sweep checks.
-Boring uses separate geometric access
-routing and does not claim stock-opening or holder clearance certification.
+Internal Rough/Profile routing enters from the axis-side containment boundary
+and checks protected moves against the selected internal contour. It does not
+certify a pre-existing opening or bar/holder clearance.
 
 All operations inherit `pass_offset` from the base class. It is radial for
-roughing/grooving/threading, axial for facing, normal to the contour for profiling and
-unused for parting. `cut_direction` is also stored and reported by `BaseOP`,
-defaulting to `CutDirection.RADIAL` (`liblathe.op.base`); currently only boring uses
-it to select X/Z clearing. Use `CutDirection.AXIAL` for axial clearing, not raw strings.
-The add-on uses one `PassOffset` property, with descriptive
-Radial Pass Offset, Axial Pass Offset or Pass Offset labels; parting hides it.
-Grooving also uses `finish_pass_offset` (`FinishPassOffset` in the add-on)
-between finishing contours. Previous parameter names are not supported;
-existing scripts and saved operations must be updated or recreated.
+roughing/threading, normal to the contour for profiling and unused for parting.
+Rough directions `-Z` and `+Z` make axial passes; `Radial` makes one full radial
+stroke per axial station and covers facing and groove roughing. Facing ends in
+a +Z pull-off; groove-enabled strokes withdraw radially through the plunge.
+External grooving repositions at containment-based clearance between passes,
+with global stock/model clearance only at operation entry and final return.
+The local lane must be prepared; remaining stock is not automatically certified.
+Profile supports `-Z`, `+Z` and Radial
+traversal. Rough and Profile expose External/Internal mode. Previous operation
+classes and parameter names are not supported; existing scripts and saved
+operations must be updated or recreated.
 
 Operations choose the traversal of generated geometry; the G-code router
 chooses approaches and retracts. `SegmentGroup.reversed()` provides a shared,
@@ -88,28 +90,22 @@ or rebuild its lead-in/out.
 
 `BaseOP` owns shared input/parameter validation, path-state reset and an ordered
 routing wrapper. Each strategy still chooses its groups, traversal order and
-routing policy explicitly. Facing and parting remain unprotected stock-removal
-cuts; parting explicitly requests radial withdrawal through the kerf.
-Boring and centreline drilling retain separate access routing. Generation
-publishes complete path sets only; validation and routing failures clear both
-published collections. Unused cutting parameters are not validated, and feed
-rates remain pass-through.
+routing policy explicitly. Parting remains an unprotected stock-removal cut and
+explicitly requests radial withdrawal through the kerf. Centreline drilling
+retains separate access routing. Generation publishes complete path sets only;
+validation and routing failures clear both published collections. Unused
+cutting parameters are not validated, and feed rates remain pass-through.
 
 `SegmentGroup.reflectX(radius=0)` provides the common native transformation
-`X = radius - X` for side dispatch and boring's material frame. It preserves
-segment order, reverses arc bulges and does not mutate its input.
+`X = radius - X` for side dispatch and Internal mode. It preserves segment
+order, reverses arc bulges and does not mutate its input.
 
-Grooving partitions its clipped finishing polyline at radial direction changes
-and gaps, reversing outward runs so each stroke cuts inward. Constant-X floor
-segments remain, and the existing radial router provides clearance moves
-between strokes. Near-side generation followed by the existing far-side
-reflection keeps both tool sides cutting toward the centerline. Other
-operations retain their existing traversal and layer order.
-
-Grooving's optional `finish_pass_offset` reserves a finishing allowance during
-plunging. Each finishing contour is offset independently from the original
-tool-origin profile, from the outer allowance down to `stock_to_leave`.
-The default of zero preserves repeated final-contour passes.
+Radial Profile partitions external clipped contours at gaps and radial
+direction changes, reversing outward runs toward their floor. In Internal mode
+it traverses each connected bore contour from bottom toward mouth as the exact
+reverse of the `-Z` pass, leads included. Groove
+roughing and finishing use separate Rough and Profile operations with no
+groove-specific finish-stepdown parameter.
 
 Full-insert sweep checks certify finishing cuts as well as added approach and
 retract moves. Long public sweep queries are partitioned into consecutive
@@ -128,48 +124,30 @@ near curved groove shoulders while retaining the numerical clearance margin.
 `SegmentGroup.validateToolSweeps(tool, moves)` batches ordered straight
 translations against one immutable part/tool snapshot. It uses the scalar
 checker without reducing tolerances or skipping moves, and identifies the first
-failed move by index and coordinates. Profile, rough, groove and bore generation
-use batches; routing keeps individual queries because candidate selection
-depends on each result. Both APIs retain the GIL. Snapshots live only for the
-call, avoiding mutable cross-call caches. Rebuild the native modules together
-before using the Python operation changes.
+failed move by index and coordinates. Profile and Rough generation use batches;
+routing keeps individual queries because candidate selection depends on each
+result. Both APIs retain the GIL. Snapshots live only for the call, avoiding
+mutable cross-call caches. Rebuild the native modules together before using the
+Python operation changes.
 
-## Internal boring experiment
+## Internal machining mode
 
-`BoreOP` reuses defeaturing and positive offsets by mapping the target inner
-contour into a finite external-material frame (`u = reference_radius - x`),
-with reflected tool-relative X. Terminal extensions keep endpoint artefacts
-outside the requested cutting limits. Cutting strokes return to physical X/Z
-before containment clipping. The existing near/far dispatch is independent of
-this material-side transformation.
+Rough and Profile share an Internal frame in `BaseOP`. It maps selected part
+geometry and containment with `X' = R - X`, reflects the tool-relative X
+coordinates, plans using the ordinary reachable-profile/contour strategies,
+then maps paths and G-code back to physical X. Arc offsets are reflected and
+clockwise/counter-clockwise commands are exchanged. This frame is composed
+after Near/Far normalization; it does not mutate caller geometry or change the
+physical Near/Far sign convention.
 
-The experiment confirms reuse for bounded, single-contour examples; it does not
-establish support for arbitrary internal topology. External stock routing is
-not reused: the operation emits a separate geometric feed entry/inward escape
-sequence. Feeds stay within tool-reference containment; rapid positioning and
-return may leave it to reach clearance. TurningAddon extracts coaxial internal
-walls and attached floors automatically and selects one contour using containment.
-There are deliberately no prepared-opening or tool-fit checks.
-Clearing scans the first accessible interval of the compensated allowance region
-in X (default) or Z, with at most `pass_offset` between successive scan lines.
-Radial clearing's first station is containment ZMax, not the model mouth.
-Stations ahead of the mouth reuse its compensated radius without changing
-native extraction bounds or endpoint-limited finishing.
-Separate `clearing_paths` precede `tool_paths`; the latter are reversed finishing
-contours, cutting outward across the floor then toward the mouth. Each stroke
-enters from containment XMin for radial clearing and finishing, feeding down
-before moving outward. Axial clearing instead positions X at the exact
-`containment.ZMax + clearance` plane, approaches ZMax at rapid, and feeds
-axially without an engaged outward positioning feed. The same plane is used
-for every front return; all known approach and return segments are checked
-against target material. Withdrawal
-first disengages perpendicular to the last cut before returning to XMin and
-front clearance. Outward radial cuts lift in +Z (bounded by clearance,
-pass spacing and containment); at the front boundary they rapid axially to
-front clearance before returning inward. Axial clearing skips the inner access
-lane itself, retaining space for inward disengagement. Both cutting and added
-feeds are checked against the target material, not starting stock.
-See [scope and limitations](docs/source/pages/operations/bore.rst).
+Internal routes use the axis-side containment boundary as their radial access
+lane. This avoids routing the tool reference through negative radii when the
+selected containment reaches the spindle axis. The selected internal contour
+and protected feed sweeps are checked, but stock-opening, tool-fit, holder,
+fixture and machine-travel checks are deliberately not inferred. TurningAddon
+extracts one coaxial inner contour and any attached inward floor from the job
+model using X/Z containment. Stock preview consumes the physical-coordinate
+insert and feeds after planning, not the reflected computational frame.
 
 ## External threading
 

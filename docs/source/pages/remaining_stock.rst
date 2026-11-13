@@ -80,17 +80,16 @@ included for context and consistent plot bounds, including fully removed stock.
 For filled rendering, use ``polygons()`` rather than joining unordered edges;
 the disjoint material cells preserve removed pockets and disconnected pieces.
 
-Internal boring
+Internal machining
 ---------------
 
-Generated bore feeds use this same physical-coordinate subtraction, with no
-operation-specific material transform or internal-stock algorithm. Both radial
-and axial clearing, finishing, and near/far tool sides are supported. The bore
-planner's reflected computational frame must not be used for stock subtraction:
-use the actual insert and emitted moves in one common coordinate system.
-Subsequent operations consume the resulting stock snapshot in the usual way.
-The preview remains downstream of planning and does not validate prepared-hole
-access, entry, rapids or bar/holder fit.
+Generated Internal Rough and Profile feeds use this same physical-coordinate
+subtraction. The planner maps its internal computational frame back to physical
+X before emitting moves; stock preview uses the actual insert and emitted
+coordinates. Near/Far tool sides are supported. Subsequent operations consume
+the resulting stock snapshot in the usual way. The preview remains downstream
+of planning and does not validate prepared-hole access, entry, rapids or
+bar/holder fit.
 
 TurningAddon initializes this preview from the stock's outer rotational envelope,
 closed to the spindle axis. Pre-existing openings in hollow/imported stock are
@@ -137,11 +136,11 @@ Python binding tests run with the normal suite:
 
 .. code-block:: sh
 
-   python -m pytest tests/base/test_stock_preview.py tests/op/test_bore_stock_preview.py -q
+   python -m pytest tests/base/test_stock_preview.py tests/op/test_internal_mode.py -q
 
-Generated-operation tests cover radial/axial boring, near/far sides and blind/
-through contours. They check cavity removal, preservation of the outer wall and
-blind-floor allowance, snapshot independence, boundary area and unchanged paths.
+Generated-operation tests cover internal Near/Far routing, radial Rough strokes
+and Profile finishing. The preview remains downstream of planning and does not
+validate prepared-hole access, entry, rapids or bar/holder fit.
 FreeCAD integration was also compared with independent planar OCC subtraction
 of the same sampled insert sweeps, including following-operation snapshots and
 the filled preview. Numerically uncertain retention caused excess material of
