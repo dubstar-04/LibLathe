@@ -13,6 +13,8 @@
 namespace liblathe
 {
 
+    struct DefeatureResult;
+
     class SegmentGroup
     {
     public:
@@ -47,6 +49,8 @@ namespace liblathe
         void validateToolSweeps(const SegmentGroup &tool,
                                const std::vector<std::pair<Point, Point>> &moves);
         SegmentGroup defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving);
+        DefeatureResult defeatureWithSamples(BoundBox stock, SegmentGroup tool,
+                                              bool allow_grooving);
         void validate();
         SegmentGroup fromPoints(std::vector<Point> points);
         std::vector<Point> reduce(std::vector<Point> &points, float tolerance);
@@ -100,6 +104,12 @@ namespace liblathe
         std::array<Segment, 3> axisClosure();
         void rdp(std::vector<Point> &points, float tolerance, std::vector<Point> &out);
         SegmentGroup copy();
+    };
+
+    struct DefeatureResult
+    {
+        SegmentGroup contour;
+        std::vector<Point> samples;
     };
 
 }

@@ -183,6 +183,28 @@ class TestDefeatureBounds(unittest.TestCase):
                 self.assertEqual(self.coordinates(source), original_source)
                 self.assertEqual(self.coordinates(tool), original_tool)
 
+    def test_defeature_samples_are_available_without_changing_the_contour(self):
+        source = self.groove()
+        tool = self.profile([(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)])
+        stock = BoundBox(Point(0, 1), Point(12, -18))
+
+        result = source.defeatureWithSamples(stock, tool, True)
+        reference = source.defeature(stock, tool, True)
+
+        self.assertEqual(self.coordinates(result.contour), self.coordinates(reference))
+        self.assertGreater(len(result.samples), 1)
+        self.assertTrue(all(first.Z > second.Z
+                            for first, second in zip(result.samples, result.samples[1:])))
+        for sample in result.samples:
+            source.validateToolSweep(tool, sample, sample)
+
+        ordinary = source.defeatureWithSamples(stock, tool, False).samples
+        grooved = result.samples
+        self.assertTrue(all(next_point.X >= point.X - 1e-5
+                            for point, next_point in zip(ordinary, ordinary[1:])))
+        self.assertTrue(any(next_point.X < point.X - 1e-5
+                            for point, next_point in zip(grooved, grooved[1:])))
+
     def test_expanded_containment_certifies_long_rounded_insert_connectors(self):
         source = self.profile([(0, 95.005), (22, 95.005), (22, 0), (0, 0)])
         vertices = [(0.2, 2), (0, 1.8), (0, 0.2), (0.2, 0),

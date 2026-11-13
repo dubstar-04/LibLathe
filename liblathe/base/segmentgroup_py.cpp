@@ -50,6 +50,12 @@ PYBIND11_MODULE(segmentgroup, m)
          .def_property_readonly("area", &stock_preview::StockState::materialArea)
          .def_property_readonly("uncertain_retentions", &stock_preview::StockState::retainedUncertain);
 
+         py::class_<DefeatureResult>(m, "DefeatureResult")
+             .def_readonly("contour", &DefeatureResult::contour,
+                          "Collision-free simplified contour with certified connectors.")
+             .def_readonly("samples", &DefeatureResult::samples,
+                          "Accepted radial scan origins before connector construction and simplification.");
+
      // bindings to segmentgroup class
      py::class_<SegmentGroup>(m, "SegmentGroup")
          .def(py::init<>())
@@ -80,6 +86,8 @@ PYBIND11_MODULE(segmentgroup, m)
               "Raises RuntimeError for detected zero-width branches, uncertifiable "
               "chords or fewer than two contour points. Does not guarantee completeness.")
          .def("defeature", &SegmentGroup::defeature)
+         .def("defeatureWithSamples", &SegmentGroup::defeatureWithSamples,
+              "Return the defeatured contour and accepted radial scan origins.")
          .def("validateToolSweep", &SegmentGroup::validateToolSweep,
               "Certify full-insert clearance throughout a straight translation. "
               "Raise RuntimeError for collisions or uncertifiable sweeps.")

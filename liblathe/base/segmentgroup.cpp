@@ -392,7 +392,13 @@ namespace liblathe
         return Point(toolBounds.XMin, (contactZMin + contactZMax) * 0.5f);
     }
 
-    SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving = false)
+    SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving)
+    {
+        return defeatureWithSamples(stock, std::move(tool), allow_grooving).contour;
+    }
+
+    DefeatureResult SegmentGroup::defeatureWithSamples(BoundBox stock, SegmentGroup tool,
+                                                        bool allow_grooving)
     {
         // Build a tool-origin boundary with full-insert clearance and certified connectors //
 
@@ -485,6 +491,7 @@ namespace liblathe
         };
 
         float z_pos = start.Z;
+        std::vector<Point> samples;
         while (z_pos > ZMin)
         {
             float x_pos = -toolBounds.XMin;
@@ -509,6 +516,7 @@ namespace liblathe
                         continue;
                     }
                     points.push_back(iteration_position);
+                    samples.push_back(iteration_position);
                     break;
                 }
                 const double previousX = x_pos;
@@ -518,7 +526,10 @@ namespace liblathe
                 } while (x_pos < x_limit && double(x_pos) - previousX < collisionRadius);
             }
 
-            z_pos -= resolution;
+            const float next_z = z_pos - resolution;
+            if (!(next_z < z_pos))
+                throw std::runtime_error("Cannot advance axial defeature scan at coordinate precision");
+            z_pos = next_z;
         }
 
         std::vector<Point> safePoints;
@@ -615,7 +626,7 @@ namespace liblathe
             self(self, split, last);
         };
         reduceSafe(reduceSafe, 0, safePoints.size() - 1);
-        return this->fromPoints(defeatured_points);
+        return {this->fromPoints(defeatured_points), std::move(samples)};
     }
 
     void SegmentGroup::PreparedGeometry::validateToolSweepSpan(
