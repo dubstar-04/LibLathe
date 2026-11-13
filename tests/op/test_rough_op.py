@@ -304,6 +304,30 @@ class test_RoughOP(unittest.TestCase):
         self.assertAlmostEqual(min(stroke.end.Z for stroke in floor_strokes), 25, delta=0.05)
         self.assertAlmostEqual(max(stroke.end.Z for stroke in floor_strokes) + 2, 30, delta=0.05)
 
+    def test_axial_grooving_keeps_groove_passes_behind_the_shoulder(self):
+        operation = RoughOP()
+        operation.setParams({"direction": Direction.NEGATIVE_Z,
+                             "allow_grooving": True, "pass_offset": 1})
+        operation.add_containment(BoundBox(Point(20, 20), Point(35, 35)))
+        vertices = [(0, 50), (30, 50), (30, 30), (25, 30), (25, 25),
+                    (30, 25), (30, 0), (0, 0)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        vertices = [(0, 0), (2, 0), (2, 1), (0, 1), (0, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        self.assertTrue(operation.getGCode())
+
+        groove = [group.boundbox() for group in operation.tool_paths
+                  if group.boundbox().XMin < 30.5]
+        self.assertTrue(groove)
+        for bounds in groove:
+            self.assertLess(bounds.ZMax, 30)
+            self.assertAlmostEqual(bounds.ZMin, 25, delta=0.05)
+
     def test_radial_grooving_rejects_a_blocked_local_clearance_lane(self):
         operation = RoughOP()
         operation.setParams({"direction": Direction.RADIAL,
