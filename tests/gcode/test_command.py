@@ -28,6 +28,12 @@ class test_command(unittest.TestCase):
         string = command.to_string()
         self.assertEqual(string, 'G0 X-20 Y0 Z6 F10')
 
+    def test_scientific_notation_is_expanded_without_changing_parameter_values(self):
+        params = {'Z': -1e-7, 'K': 1e-6}
+        command = Command('G33', params)
+        self.assertEqual(command.to_string(), 'G33 Z-0.0000001 K0.000001')
+        self.assertEqual(command.getParams(), params)
+
 
 if __name__ == '__main__':
     unittest.main()

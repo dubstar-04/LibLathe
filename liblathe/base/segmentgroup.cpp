@@ -171,7 +171,7 @@ namespace liblathe
                             prepareIntersections(segmentGroup.segments), Point());
     }
 
-    SegmentGroup SegmentGroup::offset(float step_over)
+    SegmentGroup SegmentGroup::offset(float step_over, bool extend_start)
     {
         // Create an offset segmentgroup by the distance of step_over //
         if (this->count() == 0)
@@ -197,7 +197,7 @@ namespace liblathe
 
         Quadtree qt = Quadtree();
         qt.initialise(this, center, size, size);
-        std::vector<Point> offset = qt.getOffset(step_over);
+        std::vector<Point> offset = qt.getOffset(step_over, extend_start);
         offset.erase(std::unique(offset.begin(), offset.end(),
                                  [](Point first, Point second)
                                  { return first.isSame(second); }),
@@ -228,7 +228,68 @@ namespace liblathe
     void SegmentGroup::validateToolSweep(SegmentGroup tool, Point start, Point end)
     {
         // Certify a full insert translation against the prepared axis-closed part region //
-        this->prepareGeometry().validateToolSweep(tool.prepareGeometry(), start, end);
+        const auto partGeometry = this->prepareGeometry();
+        const auto toolGeometry = tool.prepareGeometry();
+        partGeometry.validateToolSweep(toolGeometry, start, end);
+    }
+
+    void SegmentGroup::validateToolSweeps(
+        const SegmentGroup &tool, const std::vector<std::pair<Point, Point>> &moves)
+    {
+        if (moves.empty())
+            return;
+        const auto partGeometry = this->prepareGeometry();
+        auto toolSnapshot = tool;
+        const auto toolGeometry = toolSnapshot.prepareGeometry();
+        for (size_t index = 0; index < moves.size(); ++index)
+        {
+            const auto &move = moves[index];
+            try
+            {
+                partGeometry.validateToolSweep(toolGeometry, move.first, move.second);
+            }
+            catch (const std::runtime_error &error)
+            {
+                throw std::runtime_error("Tool sweep " + std::to_string(index) + " (" +
+                                         std::to_string(move.first.X) + ", " + std::to_string(move.first.Z) +
+                                         ") -> (" + std::to_string(move.second.X) + ", " +
+                                         std::to_string(move.second.Z) + "): " + error.what());
+            }
+        }
+    }
+
+    void SegmentGroup::PreparedGeometry::validateToolSweep(
+        const PreparedGeometry &tool, Point start, Point end) const
+    {
+        auto bounds = tool.boundaryBounds.front();
+        for (size_t index = 1; index < tool.originalCount; ++index)
+        {
+            const auto &edge = tool.boundaryBounds[index];
+            bounds.XMin = std::min(bounds.XMin, edge.XMin);
+            bounds.XMax = std::max(bounds.XMax, edge.XMax);
+            bounds.ZMin = std::min(bounds.ZMin, edge.ZMin);
+            bounds.ZMax = std::max(bounds.ZMax, edge.ZMax);
+        }
+        const double span = std::min(bounds.XLength(), bounds.ZLength());
+        const double dx = double(end.X) - start.X;
+        const double dz = double(end.Z) - start.Z;
+        const double travel = std::hypot(dx, dz);
+        if (!std::isfinite(travel) || !std::isfinite(span) || span <= 0)
+            throw std::invalid_argument("Tool sweep requires finite coordinates and positive insert X/Z extents");
+        const double count = std::max(1.0, std::ceil(travel / span));
+        if (count >= double(std::numeric_limits<size_t>::max()))
+            throw std::runtime_error("Tool sweep requires too many translation spans");
+        // Bound each translation's subdivision work without changing the swept path or clearance tests.
+        Point previous = start;
+        for (size_t index = 1; index <= static_cast<size_t>(count); ++index)
+        {
+            const double fraction = index / count;
+            const Point next = index == static_cast<size_t>(count)
+                                   ? end
+                                   : Point(start.X + fraction * dx, start.Z + fraction * dz);
+            this->validateToolSweepSpan(tool, previous, next);
+            previous = next;
+        }
     }
 
     void SegmentGroup::PreparedGeometry::validateContour(
@@ -331,12 +392,18 @@ namespace liblathe
         return Point(toolBounds.XMin, (contactZMin + contactZMax) * 0.5f);
     }
 
-    SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving = false)
+    SegmentGroup SegmentGroup::defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving)
+    {
+        return defeatureWithSamples(stock, std::move(tool), allow_grooving).contour;
+    }
+
+    DefeatureResult SegmentGroup::defeatureWithSamples(BoundBox stock, SegmentGroup tool,
+                                                        bool allow_grooving)
     {
         // Build a tool-origin boundary with full-insert clearance and certified connectors //
 
         float ZMin = stock.ZMin;
-        float resolution = 0.01;
+        const float resolution = defeatureResolution;
 
         std::vector<Point> points;
 
@@ -424,6 +491,7 @@ namespace liblathe
         };
 
         float z_pos = start.Z;
+        std::vector<Point> samples;
         while (z_pos > ZMin)
         {
             float x_pos = -toolBounds.XMin;
@@ -448,6 +516,7 @@ namespace liblathe
                         continue;
                     }
                     points.push_back(iteration_position);
+                    samples.push_back(iteration_position);
                     break;
                 }
                 const double previousX = x_pos;
@@ -457,7 +526,10 @@ namespace liblathe
                 } while (x_pos < x_limit && double(x_pos) - previousX < collisionRadius);
             }
 
-            z_pos -= resolution;
+            const float next_z = z_pos - resolution;
+            if (!(next_z < z_pos))
+                throw std::runtime_error("Cannot advance axial defeature scan at coordinate precision");
+            z_pos = next_z;
         }
 
         std::vector<Point> safePoints;
@@ -554,13 +626,25 @@ namespace liblathe
             self(self, split, last);
         };
         reduceSafe(reduceSafe, 0, safePoints.size() - 1);
-        return this->fromPoints(defeatured_points);
+        return {this->fromPoints(defeatured_points), std::move(samples)};
     }
 
-    void SegmentGroup::PreparedGeometry::validateToolSweep(
+    void SegmentGroup::PreparedGeometry::validateToolSweepSpan(
         const PreparedGeometry &tool, Point start, Point end) const
     {
         // Certify insert clearance throughout a translation, rejecting collisions or unresolved sweeps //
+        const double xmin = std::min(start.X, end.X) + double(tool.bounds.XMin);
+        const double xmax = std::max(start.X, end.X) + double(tool.bounds.XMax);
+        const double zmin = std::min(start.Z, end.Z) + double(tool.bounds.ZMin);
+        const double zmax = std::max(start.Z, end.Z) + double(tool.bounds.ZMax);
+        const double margin = 1e-5 + 4 * std::numeric_limits<float>::epsilon() *
+            std::max({1.0, std::abs(xmin), std::abs(xmax), std::abs(zmin), std::abs(zmax),
+                      std::abs(double(this->bounds.XMin)), std::abs(double(this->bounds.XMax)),
+                      std::abs(double(this->bounds.ZMin)), std::abs(double(this->bounds.ZMax))});
+        // Disjoint swept envelopes prove clearance even for long, near-tangent moves.
+        if (xmin > this->bounds.XMax + margin || xmax < this->bounds.XMin - margin ||
+            zmin > this->bounds.ZMax + margin || zmax < this->bounds.ZMin - margin)
+            return;
         const auto &boundaryBounds = this->boundaryBounds;
         for (const auto &edge : this->boundary)
             if (tool.isInside(Point(edge.segment.start.X - start.X,
@@ -641,13 +725,30 @@ namespace liblathe
             const double zReach = edgeZReach + numerical +
                                   std::abs(moveZ) * (moveEnd - moveStart) / 2;
             bool touchesBoundary = false;
-            for (const auto &bounds : boundaryBounds)
+            for (size_t index = 0; index < boundaryBounds.size(); ++index)
+            {
+                const auto &bounds = boundaryBounds[index];
                 if (!(sample.X + xReach < bounds.XMin || sample.X - xReach > bounds.XMax ||
                       sample.Z + zReach < bounds.ZMin || sample.Z - zReach > bounds.ZMax))
                 {
+                    const auto &target = this->boundary[index];
+                    if (target.segment.bulge != 0)
+                    {
+                        const double dx = std::abs(double(sample.X) - target.arc.centre.X);
+                        const double dz = std::abs(double(sample.Z) - target.arc.centre.Z);
+                        const double nearX = std::max(0.0, dx - xReach);
+                        const double nearZ = std::max(0.0, dz - zReach);
+                        const double nearest = std::hypot(nearX, nearZ);
+                        const double farthest = std::hypot(dx + xReach, dz + zReach);
+                        // A patch entirely inside or outside the supporting circle cannot cross its arc.
+                        if (nearest > target.arc.radius + numerical ||
+                            farthest < target.arc.radius - numerical)
+                            continue;
+                    }
                     touchesBoundary = true;
                     break;
                 }
+            }
             if (!touchesBoundary)
                 return;
             if (alongEdge == edgeStart || alongEdge == edgeEnd ||
@@ -722,6 +823,26 @@ namespace liblathe
         }
 
         return segmentGroup;
+    }
+
+    SegmentGroup SegmentGroup::reversed() const
+    {
+        SegmentGroup result;
+        for (auto segment = segments.rbegin(); segment != segments.rend(); ++segment)
+            result.addSegment(Segment(segment->end, segment->start, -segment->bulge));
+        return result;
+    }
+
+    SegmentGroup SegmentGroup::reflectX(double radius) const
+    {
+        if (!std::isfinite(radius))
+            throw std::invalid_argument("Radial reflection requires a finite reference radius");
+        SegmentGroup result;
+        for (const auto &segment : segments)
+            result.addSegment(Segment(Point(radius - segment.start.X, segment.start.Z),
+                                      Point(radius - segment.end.X, segment.end.Z),
+                                      -segment.bulge));
+        return result;
     }
 
     std::vector<Point> SegmentGroup::reduce(std::vector<Point> &points, float tolerance)
@@ -869,7 +990,20 @@ namespace liblathe
             }
         };
         for (size_t i = 0; i < this->boundary.size(); ++i)
+        {
+            if (this->boundary[i].segment.bulge == 0)
+            {
+                const auto &bounds = this->boundaryBounds[i];
+                const double dx = std::max({double(bounds.XMin) - point.X, 0.0,
+                                            double(point.X) - bounds.XMax});
+                const double dz = std::max({double(bounds.ZMin) - point.Z, 0.0,
+                                            double(point.Z) - bounds.ZMax});
+                // Line projections stay inside endpoint bounds; keep ties in traversal order.
+                if (dx * dx + dz * dz >= closestDistance)
+                    continue;
+            }
             consider(this->boundary[i], i < this->originalCount);
+        }
         if (onProfile != nullptr)
             *onProfile = closestOnProfile;
         return closest;
@@ -997,8 +1131,16 @@ namespace liblathe
             point.Z < bounds.ZMin - margin || point.Z > bounds.ZMax + margin)
             return false;
         int intersections = 0;
-        for (const auto &segment : this->boundary)
+        for (size_t index = 0; index < this->boundary.size(); ++index)
         {
+            const auto &segment = this->boundary[index];
+            if (segment.segment.bulge == 0)
+            {
+                const auto &edgeBounds = this->boundaryBounds[index];
+                if (point.X < edgeBounds.XMin || point.X > edgeBounds.XMax ||
+                    point.Z > edgeBounds.ZMax)
+                    continue;
+            }
             const int count = segment.crossings(point);
             if (count < 0)
                 return true;

@@ -33,10 +33,10 @@ class test_PartoffOP(unittest.TestCase):
         partSegments.append(Segment(PartPt6, PartPt8))
         partSegments.append(Segment(PartPt7, PartPt8))
 
-        # Define stock bounds
-        stockPt1 = Point(0, 15)
-        stockPt2 = Point(25, -55)
-        stock_boundbox = BoundBox(stockPt1, stockPt2)
+        # Define containment bounds
+        containmentPt1 = Point(0, 15)
+        containmentPt2 = Point(25, -55)
+        containment_bounds = BoundBox(containmentPt1, containmentPt2)
 
         # set feed rate to test
         self.hfeed = 10
@@ -44,7 +44,6 @@ class test_PartoffOP(unittest.TestCase):
         # Define Operations Properties
         params = {}
         params['allow_grooving'] = False
-        params['step_over'] = 1
         params['finish_passes'] = 2
         params['stock_to_leave'] = 0
         params['hfeed'] = self.hfeed
@@ -52,7 +51,7 @@ class test_PartoffOP(unittest.TestCase):
 
         self.op = PartoffOP()
         self.op.setParams(params)
-        self.op.add_stock(stock_boundbox)
+        self.op.add_containment(containment_bounds)
         self.op.addPartSegments(partSegments)
         tool = Tool()
         tool.set_tool_from_string('DCMT070204R')

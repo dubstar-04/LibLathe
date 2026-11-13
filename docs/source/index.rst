@@ -10,6 +10,7 @@ Welcome to LibLathe
    pages/bulge
    pages/gcode
    pages/operations
+   pages/remaining_stock
 
 
 About LibLathe
@@ -38,4 +39,3 @@ LibLathe is opensource making it free to use, change and redistribute.
 LibLathe sourcecode can be found at `GitHub`_
 
 .. _GitHub: https://github.com/dubstar-04/LibLathe 
-

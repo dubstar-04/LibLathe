@@ -61,3 +61,20 @@ such as:
 - Offsetting
 - Converting to gcode
 - Analysis for use with a selected tool
+
+Reversing traversal
+-------------------
+
+``group.reversed()`` returns an independent segment group describing the same
+geometry in the opposite direction. It reverses segment order, exchanges each
+segment's start and end, and negates arc bulges. It preserves gaps rather than
+adding connectors, and does not mutate the source group.
+
+For connected lines this is equivalent to reversing their point array before
+building the group. Reversing only a list of segments is not equivalent: each
+segment would still point in its original direction.
+
+Operations may reuse this method to choose cutting traversal before G-code
+routing. Reversing traversal is distinct from changing layer order, mirroring
+the tool side, or choosing an approach/retract axis. Operation-specific
+lead-ins, lead-outs and clearance checks must still match the chosen traversal.

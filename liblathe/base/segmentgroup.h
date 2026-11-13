@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <utility>
 
 #include "boundbox.h"
 #include "point.h"
@@ -12,10 +13,13 @@
 namespace liblathe
 {
 
+    struct DefeatureResult;
+
     class SegmentGroup
     {
     public:
         static constexpr float offsetTolerance = 0.05f;
+        static constexpr double defeatureResolution = 0.01;
 
         SegmentGroup();
         // Destroy the group and its stored segments //
@@ -24,6 +28,8 @@ namespace liblathe
         void addSegment(Segment segment);
         void insertSegment(Segment segment, int position);
         std::vector<Segment> getSegments();
+        SegmentGroup reversed() const;
+        SegmentGroup reflectX(double radius = 0) const;
         // C++ accessor without copying geometry; throws invalid_argument if empty.
         const Point &getStartPoint() const;
         void extend(SegmentGroup segmentgroup);
@@ -34,13 +40,17 @@ namespace liblathe
         // Throws invalid_argument for empty geometry or nonfinite offsets,
         // runtime_error if fewer than two distinct contour points are produced or
         // connecting chords cannot be certified within offsetTolerance.
-        SegmentGroup offset(float step_over);
+        SegmentGroup offset(float step_over, bool extend_start = false);
         // C++ extraction/simplification guard; empty and single-point contours are
         // handled separately by offset(). Does not certify contour completeness.
         void validateOffsetContour(const std::vector<Point> &points, float offset);
         // Reject colliding or uncertifiable insert translations against this axis-closed region //
         void validateToolSweep(SegmentGroup tool, Point start, Point end);
+        void validateToolSweeps(const SegmentGroup &tool,
+                               const std::vector<std::pair<Point, Point>> &moves);
         SegmentGroup defeature(BoundBox stock, SegmentGroup tool, bool allow_grooving);
+        DefeatureResult defeatureWithSamples(BoundBox stock, SegmentGroup tool,
+                                              bool allow_grooving);
         void validate();
         SegmentGroup fromPoints(std::vector<Point> points);
         std::vector<Point> reduce(std::vector<Point> &points, float tolerance);
@@ -87,12 +97,19 @@ namespace liblathe
             void validateContour(const std::vector<Point> &points, float offset) const;
             void validateChord(Point start, Point end, float offset) const;
             void validateToolSweep(const PreparedGeometry &tool, Point start, Point end) const;
+            void validateToolSweepSpan(const PreparedGeometry &tool, Point start, Point end) const;
         };
         PreparedGeometry prepareGeometry();
         std::vector<Segment> segments;
         std::array<Segment, 3> axisClosure();
         void rdp(std::vector<Point> &points, float tolerance, std::vector<Point> &out);
         SegmentGroup copy();
+    };
+
+    struct DefeatureResult
+    {
+        SegmentGroup contour;
+        std::vector<Point> samples;
     };
 
 }

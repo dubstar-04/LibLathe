@@ -38,15 +38,15 @@ partSegments.append(Segment(PartPt5, PartPt6))
 partSegments.append(Segment(PartPt6, PartPt7))
 partSegments.append(Segment(PartPt7, PartPt8))
 
-# Define stock bounds
-stockPt1 = Point(0, 15)
-stockPt2 = Point(25, -55)
-StockBoundingBox = BoundBox(stockPt1, stockPt2)
+# Define containment bounds
+containmentPt1 = Point(0, 15)
+containmentPt2 = Point(25, -55)
+ContainmentBoundingBox = BoundBox(containmentPt1, containmentPt2)
 
 # Define Operations Properties
 params = {}
 params['allow_grooving'] = True
-params['step_over'] = 0.25
+params['pass_offset'] = 0.25
 params['finish_passes'] = 10
 params['stock_to_leave'] = 0
 params['hfeed'] = 10
@@ -55,7 +55,7 @@ params['vfeed'] = 10
 # Create Profile Operation
 profileOP = ProfileOP()
 profileOP.setParams(params)
-profileOP.add_stock(StockBoundingBox)
+profileOP.add_containment(ContainmentBoundingBox)
 profileOP.addPartSegments(partSegments)
 tool = Tool()
 tool.set_tool_from_string('DCMT070204R')

@@ -47,14 +47,14 @@ namespace liblathe
         // Throws runtime_error before initialisation, invalid_argument for empty geometry
         // or nonfinite offsets. A valid request with no contour returns an empty vector.
         // Uses the axis-closed field, but excludes artificial-closure candidates.
-        // Original faces remain eligible; the first segment's start-Z clip is retained.
+        // Original faces remain eligible; extend_start optionally disables the start-Z clip.
         // Zero levels sample both sides; centre/corner seeds preserve feature joins.
         // Candidates converge within float/arc-rounding precision. Connecting chords
         // must satisfy SegmentGroup::offsetTolerance; detected collapsed branches
         // and uncertifiable chords throw runtime_error. Completeness is not guaranteed.
         // Rejected greedy ordering retries source-profile ordering of the same
         // candidates, under the same contour certificate.
-        std::vector<Point> getOffset(float offsetValue);
+        std::vector<Point> getOffset(float offsetValue, bool extend_start = false);
         // Independent flat snapshots in root-first depth-first traversal order.
         // Before extraction (including after initialise), returns only the root.
         // Deferred signs are resolved against the geometry from the latest extraction.
@@ -64,6 +64,7 @@ namespace liblathe
         friend class SegmentGroup;
         // value to offset the segmentgroup by
         float offset = 0;
+        bool extendStart = false;
         // precision of the quadtree
         float precision = defaultPrecision;
         Point segmentStart = Point(0, 0);

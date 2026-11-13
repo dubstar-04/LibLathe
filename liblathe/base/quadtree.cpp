@@ -251,7 +251,7 @@ namespace liblathe
         this->precision = defaultPrecision;
     }
 
-    std::vector<Point> Quadtree::getOffset(float offsetValue)
+    std::vector<Point> Quadtree::getOffset(float offsetValue, bool extend_start)
     {
         // Extract and order offset points from a fresh snapshot of the source geometry //
         if (!this->initialised)
@@ -269,6 +269,7 @@ namespace liblathe
         this->offsetBoundaryPoints.clear();
         this->nodes.clear();
         this->offset = offsetValue;
+        this->extendStart = extend_start;
         this->segmentStart = this->segmentGroup->getStartPoint();
         this->geometry = this->segmentGroup->prepareGeometry();
         // start to process the quadtree, populating the offsetBoundaryPoints
@@ -323,7 +324,7 @@ namespace liblathe
                     if (this->projectToOffset(seeds[i], value, projectedPoint, geometry) &&
                         this->insideNode(projectedPoint, node))
                     {
-                        if (projectedPoint.Z <= this->segmentStart.Z)
+                        if (this->extendStart || projectedPoint.Z <= this->segmentStart.Z)
                             this->offsetBoundaryPoints.push_back(projectedPoint);
                     }
                 }

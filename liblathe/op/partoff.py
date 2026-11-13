@@ -3,7 +3,7 @@ from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 
-from liblathe.gcode.path import Path
+from liblathe.gcode.path import RoutingDirection
 
 
 class PartoffOP(liblathe.op.base.BaseOP):
@@ -11,14 +11,10 @@ class PartoffOP(liblathe.op.base.BaseOP):
     def generatePath(self):
         """Generate the path for the Part operation"""
 
-        self.tool_paths = []
-        toolShape = self.tool.get_segmentgroup()
-        toolBoundbox = toolShape.boundbox()
-        toolWidth = toolBoundbox.XLength()
-
-        XMin = self.stock.XMin
-        XMax = self.stock.XMax + self.clearance
-        ZMin = self.stock.ZMin - toolWidth
+        self._begin_generation()
+        XMin = self.containment.XMin
+        XMax = self.containment.XMax
+        ZMin = self.containment.ZMin
 
         # TODO: Add a chip break / pecking option
 
@@ -34,9 +30,4 @@ class PartoffOP(liblathe.op.base.BaseOP):
     def generateGCode(self):
         """Generate Gcode for the op segments"""
 
-        path = Path()
-
-        for segmentgroup in self.tool_paths:
-            path.fromSegmentGroup(self, segmentgroup)
-
-        return path.commands
+        return self._route_paths(self.tool_paths, protect_part=False, direction=RoutingDirection.RADIAL)

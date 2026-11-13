@@ -69,7 +69,7 @@ setup(
     author_email='s.d.wood.82@googlemail.com',
     license='GPL2',
     keywords="lathe turning CAD CAM CNC",
-    packages=['liblathe', "liblathe/op", "liblathe/tool", "liblathe/gcode"],
+    packages=["liblathe", "liblathe.op", "liblathe.tool", "liblathe.gcode", "liblathe.debug"],
     python_requires='>=3.10',
     install_requires=['pillow'],
     ext_modules=[point, boundbox, segment, segmentgroup, quadtree],

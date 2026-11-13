@@ -23,9 +23,11 @@ PYBIND11_MODULE(quadtree, m)
               "geometry supplied by earlier initialise calls. Invalid geometry "
               "pointers or root bounds raise ValueError without changing configuration.")
          .def("getOffset", &Quadtree::getOffset,
+              py::arg("offsetValue"), py::arg("extend_start") = false,
               "Return offset points, or an empty list when no contour is found. "
               "Use the axis-closed distance field but exclude artificial-closure "
-              "candidates, retaining original geometry on exact ties and the start-Z clip. "
+              "candidates, retaining original geometry on exact ties. "
+              "extend_start optionally disables the default start-Z clip. "
               "Zero offsets sample both sides; projected candidates are checked "
               "against the requested signed distance. "
               "Raise RuntimeError before initialisation, or ValueError for empty "

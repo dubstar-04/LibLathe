@@ -54,6 +54,41 @@ class TestDefeatureBounds(unittest.TestCase):
                 self.assertEqual(self.group(part).intersectsGroup(self.group(tool)),
                                  expected)
 
+    def test_long_near_tangent_rounded_insert_sweep(self):
+        part = self.profile([(0, 100), (20, 100), (30, 80), (30, 50)])
+        part.addSegment(Segment(Point(30, 50), Point(30, 30), -1))
+        part.addSegment(Segment(Point(30, 30), Point(30, 0)))
+        part.addSegment(Segment(Point(30, 0), Point(0, 0)))
+        vertices = [
+            (12.4724569, 1.0546752, 0),
+            (0.4348623, 0.0015221, 0.46630767),
+            (0.0015221, 0.4348623, 0),
+            (1.0546752, 12.4724569, 0.36397022),
+            (1.4182909, 12.8360729, 0),
+            (13.4558859, 13.8892260, 0.46630767),
+            (13.8892260, 13.4558859, 0),
+            (12.8360729, 1.4182909, 0.36397022),
+        ]
+        tool = self.group([
+            Segment(Point(x, z), Point(next_x, next_z), bulge)
+            for (x, z, bulge), (next_x, next_z, _) in
+            zip(vertices, vertices[1:] + vertices[:1])
+        ])
+        for start_x, end_x in ((0.0025, 10.005), (10.005, 0.0025)):
+            part.validateToolSweep(tool, Point(start_x, 100.000084),
+                                   Point(end_x, 100.000084))
+            for z in (100, 99.99, 99):
+                with self.subTest(z=z, start=start_x):
+                    with self.assertRaises(RuntimeError):
+                        part.validateToolSweep(tool, Point(start_x, z), Point(end_x, z))
+        for start_x, end_x in ((29.020634, 30.01), (30.01, 29.020634)):
+            part.validateToolSweep(tool, Point(start_x, 30.017721),
+                                   Point(end_x, 30.017721))
+            for z in (30.01, 30):
+                with self.subTest(z=z, start=start_x):
+                    with self.assertRaises(RuntimeError):
+                        part.validateToolSweep(tool, Point(start_x, z), Point(end_x, z))
+
     def test_arc_extrema_beyond_endpoints_are_not_pruned(self):
         for bulge in (-math.tan(math.pi / 8), math.tan(math.pi / 8),
                       -1, 1, -math.tan(3 * math.pi / 8), math.tan(3 * math.pi / 8)):
@@ -147,6 +182,42 @@ class TestDefeatureBounds(unittest.TestCase):
                     self.assertLess(min(edge.end.X for edge in result.getSegments()), 7)
                 self.assertEqual(self.coordinates(source), original_source)
                 self.assertEqual(self.coordinates(tool), original_tool)
+
+    def test_defeature_samples_are_available_without_changing_the_contour(self):
+        source = self.groove()
+        tool = self.profile([(0, 0), (0, 2), (2, 2), (2, 0), (0, 0)])
+        stock = BoundBox(Point(0, 1), Point(12, -18))
+
+        result = source.defeatureWithSamples(stock, tool, True)
+        reference = source.defeature(stock, tool, True)
+
+        self.assertEqual(self.coordinates(result.contour), self.coordinates(reference))
+        self.assertGreater(len(result.samples), 1)
+        self.assertTrue(all(first.Z > second.Z
+                            for first, second in zip(result.samples, result.samples[1:])))
+        for sample in result.samples:
+            source.validateToolSweep(tool, sample, sample)
+
+        ordinary = source.defeatureWithSamples(stock, tool, False).samples
+        grooved = result.samples
+        self.assertTrue(all(next_point.X >= point.X - 1e-5
+                            for point, next_point in zip(ordinary, ordinary[1:])))
+        self.assertTrue(any(next_point.X < point.X - 1e-5
+                            for point, next_point in zip(grooved, grooved[1:])))
+
+    def test_expanded_containment_certifies_long_rounded_insert_connectors(self):
+        source = self.profile([(0, 95.005), (22, 95.005), (22, 0), (0, 0)])
+        vertices = [(0.2, 2), (0, 1.8), (0, 0.2), (0.2, 0),
+                    (12, 0), (12, 2), (0.2, 2)]
+        tool = self.group([
+            Segment(Point(*start), Point(*end),
+                    -math.tan(math.pi / 8) if index in (0, 2) else 0)
+            for index, (start, end) in enumerate(zip(vertices, vertices[1:]))
+        ])
+        result = source.defeature(BoundBox(Point(0, 0), Point(30, 100)), tool, False)
+        self.assertGreater(result.count(), 0)
+        for move in result.getSegments():
+            source.validateToolSweep(tool, move.start, move.end)
 
     def test_defeature_retains_the_curved_tool_footprint(self):
         source = self.groove()

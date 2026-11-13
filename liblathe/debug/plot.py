@@ -56,7 +56,7 @@ class Plot:
             try:
                 if g_number.upper().startswith('G0'):
                     self.g0_colour = colour
-                elif g_number.upper().startswith('G1'):
+                elif g_number.upper().startswith('G1') or g_number.upper() == 'G33':
                     self.g1_colour = colour
                 elif g_number.upper().startswith('G2'):
                     self.g2_colour = colour
@@ -116,7 +116,7 @@ class Plot:
             if idx < len(gcode) - 1:
 
                 movement = command.get_movement()
-                if movement not in ["G0", "G1", "G2", "G3"]:
+                if movement not in ["G0", "G1", "G2", "G3", "G33"]:
                     continue
 
                 if movement == "G0" and not include_rapids:
@@ -130,7 +130,7 @@ class Plot:
                 start = self._translate_point(Point(prev_params['Z'], prev_params['X']))
                 end = self._translate_point(Point(params['Z'], params['X']))
 
-                if movement in ["G0", "G1"]:
+                if movement in ["G0", "G1", "G33"]:
                     self.drawline(start, end, line_colour)
 
                 if movement in ["G2", "G3"]:
@@ -183,13 +183,9 @@ class Plot:
 
         if isinstance(input_geometry[0], Command):
             # process commands
+            input_geometry = [command for command in input_geometry
+                              if command.get_movement() in ["G0", "G1", "G2", "G3", "G33"]]
             for command in input_geometry:
-                movement = command.get_movement()
-                if movement not in ["G0", "G1", "G2", "G3"]:
-                    # remove G18
-                    input_geometry.remove(command)
-                    continue
-
                 params = command.getParams()
 
                 if 'X' in params:
@@ -282,7 +278,7 @@ class Plot:
     def _get_line_colour(self, value):
         if value == 'G0':
             return self.g0_colour
-        elif value == 'G1':
+        elif value in ('G1', 'G33'):
             return self.g1_colour
         elif value == 'G2':
             return self.g2_colour
