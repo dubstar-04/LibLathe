@@ -104,6 +104,15 @@ def test_missing_clearance_reports_front_clearance():
     assert not op.tool_paths
 
 
+def test_clearance_lost_at_start_depth_precision_is_rejected():
+    op = operation()
+    op.add_containment_from_limits(0, 5, 80, 100)
+    op.clearance = 1e-20
+    with pytest.raises(ValueError, match="coordinate precision"):
+        op.getGCode()
+    assert not op.tool_paths
+
+
 @pytest.mark.parametrize("feed", [0, -1, 75])
 def test_feed_passed_through_like_other_turning_operations(feed):
     op = operation()
