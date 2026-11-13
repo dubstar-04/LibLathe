@@ -87,9 +87,10 @@ def test_internal_radial_profile_retraces_the_axial_pass_out_through_the_mouth()
     mouth = radial.partSegmentGroup.boundbox().ZMax
     assert len(radial.tool_paths) == radial.finish_passes
     for radial_pass, axial_pass in zip(radial.tool_paths, axial.tool_paths):
-        expected = [(s.start.X, s.start.Z, s.end.X, s.end.Z)
-                    for s in axial_pass.reversed().getSegments()]
-        actual = [(s.start.X, s.start.Z, s.end.X, s.end.Z) for s in radial_pass.getSegments()]
+        expected = [value for s in axial_pass.reversed().getSegments()
+                    for value in (s.start.X, s.start.Z, s.end.X, s.end.Z)]
+        actual = [value for s in radial_pass.getSegments()
+                  for value in (s.start.X, s.start.Z, s.end.X, s.end.Z)]
         assert actual == pytest.approx(expected)
         segments = radial_pass.getSegments()
         assert segments[0].start.X == pytest.approx(radial.containment.XMin, abs=0.02)
