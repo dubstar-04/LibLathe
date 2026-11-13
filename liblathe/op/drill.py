@@ -41,9 +41,9 @@ class DrillOP(BaseOP):
     def generateGCode(self):
         bounds = self.containment
         front = bounds.ZMax + self.clearance
-        if not math.isfinite(front):
+        if not math.isfinite(front) or front <= bounds.ZMax:
             self.tool_paths = []
-            raise ValueError("Drilling front clearance must be finite")
+            raise ValueError("Cannot represent drilling front clearance at coordinate precision")
         return [
             Command("G0", {"X": 0, "Z": front}),
             Command("G0", {"X": 0, "Z": bounds.ZMax}),
