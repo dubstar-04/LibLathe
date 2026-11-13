@@ -217,6 +217,48 @@ class test_RoughOP(unittest.TestCase):
             withdrawal = feeds[feeds.index((cut.end.X, cut.end.Z)) + 2]
             self.assertGreater(withdrawal[1], cut.end.Z)
 
+    def test_radial_facing_bounds_an_inward_pull_off_by_the_containment(self):
+        operation = RoughOP()
+        operation.setParams({"direction": Direction.RADIAL, "pass_offset": 1.0})
+        operation.leadout_angle = math.pi / 4
+        vertices = [(0, 0), (10, 0), (10, -30), (0, -30)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        operation.add_containment(BoundBox(Point(20, 0), Point(30, 5)))
+        vertices = [(-2, 0), (0, 0), (0, 2), (-2, 2), (-2, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        self.assertTrue(operation.getGCode())
+
+        for group in operation.tool_paths:
+            self.assertGreaterEqual(group.boundbox().XMin, 20 - 1e-5)
+
+    def test_radial_facing_falls_back_to_a_pure_axial_pull_off(self):
+        operation = RoughOP()
+        operation.setParams({"direction": Direction.RADIAL, "pass_offset": 1.0})
+        vertices = [(0, 0), (10, 0), (10, -30), (0, -30)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        operation.add_containment(BoundBox(Point(0, 0), Point(12, 5)))
+        vertices = [(-2, 0), (0, 0), (0, 2), (-2, 2), (-2, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(*a), Point(*b))
+                                     for a, b in zip(vertices, vertices[1:])])
+        operation.add_tool(tool)
+
+        self.assertTrue(operation.getGCode())
+
+        # A -Z lead-out never rises off the face, so only the +Z fallback can escape.
+        operation.leadout_angle = math.pi
+        end = operation.tool_paths[-1].getSegments()[0].end
+        part = operation._defeature_profile_with_samples(False).contour.offset(-0.1)
+        pull_off = operation._radial_pull_off(end, operation.tool.get_segmentgroup(), part)
+        self.assertAlmostEqual(pull_off.X, end.X, delta=1e-5)
+        self.assertGreater(pull_off.Z, end.Z)
+
     def test_radial_grooving_retracts_through_the_plunge_and_uses_local_clearance(self):
         for stock_radius, tool_x_shift in ((30, 0), (45, -0.6), (None, 0)):
             with self.subTest(stock_radius=stock_radius, tool_x_shift=tool_x_shift):
