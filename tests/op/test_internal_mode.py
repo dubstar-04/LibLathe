@@ -163,3 +163,27 @@ def test_internal_roughing_stock_preview_uses_physical_path_coordinates():
                       for segment in group.getSegments()] for group in operation.tool_paths]
     assert [command.to_string() for command in operation.getGCode()] == [
         command.to_string() for command in commands]
+
+
+@pytest.mark.parametrize("operation_type", (RoughOP, ProfileOP))
+def test_internal_radial_operations_return_along_the_access_lane_beyond_the_mouth(operation_type):
+    operation = operation_type()
+    operation.setParams({"mode": MachiningMode.INTERNAL, "direction": Direction.RADIAL,
+                         "allow_grooving": True, "pass_offset": 0.5, "finish_passes": 1})
+    operation.addPartSegments([Segment(Point(10, 0), Point(10, -20))])
+    operation.add_containment(BoundBox(Point(0, -20), Point(15, 3)))
+    operation.add_stock(BoundBox(Point(0, -25), Point(20, 5)))
+    tool = Tool()
+    vertices = [(-2, 0), (0, 0), (0, 2), (-2, 2), (-2, 0)]
+    tool.set_tool_from_segments([
+        Segment(Point(*start), Point(*end)) for start, end in zip(vertices, vertices[1:])
+    ])
+    operation.add_tool(tool)
+
+    commands = operation.getGCode()
+    last, previous = commands[-1].getParams(), commands[-2].getParams()
+
+    assert commands[-1].get_movement() == "G0"
+    assert last["X"] == pytest.approx(0, abs=1e-5)
+    assert previous["X"] == pytest.approx(0, abs=1e-5)
+    assert last["Z"] > operation.stock.ZMax
