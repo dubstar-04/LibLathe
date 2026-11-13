@@ -51,8 +51,11 @@ prepared reliefs. No run-in allowance, exit taper or pull-out helix is added.
 In particular, do not end a pass against a shoulder and expect a synchronized
 radial withdrawal.
 
-At each pass, the tool returns axially at radial clearance, rapids radially to
-depth at ZMax, synchronizes and cuts to ZMin, then rapids radially clear.
+At each pass, the tool rapids radially to depth at ZMax, synchronizes and cuts
+to ZMin, then rapids radially to a local clearance lane: the containment crest
+(XMax) plus the insert's extent below its tip plus ``clearance``. It returns
+axially along that lane, which is checked against the unthreaded part, to the
+next pass. The blank above the containment must therefore already be turned.
 The deepest radial entry is checked with the full insert against the supplied
 unthreaded part, so ZMax must leave run-in space clear of material. The deepest
 pass and its radial withdrawal are checked against the part with the thread band
@@ -62,8 +65,9 @@ run-out relief beyond ZMin, still fails generation. A missing or uncertifiable
 clearance route fails generation. The thread band is not treated as a protected
 final thread surface.
 
-The initial and final clearance corner includes the insert bounds and the
-physical stock envelope when supplied, otherwise model bounds. As with other
+The initial approach and final return use a clearance corner that includes the
+insert bounds and the physical stock envelope when supplied, otherwise model
+bounds. As with other
 external operations, original-stock access and remaining-stock preparation
 remain the user's responsibility. Checks do not certify holders, fixtures,
 machine travel or the first move from an unknown machine position.

@@ -61,6 +61,15 @@ class ThreadOP(BaseOP):
             raise RuntimeError(
                 f"Threading pass or withdrawal collides with the part outside the thread band; "
                 f"check run-out relief beyond the -Z limit: {error}") from error
+        # Withdrawal and plunge at the lane are covered above; only the return traverse is new.
+        lane = self._local_clearance(tool.boundbox())
+        try:
+            self.partSegmentGroup.validateToolSweeps(tool, [
+                (Point(lane, limits.ZMin), Point(lane, limits.ZMax)),
+            ])
+        except RuntimeError as error:
+            raise RuntimeError(
+                f"Threading return above the containment collides with the part: {error}") from error
 
         radii = []
         radius = limits.XMax
@@ -160,20 +169,35 @@ class ThreadOP(BaseOP):
             raise ValueError("Cannot represent threading clearance at coordinate precision")
         return outside
 
+    def _local_clearance(self, tool_bounds):
+        """Return the radius where the tool clears the containment crest by the clearance."""
+        lane = self.containment.XMax - tool_bounds.XMin + self.clearance
+        if not math.isfinite(lane) or lane <= self.containment.XMax - tool_bounds.XMin:
+            raise ValueError("Cannot represent threading clearance at coordinate precision")
+        return lane
+
     def generateGCode(self):
+        """Enter and leave via the global clearance; reposition between passes just above the crest."""
         if not self.tool_paths:
             raise ValueError("Generate threading paths before requesting G-code")
-        outside = self._clearance_point(self.tool.get_segmentgroup().boundbox())
+        tool_bounds = self.tool.get_segmentgroup().boundbox()
+        outside = self._clearance_point(tool_bounds)
+        lane = self._local_clearance(tool_bounds)
+        limits = self.containment
         commands = [Command("G18"), Command("G90"), Command("G8"),
-                    Command("G0", {"X": outside.X, "Z": outside.Z})]
-        for group in self.tool_paths:
+                    Command("G0", {"X": outside.X, "Z": outside.Z}),
+                    Command("G0", {"X": outside.X, "Z": limits.ZMax}),
+                    Command("G0", {"X": lane, "Z": limits.ZMax})]
+        for index, group in enumerate(self.tool_paths):
             segment = group.getSegments()[0]
             start, end = segment.start, segment.end
+            if index:
+                commands.append(Command("G0", {"X": lane, "Z": start.Z}))
             commands.extend([
-                Command("G0", {"X": outside.X, "Z": start.Z}),
                 Command("G0", {"X": start.X, "Z": start.Z}),
                 Command("G33", {"X": end.X, "Z": end.Z, "K": self.pitch}),
-                Command("G0", {"X": outside.X, "Z": end.Z}),
+                Command("G0", {"X": lane, "Z": end.Z}),
             ])
-        commands.append(Command("G0", {"X": outside.X, "Z": outside.Z}))
+        commands.extend([Command("G0", {"X": outside.X, "Z": limits.ZMin}),
+                         Command("G0", {"X": outside.X, "Z": outside.Z})])
         return commands

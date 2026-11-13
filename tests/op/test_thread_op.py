@@ -50,21 +50,34 @@ def test_g33_pass_depths_pitch_and_spring_passes():
         assert segment.end.Z == -21
 
 
-def test_radial_transfers_and_axial_returns_use_clearance():
+def test_passes_return_above_the_containment_and_only_enter_and_leave_via_stock_clearance():
     commands = operation().getGCode()[3:]
+    lane = 12  # crest 10 + clearance 2
     assert commands[0].getParams() == {"X": 14, "Z": 4.5}
     assert commands[-1].getParams() == commands[0].getParams()
-    for previous, command in zip(commands, commands[1:]):
+    assert [c.getParams() for c in commands[1:3]] == [{"X": 14, "Z": 1}, {"X": lane, "Z": 1}]
+    assert [c.getParams() for c in commands[-3:-1]] == [{"X": lane, "Z": -21}, {"X": 14, "Z": -21}]
+    for previous, command in zip(commands[2:-2], commands[3:-2]):
         start, end = previous.getParams(), command.getParams()
         if command.get_movement() == "G0":
             if start["Z"] != end["Z"]:
-                assert start["X"] == end["X"] == 14
+                assert start["X"] == end["X"] == lane
             else:
                 assert end["Z"] in (1, -21)
+                assert lane in (start["X"], end["X"])
         else:
             assert command.get_movement() == "G33"
             assert start["X"] == end["X"]
             assert start["Z"] == 1 and end["Z"] == -21
+
+
+def test_return_lane_collision_is_reported():
+    op = operation()
+    op.partSegmentGroup = SegmentGroup()
+    vertices = [(0, 0), (10, 0), (10, -8), (13, -8), (13, -12), (10, -12), (10, -20), (0, -20)]
+    op.addPartSegments([Segment(Point(*a), Point(*b)) for a, b in zip(vertices, vertices[1:])])
+    with pytest.raises(RuntimeError, match="return above the containment"):
+        op.getGCode()
 
 
 def test_near_and_far_commands_and_paths_are_reflected_without_changing_pitch():
