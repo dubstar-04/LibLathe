@@ -298,12 +298,15 @@ class BaseOP:
         """Route ordered groups without choosing the operation's machining policy."""
         path = Path()
         groups = tuple(groups)
+        # radial routes end at their lane beside the last pass, so leave the work for the next op
+        returns = direction == RoutingDirection.RADIAL and (
+            radial_clearance is not None or self.inside_access)
         try:
             for index, group in enumerate(groups):
                 path.fromSegmentGroup(
                     self, group, protect_part=protect_part, direction=direction,
                     radial_clearance=radial_clearance,
-                    return_to_clearance=radial_clearance is not None and index == len(groups) - 1,
+                    return_to_clearance=returns and index == len(groups) - 1,
                     inside_access=self.inside_access)
         except (ValueError, RuntimeError):
             self._reset_paths()

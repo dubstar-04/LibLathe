@@ -77,7 +77,8 @@ class Path:
         Local radial clearance uses a prepared radial repositioning plane between
         passes; the operation's final pass can return to the global clearance corner.
         Inside access uses the transformed containment boundary as the radial
-        access lane for protected internal operations.
+        access lane for protected internal operations; their final radial pass
+        can return axially along that lane to beyond the mouth.
         All feeds, including approach and withdrawal, stay inside tool-reference
         containment. Rapids may cross original stock outside containment;
         the user must evaluate remaining stock before machining. Protected
@@ -90,8 +91,9 @@ class Path:
                 direction != RoutingDirection.RADIAL or not protect_part
                 or not math.isfinite(radial_clearance) or inside_access):
             raise ValueError("Local radial clearance requires protected external radial routing")
-        if return_to_clearance and radial_clearance is None:
-            raise ValueError("Returning to clearance requires local radial routing")
+        if return_to_clearance and (direction != RoutingDirection.RADIAL
+                                    or (radial_clearance is None and not inside_access)):
+            raise ValueError("Returning to clearance requires local radial or inside access routing")
         if inside_access and not protect_part:
             raise ValueError("Inside access requires protected routing")
         if not contain_feeds:
@@ -302,6 +304,8 @@ class Path:
 
         retract(segments[-1])
         if return_to_clearance:
-            emit('G0', Point(outside.X, segments[-1].end.Z))
-            emit('G0', outside)
+            # inside access retracts onto its lane, so only the axial leg out of the mouth remains
+            for point in (Point(outside.X, segments[-1].end.Z), outside):
+                if not point.isSame(Point(commands[-1].getParams()['X'], commands[-1].getParams()['Z'])):
+                    emit('G0', point)
         self.commands.extend(commands)
