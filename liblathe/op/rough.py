@@ -61,7 +61,7 @@ class RoughOP(liblathe.op.base.BaseOP):
             for high_z, low_z in intervals:
                 high_z = min(high_z, z_max)
                 low_z = max(low_z, z_min)
-                if high_z - low_z < self.pass_offset:
+                if high_z - low_z <= 1e-6:
                     continue
 
                 if self.direction == Direction.NEGATIVE_Z:
