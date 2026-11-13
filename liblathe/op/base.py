@@ -251,10 +251,21 @@ class BaseOP:
             return [high]
         count = max(1, math.ceil(distance / max_step - 1e-9))
         increment = distance / count
-        stations = [high - index * increment for index in range(count)] + [low]
-        native = [Point(0, station).Z for station in stations]
-        if any(first <= second for first, second in zip(native, native[1:])):
+
+        def native(station):
+            return Point(0, station).Z
+
+        # Native spacing is coarsest at an end of the range, so reject an increment
+        # lost there before allocating a grid that could never be represented.
+        if (native(high - increment) >= native(high)
+                or native(low + increment) <= native(low)):
             raise ValueError("Cannot advance axial station at coordinate precision")
+        stations = [high]
+        for index in range(1, count + 1):
+            station = low if index == count else high - index * increment
+            if native(station) >= native(stations[-1]):
+                raise ValueError("Cannot advance axial station at coordinate precision")
+            stations.append(station)
         return stations
 
     def _defeature_profile(self, allow_grooving):
