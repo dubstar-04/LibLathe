@@ -99,6 +99,19 @@ def test_fixed_increment_stations_reject_nonprogress(low, high, step):
         next(stations)
 
 
+def test_descending_stations_preserve_grid():
+    assert BaseOP._stations_descending(1, 0, 0.25) == [1, 0.75, 0.5, 0.25, 0]
+
+
+@pytest.mark.parametrize("high,low,max_step", [(1, 0, 1e-20), (1e8, 0, 1e-3)])
+def test_descending_stations_reject_nonprogress_before_allocating(high, low, max_step, monkeypatch):
+    # Building the full grid for these spacings would need billions of entries.
+    def unbounded_range(*args):
+        raise AssertionError("station grid allocated before the precision check")
+    monkeypatch.setattr("builtins.range", unbounded_range)
+    with pytest.raises(ValueError, match="coordinate precision"):
+        BaseOP._stations_descending(high, low, max_step)
+
 def test_parameters_cannot_replace_methods_or_publish_partial_updates():
     op = BaseOP()
     previous = op.pass_offset
