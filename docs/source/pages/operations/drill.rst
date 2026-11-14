@@ -58,7 +58,11 @@ the final tip position, including compensation when enabled.
 Both diameter multipliers default to ``1.0`` and must be finite and positive
 when their mode is active. A gap larger than the preceding peck can cause
 re-feeding from Start Depth. The rapid optimizer preserves drilling reversals
-so it cannot remove an intentional full retract.
+and nonzero partial retracts.
+
+Path coordinates use native single precision. Compensation, peck advances and
+retracts that vanish at that precision are rejected. The reach check includes
+the stored final depth, and an operation is limited to 10,000 pecks.
 
 Start depth is the user-defined entry plane, even when it lies inside the
 original stock envelope. No starting-stock access check is performed and the
