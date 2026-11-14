@@ -134,6 +134,11 @@ result. Both APIs retain the GIL. Snapshots live only for the call, avoiding
 mutable cross-call caches. Rebuild the native modules together before using the
 Python operation changes.
 
+`getGCode()` optimises rapid output for every operation after routing. Rapids
+omit feed words, stationary rapids are dropped, and consecutive collinear rapids
+merge into one move. A merged move lies within the route already certified, so
+clearance checks are unchanged.
+
 ## Internal machining mode
 
 Rough and Profile share an Internal frame in `BaseOP`. It maps selected part
