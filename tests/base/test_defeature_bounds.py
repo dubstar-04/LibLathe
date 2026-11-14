@@ -103,6 +103,44 @@ class TestDefeatureBounds(unittest.TestCase):
                     self.assertTrue(line.intersect(arc, False))
                     self.assertTrue(self.group([arc]).intersectsGroup(self.group([line])))
 
+    def test_small_rounded_insert_sweep_past_curved_tip(self):
+        part = self.profile([(0, 47.577003479003906),
+                             (0.08000899851322174, 47.577003479003906)])
+        part.addSegment(Segment(Point(0.08000899851322174, 47.577003479003906),
+                                Point(5.3789801597595215, 42.176048278808594),
+                                0.41980788111686707))
+        part.extend(self.profile([(5.3789801597595215, 42.176048278808594),
+                                  (5.3789801597595215, 0), (0, 0)]))
+        tool = self.group([
+            Segment(Point(0.1, 0), Point(0, 0.1), math.tan(math.pi / 8)),
+            *self.profile([(0, 0.1), (0, 4), (4, 4), (4, 0), (0.1, 0)]).getSegments(),
+        ])
+        start, end = Point(0.0075, 47.576988), Point(3.553359, 47.576988)
+        for first, last in ((start, end), (end, start)):
+            with self.subTest(start=first.X):
+                part.validateToolSweep(tool, first, first)
+                part.validateToolSweep(tool, last, last)
+                part.validateToolSweep(tool, first, last)
+                with self.assertRaises(RuntimeError):
+                    part.validateToolSweep(tool, first.sub(Point(0, 0.0001)),
+                                           last.sub(Point(0, 0.0001)))
+
+    def test_rounded_sweep_rejects_collision_between_clear_endpoints(self):
+        part = self.group([
+            Segment(Point(0, 1), Point(0, -1), 1),
+            Segment(Point(0, -1), Point(0, 1), 1),
+        ])
+        tool = self.group([
+            Segment(Point(0, 0.1), Point(0, -0.1), 1),
+            Segment(Point(0, -0.1), Point(0, 0.1), 1),
+        ])
+        start, end = Point(-1, 1.05), Point(1, 1.05)
+        part.validateToolSweep(tool, start, start)
+        part.validateToolSweep(tool, end, end)
+        for first, last in ((start, end), (end, start)):
+            with self.subTest(start=first.X), self.assertRaises(RuntimeError):
+                part.validateToolSweep(tool, first, last)
+
     def test_contacts_degenerate_edges_and_empty_groups(self):
         segments = [
             Segment(Point(0, 0), Point(1, 0)),
