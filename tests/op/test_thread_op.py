@@ -55,8 +55,12 @@ def test_passes_return_above_the_containment_and_only_enter_and_leave_via_stock_
     lane = 12  # crest 10 + clearance 2
     assert commands[0].getParams() == {"X": 14, "Z": 4.5}
     assert commands[-1].getParams() == commands[0].getParams()
-    assert [c.getParams() for c in commands[1:3]] == [{"X": 14, "Z": 1}, {"X": lane, "Z": 1}]
-    assert [c.getParams() for c in commands[-3:-1]] == [{"X": lane, "Z": -21}, {"X": 14, "Z": -21}]
+    # collinear radial rapids through the lane are merged at entry and exit
+    assert commands[1].getParams() == {"X": 14, "Z": 1}
+    assert commands[2].get_movement() == "G0"
+    assert commands[2].getParams()["Z"] == 1 and commands[2].getParams()["X"] < lane
+    assert commands[-3].get_movement() == "G33"
+    assert commands[-2].getParams() == {"X": 14, "Z": -21}
     for previous, command in zip(commands[2:-2], commands[3:-2]):
         start, end = previous.getParams(), command.getParams()
         if command.get_movement() == "G0":
