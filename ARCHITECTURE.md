@@ -120,6 +120,10 @@ Within those checks, patch bounds are also compared with an arc's supporting
 circle. A patch wholly inside or outside that circle cannot intersect the arc,
 even when its rectangular bounds overlap. This avoids excessive subdivision
 near curved groove shoulders while retaining the numerical clearance margin.
+For rounded insert edges, the translated supporting disk also bounds the
+complete arc. Its centre's minimum distance over the translation, not just at
+the endpoints, can prove separation from a part arc's supporting circle without
+exhausting subdivisions near a curved tip. Clearance margins remain unchanged.
 
 `SegmentGroup.validateToolSweeps(tool, moves)` batches ordered straight
 translations against one immutable part/tool snapshot. It uses the scalar
