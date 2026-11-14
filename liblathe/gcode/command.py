@@ -1,5 +1,4 @@
 from decimal import Decimal
-import math
 from numbers import Real
 
 
@@ -7,8 +6,8 @@ def optimise_rapids(commands, tolerance=1e-6):
     """Return commands with redundant rapid moves removed.
 
     Rapids carry no feed word, stationary rapids are dropped, and consecutive
-    collinear rapids are merged. A merged move stays within the original route,
-    so previously certified clearance still applies.
+    exactly collinear rapids are merged. A merged move stays within the original
+    route, so previously certified clearance still applies.
     """
 
     result = []
@@ -30,7 +29,7 @@ def optimise_rapids(commands, tolerance=1e-6):
                     first = (position["X"] - rapid_start[0], position["Z"] - rapid_start[1])
                     second = (target["X"] - position["X"], target["Z"] - position["Z"])
                     cross = first[0] * second[1] - first[1] * second[0]
-                    if abs(cross) <= tolerance * max(1, math.hypot(*first) * math.hypot(*second)):
+                    if cross == 0:
                         result.pop()
                         position = {"X": rapid_start[0], "Z": rapid_start[1]}
                         if (abs(target["X"] - position["X"]) <= tolerance
