@@ -109,9 +109,9 @@ class test_RoughOP(unittest.TestCase):
             self.assertTrue(command.get_movement().startswith("G"))
 
             if command.get_movement() in ["G0", "G1", "G2", "G3"]:
-                # check command has feed rate
-                feed_exists = True if "F" in command.getParams() else False
-                self.assertTrue(feed_exists)
+                # rapids omit feed; cutting moves carry it
+                feed_exists = "F" in command.getParams()
+                self.assertEqual(feed_exists, command.get_movement() != "G0")
 
                 # check the feed rate
                 if feed_exists:
@@ -305,7 +305,9 @@ class test_RoughOP(unittest.TestCase):
                     snapshot.remove_feeds(
                         tool_vertices, [(cut.end.X, cut.end.Z, withdrawal["X"], withdrawal["Z"])])
                     self.assertAlmostEqual(snapshot.area, remaining, delta=1e-9)
-                    self.assertAlmostEqual(moves[cut_index + 2].getParams()["X"], local_x, delta=1e-5)
+                    # the final radial retract merges straight through local clearance
+                    expected_x = global_x if group is operation.tool_paths[-1] else local_x
+                    self.assertAlmostEqual(moves[cut_index + 2].getParams()["X"], expected_x, delta=1e-5)
 
                 self.assertGreater(len(cut_indices), 2)
                 axial_transfers = 0
