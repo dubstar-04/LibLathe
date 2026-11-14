@@ -74,6 +74,35 @@ class test_command(unittest.TestCase):
             {'X': 2, 'Z': 1},
         ])
 
+    def test_optimise_rapids_keeps_short_right_angle_corner(self):
+        commands = [
+            Command('G0', {'X': 0, 'Z': 0}),
+            Command('G0', {'X': 0.0005, 'Z': 0}),
+            Command('G0', {'X': 0.0005, 'Z': 0.0005}),
+        ]
+
+        optimised = optimise_rapids(commands)
+
+        self.assertEqual([command.getParams() for command in optimised], [
+            {'X': 0, 'Z': 0},
+            {'X': 0.0005, 'Z': 0},
+            {'X': 0.0005, 'Z': 0.0005},
+        ])
+
+    def test_optimise_rapids_merges_short_exactly_collinear_moves(self):
+        commands = [
+            Command('G0', {'X': 0, 'Z': 0}),
+            Command('G0', {'X': 0.0005, 'Z': 0}),
+            Command('G0', {'X': 0.001, 'Z': 0}),
+        ]
+
+        optimised = optimise_rapids(commands)
+
+        self.assertEqual([command.getParams() for command in optimised], [
+            {'X': 0, 'Z': 0},
+            {'X': 0.001, 'Z': 0},
+        ])
+
 
 if __name__ == '__main__':
     unittest.main()
