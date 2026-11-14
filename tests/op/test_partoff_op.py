@@ -73,9 +73,9 @@ class test_PartoffOP(unittest.TestCase):
             self.assertTrue(command.get_movement().startswith("G"))
 
             if command.get_movement() in ["G0", "G1", "G2", "G3"]:
-                # check command has feed rate
-                feed_exists = True if "F" in command.getParams() else False
-                self.assertTrue(feed_exists)
+                # rapids omit feed; cutting moves carry it
+                feed_exists = "F" in command.getParams()
+                self.assertEqual(feed_exists, command.get_movement() != "G0")
 
                 # check the feed rate
                 if feed_exists:

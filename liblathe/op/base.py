@@ -5,7 +5,7 @@ from liblathe.base.segmentgroup import SegmentGroup
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
-from liblathe.gcode.command import Command
+from liblathe.gcode.command import Command, optimise_rapids
 from liblathe.gcode.path import Path, RoutingDirection
 from liblathe.tool.tool import ToolSide
 import math
@@ -77,7 +77,7 @@ class BaseOP:
 
         self._reset_paths()
         try:
-            return self._get_gcode()
+            return optimise_rapids(self._get_gcode())
         except (ValueError, RuntimeError, Warning):
             self._reset_paths()
             raise

@@ -109,9 +109,9 @@ class test_RoughOP(unittest.TestCase):
             self.assertTrue(command.get_movement().startswith("G"))
 
             if command.get_movement() in ["G0", "G1", "G2", "G3"]:
-                # check command has feed rate
-                feed_exists = True if "F" in command.getParams() else False
-                self.assertTrue(feed_exists)
+                # rapids omit feed; cutting moves carry it
+                feed_exists = "F" in command.getParams()
+                self.assertEqual(feed_exists, command.get_movement() != "G0")
 
                 # check the feed rate
                 if feed_exists:
@@ -305,7 +305,9 @@ class test_RoughOP(unittest.TestCase):
                     snapshot.remove_feeds(
                         tool_vertices, [(cut.end.X, cut.end.Z, withdrawal["X"], withdrawal["Z"])])
                     self.assertAlmostEqual(snapshot.area, remaining, delta=1e-9)
-                    self.assertAlmostEqual(moves[cut_index + 2].getParams()["X"], local_x, delta=1e-5)
+                    # the final radial retract merges straight through local clearance
+                    expected_x = global_x if group is operation.tool_paths[-1] else local_x
+                    self.assertAlmostEqual(moves[cut_index + 2].getParams()["X"], expected_x, delta=1e-5)
 
                 self.assertGreater(len(cut_indices), 2)
                 axial_transfers = 0
@@ -365,6 +367,45 @@ class test_RoughOP(unittest.TestCase):
         for group in operation.tool_paths:
             self.assertAlmostEqual(group.boundbox().ZMin, -10, delta=1e-5)
             self.assertAlmostEqual(group.boundbox().ZMax, -9, delta=1e-5)
+
+    def _chamfered_face_operation(self, direction, containment, stock_to_leave=0):
+        operation = RoughOP()
+        operation.setParams({"direction": direction, "pass_offset": 1,
+                             "stock_to_leave": stock_to_leave})
+        operation.add_containment(containment)
+        vertices = [(0, 100), (20, 100), (30, 80), (30, 0), (0, 0)]
+        operation.addPartSegments([Segment(Point(*a), Point(*b))
+                                   for a, b in zip(vertices, vertices[1:])])
+        # 80 degree rhombic insert with its nose at the origin, as exported by FreeCAD
+        insert = [(4.0132, 0.4249, 3.9223, 0.334, 0.364), (3.9223, 0.334, 0.1087, 0.0004, 0),
+                  (0.1087, 0.0004, 0.0004, 0.1087, 0.4663), (0.0004, 0.1087, 0.334, 3.9223, 0),
+                  (0.334, 3.9223, 0.4249, 4.0132, 0.364), (0.4249, 4.0132, 4.2385, 4.3469, 0),
+                  (4.2385, 4.3469, 4.3469, 4.2385, 0.4663), (4.3469, 4.2385, 4.0132, 0.4249, 0)]
+        tool = Tool()
+        tool.set_tool_from_segments([Segment(Point(x1, z1), Point(x2, z2), bulge)
+                                     for x1, z1, x2, z2, bulge in insert])
+        operation.add_tool(tool)
+        return operation
+
+    def test_radial_facing_entirely_in_front_of_the_part(self):
+        operation = self._chamfered_face_operation(
+            Direction.RADIAL, BoundBox(Point(0, 100), Point(50, 110)), stock_to_leave=0.25)
+
+        self.assertTrue(operation.getGCode())
+
+        self.assertTrue(operation.tool_paths)
+        for group in operation.tool_paths:
+            self.assertGreaterEqual(group.boundbox().ZMin, 100 - 1e-5)
+
+    def test_axial_stations_inside_the_face_stay_clear_when_containment_ends_at_the_face(self):
+        operation = self._chamfered_face_operation(
+            Direction.NEGATIVE_Z, BoundBox(Point(0, -3), Point(50, 100)))
+
+        self.assertTrue(operation.getGCode())
+
+        self.assertTrue(operation.tool_paths)
+        for group in operation.tool_paths:
+            self.assertGreater(group.boundbox().XMin, 20)
 
     def test_axial_grooving_keeps_groove_passes_behind_the_shoulder(self):
         operation = RoughOP()

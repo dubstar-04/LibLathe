@@ -744,6 +744,27 @@ namespace liblathe
                         if (nearest > target.arc.radius + numerical ||
                             farthest < target.arc.radius - numerical)
                             continue;
+                        if (edge.segment.bulge != 0)
+                        {
+                            const double cx = double(edge.arc.centre.X) + start.X +
+                                              moveStart * moveX - target.arc.centre.X;
+                            const double cz = double(edge.arc.centre.Z) + start.Z +
+                                              moveStart * moveZ - target.arc.centre.Z;
+                            const double sx = (moveEnd - moveStart) * moveX;
+                            const double sz = (moveEnd - moveStart) * moveZ;
+                            const double lengthSquared = sx * sx + sz * sz;
+                            const double fraction = lengthSquared > 0
+                                ? std::max(0.0, std::min(1.0, -(cx * sx + cz * sz) / lengthSquared))
+                                : 0;
+                            const double nearestCentre = std::hypot(cx + fraction * sx,
+                                                                   cz + fraction * sz);
+                            const double farthestCentre = std::max(std::hypot(cx, cz),
+                                                                   std::hypot(cx + sx, cz + sz));
+                            // The translated supporting disk encloses every point of the tool arc.
+                            if (nearestCentre > target.arc.radius + edge.arc.radius + numerical ||
+                                farthestCentre + edge.arc.radius < target.arc.radius - numerical)
+                                continue;
+                        }
                     }
                     touchesBoundary = true;
                     break;

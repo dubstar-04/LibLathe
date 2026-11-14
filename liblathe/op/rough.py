@@ -29,7 +29,13 @@ class RoughOP(liblathe.op.base.BaseOP):
         roughing_contour = defeature_result.contour
 
         # internal segment group to check if intersects the part. use a small offset to reduce false positives
-        internal_offset = roughing_contour.offset(-0.1)
+        try:
+            internal_offset = roughing_contour.offset(-0.1)
+        except RuntimeError as error:
+            # a contour clipped to a sliver of the part has no interior; sweeps are still certified
+            if not str(error).startswith("Offset produced"):
+                raise
+            internal_offset = SegmentGroup()
 
         # Keep the tool-origin limit reachable from outside the part and leave
         # the requested allowance using the sampled defeature profile.
@@ -47,6 +53,9 @@ class RoughOP(liblathe.op.base.BaseOP):
         z_max = self.containment.ZMax
         limits = BoundBox(Point(x_min, z_min), Point(x_max, z_max))
         tool_paths = []
+        # the defeature scan starts above the part only when the containment extends past it;
+        # otherwise the first sample lies against the part and the band above it is not clear
+        clear_above = self.partSegmentGroup.boundbox().ZMax < z_max
 
         for x_pos in self._stations(x_min, x_max, self.pass_offset):
             segment_group = SegmentGroup()
@@ -55,7 +64,7 @@ class RoughOP(liblathe.op.base.BaseOP):
             # extend only an interval open at the start; a deeper groove interval stays behind its shoulder
             if intervals and intervals[0][0] >= first_z - 1e-6:
                 intervals[0] = (z_max, intervals[0][1])
-            elif first_z < z_max - 1e-6:
+            elif clear_above and first_z < z_max - 1e-6:
                 intervals.insert(0, (z_max, first_z))
 
             for high_z, low_z in intervals:
