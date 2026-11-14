@@ -180,7 +180,11 @@ See [threading setup and limitations](docs/source/pages/operations/thread.rst).
 `DrillOP` is a separate centreline routing strategy, not an insert offsetting
 operation. It inherits the shared parameter/geometry storage but bypasses signed
 tool-side dispatch, model extraction and external routing: X stays zero and
-explicit G0/G1 commands use drill-tip depths. `Drill` supplies a symmetric
+explicit G0/G1 commands use drill-tip depths by default. Optional tip compensation
+extends the tip to reach a requested full-diameter depth. Fixed-depth pecks can
+fully retract or break chips, with gaps expressed in drill diameters. Drilling
+preserves rapid reversals so optimization cannot remove chip-clearing retracts.
+`Drill` supplies a symmetric
 convex meridional footprint. It therefore uses the same stock subtraction API
 as insert operations without a drilling-specific Boolean engine.
 

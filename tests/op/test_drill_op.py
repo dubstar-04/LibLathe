@@ -6,7 +6,7 @@ import pytest
 from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segmentgroup import StockPreview
-from liblathe.op.drill import DrillOP
+from liblathe.op.drill import DrillOP, RetractMode
 from liblathe.op.base import BaseOP
 from liblathe.tool.drill import Drill
 from liblathe.tool.tool import Tool, ToolSide
@@ -33,6 +33,161 @@ def test_straight_tip_depth_path_and_clearance():
     assert edge.start.isSame(Point(0, 0))
     assert edge.end.isSame(Point(0, -20))
     assert op.tool.point_length == pytest.approx(5 / math.tan(math.radians(59)))
+
+
+def test_full_retract_pecks_preserve_clearance_and_reentry_gap():
+    op = operation()
+    op.setParams({"peck_depth": 7, "reentry_gap_diameters": 0.1})
+    commands = op.getGCode()
+    assert [(c.get_movement(), c.getParams()["Z"]) for c in commands] == [
+        ("G0", 3), ("G0", 0), ("G1", -7), ("G0", 3),
+        ("G0", -6), ("G1", -14), ("G0", 3),
+        ("G0", -13), ("G1", -20), ("G0", 3),
+    ]
+    assert all(c.getParams()["X"] == 0 for c in commands)
+    assert all(c.getParams()["F"] == 60 for c in commands if c.get_movement() == "G1")
+    assert [(g.getSegments()[0].start.Z, g.getSegments()[0].end.Z) for g in op.tool_paths] == [
+        (0, -7), (-6, -14), (-13, -20)]
+
+
+def test_partial_retract_pecks_without_returning_to_front():
+    op = operation()
+    op.setParams({"peck_depth": 7, "retract_mode": RetractMode.PARTIAL_RETRACT,
+                  "chip_break_retract_diameters": 0.1})
+    assert [(c.get_movement(), c.getParams()["Z"]) for c in op.getGCode()] == [
+        ("G0", 3), ("G0", 0), ("G1", -7), ("G0", -6),
+        ("G1", -14), ("G0", -13), ("G1", -20), ("G0", 3),
+    ]
+
+
+def test_small_partial_retracts_survive_rapid_optimisation():
+    op = operation()
+    op.setParams({"peck_depth": 7, "retract_mode": RetractMode.PARTIAL_RETRACT,
+                  "chip_break_retract_diameters": 5e-8})
+    commands = op.getGCode()
+    starts = [group.getSegments()[0].start.Z for group in op.tool_paths]
+    assert 0 < starts[1] - (-7) < 1e-6
+    assert 0 < starts[2] - (-14) < 1e-6
+    assert [(c.get_movement(), c.getParams()["Z"]) for c in commands] == [
+        ("G0", 3), ("G0", 0), ("G1", -7), ("G0", starts[1]),
+        ("G1", -14), ("G0", starts[2]), ("G1", -20), ("G0", 3),
+    ]
+
+
+@pytest.mark.parametrize("mode", list(RetractMode))
+def test_default_diameter_gap_is_capped_at_start_depth(mode):
+    op = operation()
+    op.setParams({"peck_depth": 7, "retract_mode": mode})
+    commands = op.getGCode()
+    feeds = [c.getParams()["Z"] for c in commands if c.get_movement() == "G1"]
+    assert feeds == [-7, -14, -20]
+    starts = [g.getSegments()[0].start.Z for g in op.tool_paths]
+    assert starts == [0, 0, -4]
+
+
+@pytest.mark.parametrize("mode", list(RetractMode))
+def test_peck_larger_than_hole_depth_matches_straight_drill(mode):
+    op = operation()
+    original = [c.to_string() for c in op.getGCode()]
+    op.setParams({"peck_depth": 25, "retract_mode": mode})
+    assert [c.to_string() for c in op.getGCode()] == original
+
+
+@pytest.mark.parametrize("peck_depth", [0, 7])
+def test_tip_compensation_reaches_full_diameter_at_final_depth(peck_depth):
+    op = operation()
+    op.setParams({"tip_compensation": True, "peck_depth": peck_depth})
+    commands = op.getGCode()
+    final = min(c.getParams()["Z"] for c in commands)
+    assert final + op.tool.point_length == pytest.approx(op.containment.ZMin, abs=1e-5)
+    assert op.tool_paths[-1].getSegments()[0].end.Z == final
+    assert commands[-1].getParams()["Z"] == 3
+
+
+def test_tip_compensation_checks_the_extended_tool_reach():
+    op = operation()
+    op.add_containment_from_limits(0, 5, -49, 0)
+    op.getGCode()
+    op.tip_compensation = True
+    with pytest.raises(ValueError, match="tool length"):
+        op.getGCode()
+    assert op.tool_paths == []
+
+
+def test_tip_compensation_lost_at_coordinate_precision_is_rejected():
+    op = operation()
+    op.add_containment_from_limits(0, 5, 99999984, 100000000)
+    op.tip_compensation = True
+    with pytest.raises(ValueError, match="drill-tip compensation at coordinate precision"):
+        op.getGCode()
+    assert op.tool_paths == []
+
+
+def test_tip_compensation_checks_reach_after_coordinate_rounding():
+    op = operation()
+    op.add_tool(Drill(14, 118, 22))
+    op.add_containment_from_limits(0, 7, 99999984, 100000000)
+    op.tip_compensation = True
+    with pytest.raises(ValueError, match="tool length"):
+        op.getGCode()
+    assert op.tool_paths == []
+
+
+@pytest.mark.parametrize("params", [
+    {"peck_depth": -1}, {"peck_depth": math.nan}, {"peck_depth": math.inf},
+    {"peck_depth": 7, "retract_mode": "Full Retract"},
+    {"peck_depth": 7, "reentry_gap_diameters": 0},
+    {"peck_depth": 7, "reentry_gap_diameters": math.inf},
+    {"peck_depth": 7, "retract_mode": RetractMode.PARTIAL_RETRACT,
+     "chip_break_retract_diameters": -1},
+    {"peck_depth": 7, "retract_mode": RetractMode.PARTIAL_RETRACT,
+     "chip_break_retract_diameters": math.nan},
+])
+def test_invalid_peck_settings_clear_previous_paths(params):
+    op = operation()
+    op.getGCode()
+    op.setParams(params)
+    with pytest.raises(ValueError):
+        op.getGCode()
+    assert op.tool_paths == []
+
+
+def test_excessive_peck_count_is_rejected():
+    op = operation()
+    op.add_containment_from_limits(0, 5, 80, 100)
+    op.peck_depth = 1e-10
+    with pytest.raises(ValueError, match="pecks"):
+        op.getGCode()
+    assert op.tool_paths == []
+
+
+def test_partial_retract_lost_at_coordinate_precision_is_rejected():
+    op = operation()
+    op.add_containment_from_limits(0, 5, 80, 100)
+    op.setParams({"peck_depth": 7, "retract_mode": RetractMode.PARTIAL_RETRACT,
+                  "chip_break_retract_diameters": 1e-10})
+    with pytest.raises(ValueError, match="retract at coordinate precision"):
+        op.getGCode()
+    assert op.tool_paths == []
+
+
+def test_translated_pecks_finish_an_exact_multiple_without_an_extra_peck():
+    op = operation()
+    op.add_containment_from_limits(0, 5, 80, 100)
+    op.peck_depth = 5
+    feeds = [c.getParams()["Z"] for c in op.getGCode() if c.get_movement() == "G1"]
+    assert feeds == [95, 90, 85, 80]
+
+
+@pytest.mark.parametrize("peck_depth,expected_count", [(20 / 3, 3), (0.002, 10000)])
+def test_translated_pecks_do_not_accumulate_coordinate_rounding(peck_depth, expected_count):
+    op = operation()
+    op.add_containment_from_limits(0, 5, 80, 100)
+    op.peck_depth = peck_depth
+    feeds = [c.getParams()["Z"] for c in op.getGCode() if c.get_movement() == "G1"]
+    assert len(feeds) == expected_count
+    assert feeds[-1] == 80
+    assert all(previous > current for previous, current in zip(feeds, feeds[1:]))
 
 
 def test_shared_lifecycle_retains_centreline_dispatch():
