@@ -103,6 +103,16 @@ class test_command(unittest.TestCase):
             {'X': 0.001, 'Z': 0},
         ])
 
+    def test_optimise_rapids_preserves_required_retract_reversals(self):
+        commands = [
+            Command('G1', {'X': 0, 'Z': -10, 'F': 60}),
+            Command('G0', {'X': 0, 'Z': 3}),
+            Command('G0', {'X': 0, 'Z': -9}),
+        ]
+        optimised = optimise_rapids(commands, preserve_reversals=True)
+        self.assertEqual([command.to_string() for command in optimised],
+                         [command.to_string() for command in commands])
+
 
 if __name__ == '__main__':
     unittest.main()

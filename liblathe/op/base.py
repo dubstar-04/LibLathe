@@ -33,6 +33,8 @@ def reflect_x_segments(segments):
 class BaseOP:
     """Base class for all turning operations."""
 
+    preserve_rapid_reversals = False
+
     def __init__(self):
 
         self.containment = None
@@ -77,7 +79,8 @@ class BaseOP:
 
         self._reset_paths()
         try:
-            return optimise_rapids(self._get_gcode())
+            return optimise_rapids(
+                self._get_gcode(), preserve_reversals=self.preserve_rapid_reversals)
         except (ValueError, RuntimeError, Warning):
             self._reset_paths()
             raise

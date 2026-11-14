@@ -2,12 +2,13 @@ from decimal import Decimal
 from numbers import Real
 
 
-def optimise_rapids(commands, tolerance=1e-6):
+def optimise_rapids(commands, tolerance=1e-6, *, preserve_reversals=False):
     """Return commands with redundant rapid moves removed.
 
     Rapids carry no feed word, stationary rapids are dropped, and consecutive
     exactly collinear rapids are merged. A merged move stays within the original
     route, so previously certified clearance still applies.
+    Preserve reversals when intermediate retracts have a machining purpose.
     """
 
     result = []
@@ -29,7 +30,8 @@ def optimise_rapids(commands, tolerance=1e-6):
                     first = (position["X"] - rapid_start[0], position["Z"] - rapid_start[1])
                     second = (target["X"] - position["X"], target["Z"] - position["Z"])
                     cross = first[0] * second[1] - first[1] * second[0]
-                    if cross == 0:
+                    same_direction = first[0] * second[0] + first[1] * second[1] >= 0
+                    if cross == 0 and (same_direction or not preserve_reversals):
                         result.pop()
                         position = {"X": rapid_start[0], "Z": rapid_start[1]}
                         if (abs(target["X"] - position["X"]) <= tolerance
