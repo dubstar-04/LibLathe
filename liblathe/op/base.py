@@ -79,8 +79,10 @@ class BaseOP:
 
         self._reset_paths()
         try:
-            return optimise_rapids(
-                self._get_gcode(), preserve_reversals=self.preserve_rapid_reversals)
+            commands = self._get_gcode()
+            if self.preserve_rapid_reversals:
+                return optimise_rapids(commands, tolerance=0, preserve_reversals=True)
+            return optimise_rapids(commands)
         except (ValueError, RuntimeError, Warning):
             self._reset_paths()
             raise

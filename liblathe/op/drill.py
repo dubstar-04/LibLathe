@@ -64,9 +64,12 @@ class DrillOP(BaseOP):
         final_depth = bounds.ZMin - (self.tool.point_length if self.tip_compensation else 0)
         if not math.isfinite(final_depth):
             raise ValueError("Compensated drilling depth must be finite")
-        if self.tip_compensation and final_depth >= bounds.ZMin:
+        final = Point(0, final_depth)
+        if not math.isfinite(final.Z):
+            raise ValueError("Compensated drilling depth must be finite at coordinate precision")
+        if self.tip_compensation and final.Z >= bounds.ZMin:
             raise ValueError("Cannot represent drill-tip compensation at coordinate precision")
-        if bounds.ZMax - final_depth > self.tool.length:
+        if max(bounds.ZMax - final_depth, bounds.ZMax - final.Z) > self.tool.length:
             raise ValueError("Drilling depth exceeds the tool length")
         if not math.isfinite(self.peck_depth) or self.peck_depth < 0:
             raise ValueError("Peck depth must be finite and non-negative")
@@ -79,15 +82,16 @@ class DrillOP(BaseOP):
             gap = multiplier * self.tool.diameter
             if not math.isfinite(gap) or gap <= 0:
                 raise ValueError("Peck re-entry gap / chip-break retract must be finite and positive")
-            if (bounds.ZMax - final_depth) / self.peck_depth > MAX_PECKS:
+            if (bounds.ZMax - final.Z) / self.peck_depth > MAX_PECKS:
                 raise ValueError("Peck depth would need more than {} pecks".format(MAX_PECKS))
 
-        final = Point(0, final_depth)
         previous = Point(0, bounds.ZMax)
         start = previous
         groups = []
         while previous.Z > final.Z:
-            target = (max(final.Z, previous.Z - self.peck_depth)
+            if len(groups) >= MAX_PECKS:
+                raise ValueError("Peck depth would need more than {} pecks".format(MAX_PECKS))
+            target = (max(final.Z, bounds.ZMax - (len(groups) + 1) * self.peck_depth)
                       if self.peck_depth else final.Z)
             end = Point(0, target)
             if end.Z >= previous.Z:
