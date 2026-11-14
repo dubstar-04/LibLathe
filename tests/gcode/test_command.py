@@ -1,6 +1,6 @@
 import unittest
 
-from liblathe.gcode.command import Command
+from liblathe.gcode.command import Command, optimise_rapids
 
 
 class test_command(unittest.TestCase):
@@ -33,6 +33,46 @@ class test_command(unittest.TestCase):
         command = Command('G33', params)
         self.assertEqual(command.to_string(), 'G33 Z-0.0000001 K0.000001')
         self.assertEqual(command.getParams(), params)
+
+    def test_optimise_rapids_removes_feeds_stationary_and_collinear_moves(self):
+        commands = [
+            Command('G18'),
+            Command('G0', {'X': 17, 'Z': 38, 'F': 500}),
+            Command('G0', {'X': 17, 'Z': 0, 'F': 500}),
+            Command('G0', {'X': 13, 'Z': 0, 'F': 500}),
+            Command('G1', {'X': 13, 'Z': 35, 'F': 500}),
+            Command('G0', {'X': 17, 'Z': 35, 'F': 500}),
+            Command('G0', {'X': 17, 'Z': 38, 'F': 500}),
+            Command('G0', {'X': 17, 'Z': 38, 'F': 500}),
+            Command('G0', {'X': 17, 'Z': 0, 'F': 500}),
+            Command('G0', {'X': 12, 'Z': 0, 'F': 500}),
+        ]
+        optimised = optimise_rapids(commands)
+        self.assertEqual([(c.get_movement(), c.getParams()) for c in optimised], [
+            ('G18', {}),
+            ('G0', {'X': 17, 'Z': 38}),
+            ('G0', {'X': 17, 'Z': 0}),
+            ('G0', {'X': 13, 'Z': 0}),
+            ('G1', {'X': 13, 'Z': 35, 'F': 500}),
+            ('G0', {'X': 17, 'Z': 35}),
+            ('G0', {'X': 17, 'Z': 0}),
+            ('G0', {'X': 12, 'Z': 0}),
+        ])
+        self.assertEqual(commands[1].getParams()['F'], 500)
+
+    def test_optimise_rapids_keeps_corners_and_cancelled_round_trips(self):
+        commands = [
+            Command('G1', {'X': 1, 'Z': 1, 'F': 10}),
+            Command('G0', {'X': 2, 'Z': 1}),
+            Command('G0', {'X': 2, 'Z': 2}),
+            Command('G0', {'X': 2, 'Z': 3}),
+            Command('G0', {'X': 2, 'Z': 2}),
+            Command('G0', {'X': 2, 'Z': 3}),
+            Command('G0', {'X': 2, 'Z': 1}),
+        ]
+        self.assertEqual([c.getParams() for c in optimise_rapids(commands)[1:]], [
+            {'X': 2, 'Z': 1},
+        ])
 
 
 if __name__ == '__main__':
