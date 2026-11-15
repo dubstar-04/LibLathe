@@ -48,7 +48,7 @@ class ThreadOP(BaseOP):
                 (Point(outside.X, limits.ZMax), Point(limits.XMin, limits.ZMax)),
             ])
         except RuntimeError as error:
-            raise RuntimeError(f"Threading entry needs run-in clearance beyond the +Z limit: {error}") from error
+            raise RuntimeError(f"Threading entry needs run-in clearance beyond the Axial Max limit: {error}") from error
         # The passes remove the thread band, so the deepest pass and withdrawal only
         # need to clear material outside it (e.g. a shoulder without run-out relief).
         try:
@@ -60,7 +60,7 @@ class ThreadOP(BaseOP):
         except RuntimeError as error:
             raise RuntimeError(
                 f"Threading pass or withdrawal collides with the part outside the thread band; "
-                f"check run-out relief beyond the -Z limit: {error}") from error
+                f"check run-out relief beyond the Axial Min limit: {error}") from error
         # Withdrawal and plunge at the lane are covered above; only the return traverse is new.
         lane = self._local_clearance(tool.boundbox())
         try:

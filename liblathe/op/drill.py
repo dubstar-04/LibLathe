@@ -52,7 +52,7 @@ class DrillOP(BaseOP):
         if self.tool.tool_rotation != 0:
             raise ValueError("Centreline drilling requires an unrotated axial drill")
         if self.containment is None:
-            raise ValueError("Drilling requires explicit containment and start/final depths")
+            raise ValueError("Drilling requires explicit containment with Axial Max and Axial Min limits")
         bounds = self.containment
         values = (bounds.XMin, bounds.XMax, bounds.ZMin, bounds.ZMax, self.clearance)
         if not all(math.isfinite(value) for value in values):
