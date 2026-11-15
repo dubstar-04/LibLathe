@@ -122,13 +122,8 @@ class ChamferOP(BaseOP):
         if (clipped is None or not clipped.start.isSame(stroke.start)
                 or not clipped.end.isSame(stroke.end)):
             raise ValueError("Containment must include the complete compensated edge break")
-        if self.inside_access:
-            reverse = (
-                (self.chamfer_side == Direction.POSITIVE_Z and stroke.end.Z < stroke.start.Z)
-                or (self.chamfer_side == Direction.NEGATIVE_Z and stroke.end.Z > stroke.start.Z))
-        else:
-            reverse = stroke.end.X > stroke.start.X
-        if reverse:
+        # BaseOP reflects internal radii, so decreasing planning X cuts outward in a bore.
+        if stroke.end.X > stroke.start.X:
             stroke = Segment(stroke.end, stroke.start)
         # Bound each near-tangent proof's native subdivision work.
         spans = max(1, math.ceil(stroke.getLength() / (SegmentGroup.defeatureResolution / 10)))

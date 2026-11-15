@@ -732,6 +732,26 @@ namespace liblathe
                       sample.Z + zReach < bounds.ZMin || sample.Z - zReach > bounds.ZMax))
                 {
                     const auto &target = this->boundary[index];
+                    if (target.segment.bulge == 0 && edge.segment.bulge != 0)
+                    {
+                        const double dx = double(target.segment.end.X) - target.segment.start.X;
+                        const double dz = double(target.segment.end.Z) - target.segment.start.Z;
+                        const double length = std::hypot(dx, dz);
+                        if (length > 0)
+                        {
+                            const double cx = double(edge.arc.centre.X) + start.X +
+                                              moveStart * moveX - target.segment.start.X;
+                            const double cz = double(edge.arc.centre.Z) + start.Z +
+                                              moveStart * moveZ - target.segment.start.Z;
+                            const double first = (dx * cz - dz * cx) / length;
+                            const double last = first + (moveEnd - moveStart) *
+                                                        (dx * moveZ - dz * moveX) / length;
+                            // A swept supporting disk separated from the line cannot cross its edge.
+                            if (std::min(first, last) > edge.arc.radius + numerical ||
+                                std::max(first, last) < -edge.arc.radius - numerical)
+                                continue;
+                        }
+                    }
                     if (target.segment.bulge != 0)
                     {
                         const double dx = std::abs(double(sample.X) - target.arc.centre.X);
