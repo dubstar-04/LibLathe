@@ -42,6 +42,12 @@ class test_BaseOP(unittest.TestCase):
         self.assertIs(self.baseop.containment, containment)
         self.assertIs(self.baseop.stock, stock)
 
+    def test_containment_from_far_side_radial_limits(self):
+        self.baseop.add_containment_from_limits(radial_min=-5, radial_max=-20,
+                                                axial_min=-30, axial_max=2)
+        bounds = self.baseop.containment
+        self.assertEqual((bounds.XMin, bounds.XMax, bounds.ZMin, bounds.ZMax), (-20, -5, -30, 2))
+
     @unittest.expectedFailure
     def test_setParams_error(self):
         # Test getGCode() with no tool set
