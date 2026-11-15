@@ -141,6 +141,24 @@ class TestDefeatureBounds(unittest.TestCase):
             with self.subTest(start=first.X), self.assertRaises(RuntimeError):
                 part.validateToolSweep(tool, first, last)
 
+    def test_rounded_insert_clearance_against_oblique_line(self):
+        part = self.profile([(0, 10), (10, 0), (0, 0)])
+        tool = self.group([
+            Segment(Point(-0.2, 0), Point(0.2, 0), 1),
+            Segment(Point(0.2, 0), Point(-0.2, 0), 1),
+        ])
+        for clearance in (0.001, -0.001):
+            shift = (0.2 + clearance) / math.sqrt(2)
+            start = Point(5 + shift, 5 + shift)
+            end = Point(6 + shift, 4 + shift)
+            for first, last in ((start, end), (end, start)):
+                with self.subTest(clearance=clearance, start=first.X):
+                    if clearance > 0:
+                        part.validateToolSweep(tool, first, last)
+                    else:
+                        with self.assertRaises(RuntimeError):
+                            part.validateToolSweep(tool, first, last)
+
     def test_contacts_degenerate_edges_and_empty_groups(self):
         segments = [
             Segment(Point(0, 0), Point(1, 0)),
