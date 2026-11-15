@@ -32,7 +32,7 @@ Rough and Profile remain separate operations, so Rough can leave a finishing
 allowance without coupling roughing to the number or spacing of finish passes.
 
 Set machining limits with ``add_containment(bounds)`` or
-``add_containment_from_limits(xmin, xmax, zmin, zmax)``.
+``add_containment_from_limits(radial_min, radial_max, axial_min, axial_max)``.
 
 Parameters
 ----------
