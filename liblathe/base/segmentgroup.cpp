@@ -944,8 +944,14 @@ namespace liblathe
 
         const Point start = this->segments.front().start;
         const Point end = this->segments.back().end;
+        // Closed profiles may carry float noise at their seam; axis closure would add phantom material.
+        const float seamTolerance = 4 * std::numeric_limits<float>::epsilon() *
+                                    std::max({1.0f, std::abs(start.X), std::abs(start.Z),
+                                              std::abs(end.X), std::abs(end.Z)});
+        const bool closed = std::abs(start.X - end.X) <= seamTolerance &&
+                            std::abs(start.Z - end.Z) <= seamTolerance;
         // Radial closures at the same Z overlap; retain only their uncancelled part.
-        if (start.Z == end.Z)
+        if (closed || start.Z == end.Z)
             return {Segment(end, start), Segment(start, start), Segment(start, start)};
         return {
             Segment(Point(0, start.Z), start),
