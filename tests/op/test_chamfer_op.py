@@ -213,10 +213,12 @@ class ChamferTests(unittest.TestCase):
                 near_commands, far_commands = near.getGCode(), far.getGCode()
                 self.assertEqual(len(near.tool_paths), 4)
                 self.assertEqual(len(near_commands), len(far_commands))
-                if not internal:
-                    for operation in (near, far):
-                        for group in operation.tool_paths:
-                            stroke = group.getSegments()[0]
+                for operation in (near, far):
+                    for group in operation.tool_paths:
+                        stroke = group.getSegments()[0]
+                        if internal:
+                            self.assertLess(abs(stroke.start.X), abs(stroke.end.X))
+                        else:
                             self.assertGreater(abs(stroke.start.X), abs(stroke.end.X))
                 for first, second in zip(near_commands, far_commands):
                     self.assertEqual(first.get_movement(), second.get_movement())
@@ -227,6 +229,40 @@ class ChamferTests(unittest.TestCase):
                     stroke = near.tool_paths[-1].getSegments()[0]
                     self.assertAlmostEqual(abs(stroke.end.X - stroke.start.X), 1, delta=0.001)
                     self.assertAlmostEqual(abs(stroke.end.Z - stroke.start.Z), 1, delta=0.001)
+
+    def test_internal_chamfer_with_rounded_boring_insert_at_large_z(self):
+        operation = self.operation([(15, 100), (15, 75), (0, 75)])
+        operation.setParams({
+            "mode": MachiningMode.INTERNAL, "corner_indices": (0,),
+            "chamfer_size": 1, "pass_offset": 0.25, "clearance": 3,
+        })
+        vertices = [
+            (-0.4985147714614868, 4.010517597198486, 0.36397022008895874),
+            (-0.31670698523521423, 3.828709602355957, 0),
+            (-0.0007610603934153914, 0.21743114292621613, 0.466307669878006),
+            (-0.21743114292621613, 0.0007610603934153914, 0),
+            (-3.828709602355957, 0.31670698523521423, 0.36397022008895874),
+            (-4.010517597198486, 0.4985147714614868, 0),
+            (-4.326463222503662, 4.109793186187744, 0.466307669878006),
+            (-4.109793186187744, 4.326463222503662, 0),
+        ]
+        tool = Tool()
+        tool.set_tool_from_segments([
+            Segment(Point(x, z), Point(next_x, next_z), bulge)
+            for (x, z, bulge), (next_x, next_z, _) in
+            zip(vertices, vertices[1:] + vertices[:1])
+        ])
+        operation.add_tool(tool)
+        operation.add_containment(BoundBox(Point(7.673537, 91.673537),
+                                          Point(23.326463, 107.326463)))
+        operation.add_stock(BoundBox(Point(0, 0), Point(50, 110)))
+        commands = operation.getGCode()
+        self.assertEqual(len(operation.tool_paths), 3)
+        self.assertTrue(any(command.get_movement() == "G1" for command in commands))
+        final = operation.tool_paths[-1].getSegments()[0]
+        self.assertLess(final.start.X, final.end.X)
+        self.assertAlmostEqual(abs(final.end.X - final.start.X), 1, delta=0.001)
+        self.assertAlmostEqual(abs(final.end.Z - final.start.Z), 1, delta=0.001)
 
     def test_invalid_corners_sizes_and_containment_clear_paths(self):
         cases = [
