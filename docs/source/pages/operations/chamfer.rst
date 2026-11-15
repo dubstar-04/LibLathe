@@ -21,8 +21,8 @@ Parameters
   approach and routing.
 * ``chamfer_side``: ``Direction.NEGATIVE_Z`` or ``Direction.POSITIVE_Z``;
   identifies the axial side of the chamfer. External cuts always travel from
-  Radial Max to Radial Min, regardless of side. Internal cuts retain the selected
-  axial traversal direction. Defaults to ``NEGATIVE_Z``.
+  Radial Max to Radial Min; internal cuts always travel from Radial Min to Radial
+  Max, regardless of side. Defaults to ``NEGATIVE_Z``.
 * ``clearance``, ``hfeed`` and ``vfeed``: shared routing/feed settings.
 
 For example, an external profile running from (0, 0) to (10, 0) to (10, -20)
@@ -52,7 +52,8 @@ The complete insert outline, including circular nose extrema, determines the
 tool-reference translation. A 0.0001 mm outward normal margin keeps tangent
 positions outside native boundary classification. Complete sweeps are certified
 in 0.001 mm spans (one tenth of the native scan resolution), without subdividing
-the emitted straight cut.
+the emitted straight cut. For rounded inserts near straight faces, supporting-circle
+separation can certify clearance without exhausting adaptive subdivision.
 The original part outline is unchanged by generation.
 
 Cuts, approaches and withdrawals are checked against the part with the current
