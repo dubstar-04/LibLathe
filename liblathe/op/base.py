@@ -415,9 +415,13 @@ class BaseOP:
         """Set the operation's machining limits as a LibLathe BoundBox."""
         self.containment = bounds
 
-    def add_containment_from_limits(self, xmin, xmax, zmin, zmax):
-        """Set the operation's radial and axial machining limits."""
-        self.add_containment(BoundBox(Point(xmin, zmin), Point(xmax, zmax)))
+    def add_containment_from_limits(self, radial_min, radial_max, axial_min, axial_max):
+        """Set the operation's radial and axial machining limits.
+
+        Radial limits are signed radii on the tool's side of the spindle axis, so
+        a far-side tool passes negative values (e.g. Radial Min -5, Radial Max -20).
+        """
+        self.add_containment(BoundBox(Point(radial_min, axial_min), Point(radial_max, axial_max)))
 
     def add_stock(self, bounds):
         """Set the physical stock envelope used for safe clearance routing."""

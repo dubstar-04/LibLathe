@@ -56,7 +56,7 @@ no tolerance, scan-grid or sweep-validation changes accompany this optimization.
 ## Cutting traversal and routing
 
 `containment` defines the operation's machining limits, set through
-`add_containment(bounds)` or `add_containment_from_limits(xmin, xmax, zmin, zmax)`.
+`add_containment(bounds)` or `add_containment_from_limits(radial_min, radial_max, axial_min, axial_max)`.
 `stock` is the optional physical material envelope, set through
 `add_stock(bounds)` for initial clearance positioning. These are separate bounds.
 All G1/G2/G3/G33 moves, including approaches and withdrawals, stay inside

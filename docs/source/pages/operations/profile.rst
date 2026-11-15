@@ -8,7 +8,7 @@ the target by ``stock_to_leave``; additional passes are offset further out and
 are cut first.
 
 Set machining limits with ``add_containment(bounds)`` or
-``add_containment_from_limits(xmin, xmax, zmin, zmax)``.
+``add_containment_from_limits(radial_min, radial_max, axial_min, axial_max)``.
 
 Directions
 ----------
