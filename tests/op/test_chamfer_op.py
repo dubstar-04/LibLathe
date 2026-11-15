@@ -5,7 +5,7 @@ from liblathe.base.boundbox import BoundBox
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.op.base import Direction, MachiningMode
-from liblathe.op.chamfer import ChamferOP
+from liblathe.op.chamfer import ChamferOP, ChamferPosition
 from liblathe.tool.tool import Tool, ToolSide
 
 
@@ -94,10 +94,10 @@ class ChamferTests(unittest.TestCase):
                     self.assertEqual(len(operation.tool_paths), expected_passes)
 
     def test_external_chamfers_cut_from_radial_max_to_radial_min(self):
-        for side in (Direction.NEGATIVE_Z, Direction.POSITIVE_Z):
-            with self.subTest(side=side):
+        for position in (ChamferPosition.FRONT, ChamferPosition.BACK):
+            with self.subTest(position=position):
                 operation = self.operation()
-                operation.setParams({"chamfer_side": side})
+                operation.setParams({"chamfer_position": position})
                 commands = operation.getGCode()
                 self.assertEqual(operation.direction, Direction.RADIAL)
                 for group in operation.tool_paths:
@@ -195,21 +195,26 @@ class ChamferTests(unittest.TestCase):
                 self.assertLessEqual(params["Z"], limits.ZMax)
 
     def test_internal_mouth_and_far_side_reflections(self):
-        for internal in (False, True):
-            with self.subTest(internal=internal):
+        cases = [(internal, position) for internal in (False, True)
+                 for position in (ChamferPosition.FRONT, ChamferPosition.BACK)]
+        for internal, position in cases:
+            with self.subTest(internal=internal, position=position):
                 vertices = [(5, 0), (5, -20), (0, -20)] if internal else None
                 near = self.operation(vertices)
-                near.corner_indices = (0,) if internal else (1,)
+                front_index = 0 if internal else 1
+                near.corner_indices = (
+                    front_index if position == ChamferPosition.FRONT else front_index + 1,)
+                near.add_containment(BoundBox(Point(0, -25), Point(15, 5)))
                 near.mode = MachiningMode.INTERNAL if internal else MachiningMode.EXTERNAL
                 near.direction = Direction.RADIAL
-                near.setParams({"pass_offset": 0.2})
+                near.setParams({"pass_offset": 0.2, "chamfer_position": position})
                 far = self.operation(vertices)
                 far.corner_indices, far.mode, far.direction = near.corner_indices, near.mode, near.direction
-                far.setParams({"pass_offset": near.pass_offset})
+                far.setParams({"pass_offset": near.pass_offset, "chamfer_position": position})
                 far.partSegmentGroup = far.partSegmentGroup.reflectX()
                 far.tool.segmentGroup = far.tool.get_segmentgroup().reflectX()
                 far.tool.side = ToolSide.FAR
-                far.add_containment(BoundBox(Point(-15, -22), Point(0, 5)))
+                far.add_containment(BoundBox(Point(-15, -25), Point(0, 5)))
                 near_commands, far_commands = near.getGCode(), far.getGCode()
                 self.assertEqual(len(near.tool_paths), 4)
                 self.assertEqual(len(near_commands), len(far_commands))
@@ -268,6 +273,8 @@ class ChamferTests(unittest.TestCase):
         cases = [
             {"chamfer_size": value} for value in (0, -1, float("nan"), float("inf"), 10)
         ] + [{"corner_indices": indices} for indices in ((), (True,), (4,), (1, 1), (0,), None)]
+        cases += [{"chamfer_position": value}
+                  for value in (None, "Front", Direction.NEGATIVE_Z, 1)]
         for params in cases:
             with self.subTest(params=params):
                 operation = self.operation()

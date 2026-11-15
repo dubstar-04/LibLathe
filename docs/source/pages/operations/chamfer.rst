@@ -19,17 +19,26 @@ Parameters
 * ``mode``: ``MachiningMode.EXTERNAL`` or ``MachiningMode.INTERNAL``.
 * ``direction``: must be ``Direction.RADIAL``; chamfer passes always use radial
   approach and routing.
-* ``chamfer_side``: ``Direction.NEGATIVE_Z`` or ``Direction.POSITIVE_Z``;
-  identifies the axial side of the chamfer. External cuts always travel from
+* ``chamfer_position``: ``ChamferPosition.FRONT`` or ``ChamferPosition.BACK``,
+  defined in ``liblathe.op.chamfer``. Front anchors the corner at Axial Max;
+  Back anchors it at Axial Min of the selected containment region. This is not
+  a tool-post setting or a cutting direction. External cuts always travel from
   Radial Max to Radial Min; internal cuts always travel from Radial Min to Radial
-  Max, regardless of side. Defaults to ``NEGATIVE_Z``.
+  Max, regardless of position. Defaults to ``FRONT``.
 * ``clearance``, ``hfeed`` and ``vfeed``: shared routing/feed settings.
 
 For example, an external profile running from (0, 0) to (10, 0) to (10, -20)
 has its front outer corner at index 1::
 
+    from liblathe.op.chamfer import ChamferOP, ChamferPosition
+
     operation = ChamferOP()
-    operation.setParams({"chamfer_size": 0.5, "pass_offset": 0.1, "corner_indices": (1,)})
+    operation.setParams({
+        "chamfer_size": 0.5,
+        "pass_offset": 0.1,
+        "chamfer_position": ChamferPosition.FRONT,
+        "corner_indices": (1,),
+    })
     operation.addPartSegments(part_segments)
     operation.add_containment(bounds)
     operation.add_stock(stock_bounds)

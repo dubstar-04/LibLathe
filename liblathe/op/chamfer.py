@@ -1,6 +1,7 @@
 """Equal-distance edge breaks on selected axial/radial profile corners."""
 
 from copy import copy
+from enum import Enum
 import math
 
 from liblathe.base.boundbox import BoundBox
@@ -11,6 +12,11 @@ from liblathe.gcode.path import Path, RoutingDirection
 from liblathe.op.base import BaseOP, Direction, MachiningMode
 
 
+class ChamferPosition(Enum):
+    FRONT = "Front"
+    BACK = "Back"
+
+
 class ChamferOP(BaseOP):
     def __init__(self):
         super().__init__()
@@ -18,12 +24,12 @@ class ChamferOP(BaseOP):
         self.pass_offset = 0.25
         self.corner_indices = ()
         self.direction = Direction.RADIAL
-        self.chamfer_side = Direction.NEGATIVE_Z
+        self.chamfer_position = ChamferPosition.FRONT
         self._pass_parts = []
 
     def getParams(self):
         return {name: getattr(self, name) for name in (
-            "chamfer_size", "chamfer_side", "corner_indices", "direction", "mode",
+            "chamfer_size", "chamfer_position", "corner_indices", "direction", "mode",
             "pass_offset", "hfeed", "vfeed", "clearance")}
 
     def _reset_paths(self):
@@ -111,7 +117,7 @@ class ChamferOP(BaseOP):
         dx, dz = end.X - start.X, end.Z - start.Z
         length = math.hypot(dx, dz)
         nx, nz = -dz / length, dx / length
-        if self.inside_access and self.chamfer_side == Direction.POSITIVE_Z:
+        if self.inside_access and self.chamfer_position == ChamferPosition.BACK:
             nx, nz = -nx, -nz
         contact = self._contact(tool, nx, nz)
         # Keep tangency outside native floating-point boundary classification.
@@ -141,8 +147,8 @@ class ChamferOP(BaseOP):
             raise ValueError("chamfer_size must be finite and positive")
         if self.direction != Direction.RADIAL:
             raise ValueError("Chamfer machining direction must be radial")
-        if self.chamfer_side not in (Direction.NEGATIVE_Z, Direction.POSITIVE_Z):
-            raise ValueError("Chamfer side must be a positive or negative Z direction")
+        if not isinstance(self.chamfer_position, ChamferPosition):
+            raise ValueError("Chamfer position must be a ChamferPosition enumeration member")
         original = self.partSegmentGroup.getSegments()
         indices = self._selected_corners(original)
         if self.inside_access:
