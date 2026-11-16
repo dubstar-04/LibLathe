@@ -20,11 +20,11 @@ Parameters
 * ``direction``: must be ``Direction.RADIAL``; chamfer passes always use radial
   approach and routing.
 * ``chamfer_position``: ``ChamferPosition.FRONT`` or ``ChamferPosition.BACK``,
-  defined in ``liblathe.op.chamfer``. Front anchors the corner at Axial Max;
-  Back anchors it at Axial Min of the selected containment region. This is not
-  a tool-post setting or a cutting direction. External cuts always travel from
-  Radial Max to Radial Min; internal cuts always travel from Radial Min to Radial
-  Max, regardless of position. Defaults to ``FRONT``.
+  defined in ``liblathe.op.chamfer``. This is descriptive metadata only; it does
+  not select or anchor a corner to the containment limits. ``corner_indices``
+  selects the exact profile vertices. External cuts always travel from Radial
+  Max to Radial Min; internal cuts always travel from Radial Min to Radial Max,
+  regardless of position. Defaults to ``FRONT``.
 * ``clearance``, ``hfeed`` and ``vfeed``: shared routing/feed settings.
 
 For example, an external profile running from (0, 0) to (10, 0) to (10, -20)
