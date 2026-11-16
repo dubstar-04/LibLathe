@@ -29,7 +29,8 @@ def operation(operation_type, sign=1):
     op.pass_offset = 1
     op.finish_passes = 2
     op.clearance = 1
-    op.add_containment(BoundBox(Point(0, -15), Point(sign * 15, 5)))
+    axial = (-22, -20) if operation_type is PartoffOP else (-15, 5)
+    op.add_containment(BoundBox(Point(0, axial[0]), Point(sign * 15, axial[1])))
     op.add_stock(BoundBox(Point(0, -25), Point(sign * 12, 1)))
     vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
     op.addPartSegments([Segment(Point(sign * x, z), Point(sign * u, v))
