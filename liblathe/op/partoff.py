@@ -49,10 +49,10 @@ class PartoffOP(liblathe.op.base.BaseOP):
         if limits.ZLength() < tool_bounds.ZLength() - TOLERANCE:
             raise ValueError("Parting containment must be at least as wide as the tool")
 
+        if not tool_bounds.ZMin - TOLERANCE <= 0 <= tool_bounds.ZMax + TOLERANCE:
+            raise ValueError("Tool reference must lie within the tool's axial extent")
         # Place the tool's +Z edge on the face so the whole tool stays on the stock side.
         z = face - tool_bounds.ZMax
-        if not limits.ZMin - TOLERANCE <= z <= face + TOLERANCE:
-            raise ValueError("Tool reference must lie within the tool's axial extent")
         self._validate_pecking(limits.XLength(), tool_bounds.ZLength())
 
         segmentgroup = SegmentGroup()
