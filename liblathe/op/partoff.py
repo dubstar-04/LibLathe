@@ -5,6 +5,8 @@ from liblathe.base.segmentgroup import SegmentGroup
 
 from liblathe.gcode.path import RoutingDirection
 
+TOLERANCE = 1e-5
+
 
 class PartoffOP(liblathe.op.base.BaseOP):
 
@@ -12,19 +14,24 @@ class PartoffOP(liblathe.op.base.BaseOP):
         """Generate the path for the Part operation"""
 
         self._begin_generation()
-        XMin = self.containment.XMin
-        XMax = self.containment.XMax
-        ZMin = self.containment.ZMin
+        limits = self.containment
+        face = limits.ZMax
+        tool_bounds = self.tool.get_segmentgroup().boundbox()
+
+        if self.partSegmentGroup.count() and self.partSegmentGroup.boundbox().ZMin < face - TOLERANCE:
+            raise ValueError("Parting face (containment maximum Z) must not be inside the part")
+        if limits.ZLength() < tool_bounds.ZLength() - TOLERANCE:
+            raise ValueError("Parting containment must be at least as wide as the tool")
+
+        # Place the tool's +Z edge on the face so the whole tool stays on the stock side.
+        z = face - tool_bounds.ZMax
+        if not limits.ZMin - TOLERANCE <= z <= face + TOLERANCE:
+            raise ValueError("Tool reference must lie within the tool's axial extent")
 
         # TODO: Add a chip break / pecking option
 
-        # build list of segments
         segmentgroup = SegmentGroup()
-        startPt = Point(XMax, ZMin)
-        endPt = Point(XMin, ZMin)
-        seg = Segment(startPt, endPt)
-        segmentgroup.addSegment(seg)
-
+        segmentgroup.addSegment(Segment(Point(limits.XMax, z), Point(limits.XMin, z)))
         self.tool_paths.append(segmentgroup)
 
     def generateGCode(self):
