@@ -95,6 +95,20 @@ class ChamferOP(BaseOP):
         part.validate()
         return part
 
+    @staticmethod
+    def _signed_area(segments):
+        origin = segments[0].start
+        area = 0.0
+        for edge in segments:
+            dx1, dz1 = edge.start.X - origin.X, edge.start.Z - origin.Z
+            dx2, dz2 = edge.end.X - origin.X, edge.end.Z - origin.Z
+            area += (dx1 * dz2 - dx2 * dz1) / 2
+            if edge.bulge:
+                angle = 4 * math.atan(edge.bulge)
+                radius = edge.getRadius()
+                area += radius**2 * (angle - math.sin(angle)) / 2
+        return area
+
     def _pass_count(self, corner, chamfer):
         dx = chamfer.end.X - chamfer.start.X
         dz = chamfer.end.Z - chamfer.start.Z
@@ -158,6 +172,8 @@ class ChamferOP(BaseOP):
                     Segment(Point(0, profile[0].start.Z), profile[0].start),
                     *profile,
                     Segment(profile[-1].end, Point(0, profile[-1].end.Z)),
+                    Segment(Point(0, profile[-1].end.Z),
+                            Point(0, profile[0].start.Z)),
                 ]
 
             segments = close_profile(original)
@@ -167,12 +183,16 @@ class ChamferOP(BaseOP):
                 dx, dz = incoming.end.X - incoming.start.X, incoming.end.Z - incoming.start.Z
                 ex, ez = outgoing.end.X - outgoing.start.X, outgoing.end.Z - outgoing.start.Z
                 turns.append(dx * ez - dz * ex)
-            if all(turn > 1e-6 for turn in turns):
+            winding = self._signed_area(segments)
+            if not math.isfinite(winding) or abs(winding) <= 1e-12:
+                raise ValueError("Cannot determine internal profile winding")
+            if any((winding > 0 and turn < -1e-6)
+                   or (winding < 0 and turn > 1e-6) for turn in turns):
+                raise ValueError("Selected internal edge breaks must be convex in the material profile")
+            if winding > 0:
                 original = [Segment(edge.end, edge.start, -edge.bulge)
                             for edge in reversed(original)]
                 indices = tuple(len(original) - index for index in indices)
-            elif any(turn > 1e-6 for turn in turns):
-                raise ValueError("Selected internal edge breaks must have consistent profile winding")
         # Open profiles close radially to the axis. This also supplies the bore mouth
         # face in BaseOP's reflected internal planning frame.
         segments = [Segment(Point(0, original[0].start.Z), original[0].start),

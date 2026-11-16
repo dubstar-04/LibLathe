@@ -235,6 +235,23 @@ class ChamferTests(unittest.TestCase):
                     self.assertAlmostEqual(abs(stroke.end.X - stroke.start.X), 1, delta=0.001)
                     self.assertAlmostEqual(abs(stroke.end.Z - stroke.start.Z), 1, delta=0.001)
 
+    def test_internal_blind_bore_floor_corner_is_rejected_as_concave(self):
+        profiles = (
+            [(5, 0), (5, -20), (0, -20)],
+            [(0, -20), (5, -20), (5, 0)],
+        )
+        for vertices in profiles:
+            with self.subTest(vertices=vertices):
+                operation = self.operation(vertices)
+                operation.add_containment(BoundBox(Point(0, -25), Point(15, 5)))
+                operation.setParams({
+                    "mode": MachiningMode.INTERNAL,
+                    "corner_indices": (1,),
+                    "chamfer_position": ChamferPosition.BACK,
+                })
+                with self.assertRaisesRegex(ValueError, "convex in the material profile"):
+                    operation.getGCode()
+
     def test_internal_chamfer_with_rounded_boring_insert_at_large_z(self):
         operation = self.operation([(15, 100), (15, 75), (0, 75)])
         operation.setParams({
