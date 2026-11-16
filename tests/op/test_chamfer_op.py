@@ -286,6 +286,12 @@ class ChamferTests(unittest.TestCase):
         self.assertAlmostEqual(abs(final.end.X - final.start.X), 1, delta=0.001)
         self.assertAlmostEqual(abs(final.end.Z - final.start.Z), 1, delta=0.001)
 
+    def test_compensation_margin_scales_at_large_z(self):
+        operation = self.operation([(0, 1000), (10, 1000), (10, 980), (0, 980)])
+        operation.add_containment(BoundBox(Point(0, 978), Point(15, 1005)))
+        operation.getGCode()
+        self.assertEqual(len(operation.tool_paths), 3)
+
     def test_invalid_corners_sizes_and_containment_clear_paths(self):
         cases = [
             {"chamfer_size": value} for value in (0, -1, float("nan"), float("inf"), 10)

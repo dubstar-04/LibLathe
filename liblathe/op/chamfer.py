@@ -12,6 +12,9 @@ from liblathe.gcode.path import Path, RoutingDirection
 from liblathe.op.base import BaseOP, Direction, MachiningMode
 
 
+_NATIVE_FLOAT_EPSILON = 2**-23
+
+
 class ChamferPosition(Enum):
     FRONT = "Front"
     BACK = "Back"
@@ -136,8 +139,18 @@ class ChamferOP(BaseOP):
         if nx * (corner.X - start.X) + nz * (corner.Z - start.Z) < 0:
             nx, nz = -nx, -nz
         contact = self._contact(tool, nx, nz)
-        # Keep tangency outside native floating-point boundary classification.
-        shift = Point(-contact.X + nx * 0.0001, -contact.Z + nz * 0.0001)
+        tool_bounds = tool.boundbox()
+        coordinate_scale = max(
+            1.0,
+            *(abs(position + bound) for position in
+              (start.X - contact.X, end.X - contact.X)
+              for bound in (tool_bounds.XMin, tool_bounds.XMax)),
+            *(abs(position + bound) for position in
+              (start.Z - contact.Z, end.Z - contact.Z)
+              for bound in (tool_bounds.ZMin, tool_bounds.ZMax)))
+        # Native sweep checks use a coordinate-scaled float tolerance.
+        margin = 2 * (1e-5 + 4 * _NATIVE_FLOAT_EPSILON * coordinate_scale)
+        shift = Point(-contact.X + nx * margin, -contact.Z + nz * margin)
         stroke = Segment(start.add(shift), end.add(shift))
         clipped = self._clip(stroke, self.containment.XMin, self.containment.XMax,
                              self.containment.ZMin, self.containment.ZMax)
