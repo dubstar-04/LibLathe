@@ -133,8 +133,10 @@ class test_PartoffFace(unittest.TestCase):
             parting_op(-1, kerf=1.5).getGCode()
 
     def test_reference_outside_tool_is_rejected(self):
-        with self.assertRaisesRegex(ValueError, "Tool reference"):
-            parting_op(0.5).getGCode()
+        for kerf in (2, 3):
+            with self.subTest(kerf=kerf):
+                with self.assertRaisesRegex(ValueError, "Tool reference"):
+                    parting_op(0.5, kerf=kerf).getGCode()
 
 
 class test_PartoffPecking(unittest.TestCase):
