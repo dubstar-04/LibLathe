@@ -1,22 +1,16 @@
 """Centreline drilling with explicit pecks and optional drill-tip compensation."""
 
 import math
-from enum import Enum
 
 from liblathe.base.point import Point
 from liblathe.base.segment import Segment
 from liblathe.base.segmentgroup import SegmentGroup
 from liblathe.gcode.command import Command
-from liblathe.op.base import BaseOP
+from liblathe.op.base import BaseOP, RetractMode
 from liblathe.tool.drill import Drill
 
 
 MAX_PECKS = 10000
-
-
-class RetractMode(Enum):
-    PARTIAL_RETRACT = "Partial Retract"
-    FULL_RETRACT = "Full Retract"
 
 
 class DrillOP(BaseOP):

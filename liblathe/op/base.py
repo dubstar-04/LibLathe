@@ -23,6 +23,12 @@ class Direction(Enum):
     RADIAL = "Radial"
 
 
+class RetractMode(Enum):
+    """Retract between pecks, shared by Drill and Partoff."""
+    PARTIAL_RETRACT = "Partial Retract"
+    FULL_RETRACT = "Full Retract"
+
+
 def reflect_x_segments(segments):
     group = SegmentGroup()
     for segment in segments:
