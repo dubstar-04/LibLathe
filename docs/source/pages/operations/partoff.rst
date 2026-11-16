@@ -28,6 +28,16 @@ Parameters
 
 - ``clearance``: distance kept between the tool and the stock on rapid moves.
 - ``hfeed``: feed rate.
+- ``peck_depth``: maximum radial depth of each peck. Zero, the default, cuts in
+  one feed. Pecks are evenly spaced down to the containment's minimum X.
+- ``retract_mode``: a ``liblathe.op.base.RetractMode`` used between pecks.
+  ``PARTIAL_RETRACT`` backs off radially to break the chip, then feeds on.
+  ``FULL_RETRACT`` (the default) rapids out to the cut's start radius to clear the
+  chip, then rapids back to the re-entry gap above the last peck.
+- ``chip_break_retract_widths``: the partial-retract back-off as a multiple of
+  the tool width (default 1).
+- ``reentry_gap_widths``: the full-retract re-entry gap as a multiple of the tool
+  width (default 1).
 
 Set the containment's minimum X to zero to part the component off completely.
 Approach and withdrawal feeds also remain inside containment. The tool withdraws
