@@ -112,12 +112,13 @@ class ChamferOP(BaseOP):
                     raise ValueError("Cannot advance chamfer pass at coordinate precision")
         return count
 
-    def _compensated_pass(self, part, tool, start, end):
+    def _compensated_pass(self, part, tool, corner, start, end):
         """Compensate and certify a single pass against its remaining part."""
         dx, dz = end.X - start.X, end.Z - start.Z
         length = math.hypot(dx, dz)
         nx, nz = -dz / length, dx / length
-        if self.inside_access and self.chamfer_position == ChamferPosition.BACK:
+        # The insert sits on the removed-material side, which contains the original corner.
+        if nx * (corner.X - start.X) + nz * (corner.Z - start.Z) < 0:
             nx, nz = -nx, -nz
         contact = self._contact(tool, nx, nz)
         # Keep tangency outside native floating-point boundary classification.
@@ -218,7 +219,7 @@ class ChamferOP(BaseOP):
                 completed[index] = Segment(start, end)
                 part = (finished if pass_index == count and len(completed) == len(breaks)
                         else self._part_with_breaks(segments, completed))
-                paths.append(self._compensated_pass(part, tool, start, end))
+                paths.append(self._compensated_pass(part, tool, corner, start, end))
                 parts.append(part)
         self.tool_paths = paths
         self._pass_parts = parts

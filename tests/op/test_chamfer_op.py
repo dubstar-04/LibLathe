@@ -199,7 +199,7 @@ class ChamferTests(unittest.TestCase):
                  for position in (ChamferPosition.FRONT, ChamferPosition.BACK)]
         for internal, position in cases:
             with self.subTest(internal=internal, position=position):
-                vertices = [(5, 0), (5, -20), (0, -20)] if internal else None
+                vertices = [(5, 0), (5, -20)] if internal else None
                 near = self.operation(vertices)
                 front_index = 0 if internal else 1
                 near.corner_indices = (
