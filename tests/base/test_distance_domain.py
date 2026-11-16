@@ -53,6 +53,10 @@ class test_DistanceDomain(unittest.TestCase):
                     self.assertFalse(group.isInside(Point(x, 0)))
                     self.assertAlmostEqual(group.sdv(Point(x, 0)), 2 - x)
 
+    def test_float_noise_at_closed_seam_does_not_add_axis_closure(self):
+        group = self.profile([(2, -2.7755575615628914e-17), (2, 2), (4, 2), (4, 0), (2, 0)])
+        self.assertAlmostEqual(group.sdv(Point(1, 0.5)), 1)
+
     def test_implicit_closures_do_not_generate_caps(self):
         group = self.profile([(10, 0), (10, -10)])
         for offset in (1, -1):

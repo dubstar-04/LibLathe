@@ -3,16 +3,17 @@ Lathe Operations
 
 The operation modules provide ``RoughOP`` and ``ProfileOP`` strategies for
 external and internal turning, plus parting, straight centreline drilling and
-threading. Facing is Rough in the Radial direction; groove roughing and finishing
+threading and equal-distance chamfer edge breaks. Facing is Rough in the Radial
+direction; groove roughing and finishing
 are separate Rough and Profile operations. Threading currently supports
-straight, single-start threads with radial infeed. Chamfering is not a separate
-operation.
+straight, single-start threads with radial infeed.
 
 .. toctree::
    :maxdepth: 1
 
    operations/rough
    operations/profile
+   operations/chamfer
    operations/partoff
    operations/drill
    operations/thread
@@ -23,7 +24,7 @@ outputs use negative X. See :doc:`liblathe_tooling` for the side enum,
 reflection rules and machining limitations.
 Centreline drilling shares the base generation lifecycle but uses a symmetric
 drill at X=0, without insert-side dispatch.
-Rough and Profile additionally expose ``MachiningMode.EXTERNAL`` and
+Rough, Profile and Chamfer additionally expose ``MachiningMode.EXTERNAL`` and
 ``MachiningMode.INTERNAL``. Internal mode transforms selected internal profile
 geometry into the shared external planning frame and reflects the resulting
 paths back into physical X coordinates; it is independent of Near/Far tool
