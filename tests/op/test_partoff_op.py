@@ -1,5 +1,6 @@
 import unittest
 
+from liblathe.op.base import RetractMode
 from liblathe.op.partoff import PartoffOP
 from liblathe.gcode.command import Command
 from liblathe.base.boundbox import BoundBox
@@ -134,6 +135,61 @@ class test_PartoffFace(unittest.TestCase):
     def test_reference_outside_tool_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "Tool reference"):
             parting_op(0.5).getGCode()
+
+
+class test_PartoffPecking(unittest.TestCase):
+    """Pecks split the parting feed with radial chip-break retracts."""
+
+    @staticmethod
+    def kerf_moves(mode, sign):
+        """Return (movement, radius) of the moves in the kerf from the first peck to the final feed."""
+        op = parting_op(-1, sign)
+        op.setParams({"peck_depth": 4, "retract_mode": mode})
+        moves = [(c.get_movement(), sign * c.getParams()["X"]) for c in op.getGCode()
+                 if c.get_movement() in ("G0", "G1") and abs(c.getParams()["Z"] + 21) < 1e-6]
+        first = next(i for i, (m, x) in enumerate(moves) if m == "G1" and x < 15 - 1e-6)
+        last = next(i for i, (m, x) in enumerate(moves) if m == "G1" and abs(x) < 1e-6)
+        return moves[first:last + 1]
+
+    def assertMoves(self, moves, expected):
+        self.assertEqual([m for m, _ in moves], [m for m, _ in expected])
+        for (_, x), (_, want) in zip(moves, expected):
+            self.assertAlmostEqual(x, want)
+
+    def test_partial_retract_backs_off_one_tool_width(self):
+        for sign in (1, -1):
+            with self.subTest(sign=sign):
+                # 15 mm in four even pecks, backing off the 2 mm tool width between them
+                self.assertMoves(self.kerf_moves(RetractMode.PARTIAL_RETRACT, sign), [
+                    ("G1", 11.25), ("G0", 13.25), ("G1", 7.5), ("G0", 9.5),
+                    ("G1", 3.75), ("G0", 5.75), ("G1", 0)])
+
+    def test_full_retract_leaves_the_cut_between_pecks(self):
+        for sign in (1, -1):
+            with self.subTest(sign=sign):
+                # out to the 15 mm cut start, then back to one tool width above the last peck
+                self.assertMoves(self.kerf_moves(RetractMode.FULL_RETRACT, sign), [
+                    ("G1", 11.25), ("G0", 15), ("G0", 13.25), ("G1", 7.5), ("G0", 15), ("G0", 9.5),
+                    ("G1", 3.75), ("G0", 15), ("G0", 5.75), ("G1", 0)])
+
+    def test_zero_peck_depth_cuts_in_one_feed(self):
+        feeds = [c for c in parting_op(-1).getGCode() if c.get_movement() == "G1"
+                 and abs(c.getParams()["Z"] + 21) < 1e-6 and c.getParams()["X"] < 15]
+        self.assertEqual(len(feeds), 1)
+
+    def test_invalid_retract_mode_is_rejected(self):
+        op = parting_op(-1)
+        op.setParams({"peck_depth": 4, "retract_mode": "Full Retract"})
+        with self.assertRaisesRegex(ValueError, "Retract mode"):
+            op.getGCode()
+
+    def test_invalid_peck_depth_is_rejected(self):
+        for depth in (-1, float("nan"), float("inf")):
+            with self.subTest(depth=depth):
+                op = parting_op(-1)
+                op.setParams({"peck_depth": depth})
+                with self.assertRaisesRegex(ValueError, "Peck depth"):
+                    op.getGCode()
 
 
 if __name__ == '__main__':
