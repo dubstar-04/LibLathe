@@ -87,7 +87,8 @@ class ChamferOP(BaseOP):
             if edge.getLength() > 1e-6:
                 dx, dz = edge.end.X - edge.start.X, edge.end.Z - edge.start.Z
                 if ((ends[index].X - starts[index].X) * dx
-                        + (ends[index].Z - starts[index].Z) * dz <= 1e-6):
+                        + (ends[index].Z - starts[index].Z) * dz
+                        <= 1e-6 * math.hypot(dx, dz)):
                     raise ValueError("Selected edge breaks overlap or consume an adjacent face")
                 part.addSegment(Segment(starts[index], ends[index], edge.bulge))
             if index in breaks:

@@ -315,6 +315,12 @@ class ChamferTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "overlap"):
             operation.getGCode()
 
+    def test_short_unselected_face_does_not_count_as_consumed(self):
+        operation = self.operation([
+            (0, 0), (10, 0), (10, -10), (10.0005, -10), (10.0005, -20), (0, -20)])
+        operation.getGCode()
+        self.assertTrue(operation.tool_paths)
+
     def test_insert_cannot_cut_an_unselected_shoulder(self):
         operation = self.operation(
             [(0, 0), (10, 0), (10, -2), (15, -2), (15, -20), (0, -20)])
