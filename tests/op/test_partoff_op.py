@@ -123,6 +123,25 @@ class test_PartoffFace(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "inside the part"):
             parting_op(-1, face=-19).getGCode()
 
+    def test_outline_margin_allows_face_on_padded_outline(self):
+        # an outline padded 0.005 mm past the part's back face at -20
+        op = parting_op(-1, face=-19.995)
+        with self.assertRaisesRegex(ValueError, "inside the part"):
+            op.getGCode()
+        op.setParams({"outline_margin": 0.01})
+        self.assertTrue(op.getGCode())
+        op.setParams({"outline_margin": 0.001})
+        with self.assertRaisesRegex(ValueError, "inside the part"):
+            op.getGCode()
+
+    def test_invalid_outline_margin_is_rejected(self):
+        for margin in (-1, float("nan"), float("inf")):
+            with self.subTest(margin=margin):
+                op = parting_op(-1)
+                op.setParams({"outline_margin": margin})
+                with self.assertRaisesRegex(ValueError, "Outline margin"):
+                    op.getGCode()
+
     def test_face_beyond_part_is_allowed(self):
         feeds = [c.getParams() for c in parting_op(-1, face=-21).getGCode()
                  if c.get_movement() == "G1"]
