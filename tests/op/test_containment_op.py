@@ -72,7 +72,9 @@ def test_roughing_reaches_taper_below_old_scan_endpoint():
 def test_every_operation_contains_all_feeds(operation_type, sign, stock_radius):
     operation = operation_type()
     operation.setParams({"pass_offset": 1, "finish_passes": 2, "clearance": 1})
-    operation.add_containment(BoundBox(Point(0, -25), Point(sign * 15, 3)))
+    # parting containment is the kerf behind the part's back face
+    z_min, z_max = (-22.4, -20) if operation_type is PartoffOP else (-25, 3)
+    operation.add_containment(BoundBox(Point(0, z_min), Point(sign * 15, z_max)))
     operation.add_stock(BoundBox(Point(0, -25), Point(sign * stock_radius, 1)))
     vertices = [(0, 0), (10, 0), (10, -20), (0, -20)]
     operation.addPartSegments([Segment(Point(sign * x, z), Point(sign * u, v))
@@ -90,18 +92,19 @@ def test_every_operation_contains_all_feeds(operation_type, sign, stock_radius):
             for command in (previous, current):
                 position = command.getParams()
                 assert -1e-5 <= sign * position["X"] <= 15 + 1e-5
-                assert -25 - 1e-5 <= position["Z"] <= 3 + 1e-5
+                assert z_min - 1e-5 <= position["Z"] <= z_max + 1e-5
     if operation_type is PartoffOP:
         cuts = operation.tool_paths[0].getSegments()
-        assert cuts[0].start.Z == -25
+        # the tool's +Z edge (2) sits on the face
+        assert cuts[0].start.Z == pytest.approx(-22)
         assert cuts[-1].end.X == 0
         cut_end = next(i for i, c in enumerate(moves)
                        if c.get_movement() == "G1"
                        and abs(c.getParams()["X"]) < 1e-5
-                       and abs(c.getParams()["Z"] + 25) < 1e-5)
+                       and abs(c.getParams()["Z"] + 22) < 1e-5)
         withdrawal = moves[cut_end + 1]
         assert withdrawal.get_movement() == "G1"
-        assert withdrawal.getParams()["Z"] == pytest.approx(-25)
+        assert withdrawal.getParams()["Z"] == pytest.approx(-22)
         assert sign * withdrawal.getParams()["X"] == pytest.approx(15)
         for previous, current in zip(moves[cut_end:], moves[cut_end + 1:]):
             if abs(current.getParams()["Z"] - previous.getParams()["Z"]) > 1e-5:
