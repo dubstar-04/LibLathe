@@ -21,6 +21,7 @@ class PartoffOP(liblathe.op.base.BaseOP):
         self.retract_mode = RetractMode.FULL_RETRACT
         self.reentry_gap_widths = 1.0
         self.chip_break_retract_widths = 1.0
+        self.outline_margin = 0.0
 
     @property
     def preserve_rapid_reversals(self):
@@ -34,6 +35,7 @@ class PartoffOP(liblathe.op.base.BaseOP):
             "retract_mode": self.retract_mode,
             "reentry_gap_widths": self.reentry_gap_widths,
             "chip_break_retract_widths": self.chip_break_retract_widths,
+            "outline_margin": self.outline_margin,
         }
 
     def generatePath(self):
@@ -44,7 +46,11 @@ class PartoffOP(liblathe.op.base.BaseOP):
         face = limits.ZMax
         tool_bounds = self.tool.get_segmentgroup().boundbox()
 
-        if self.partSegmentGroup.count() and self.partSegmentGroup.boundbox().ZMin < face - TOLERANCE:
+        if not math.isfinite(self.outline_margin) or self.outline_margin < 0:
+            raise ValueError("Outline margin must be finite and non-negative")
+        # An approximated outline may extend past the model's back face by its margin.
+        if (self.partSegmentGroup.count()
+                and self.partSegmentGroup.boundbox().ZMin < face - self.outline_margin - TOLERANCE):
             raise ValueError("Parting face (containment maximum Z) must not be inside the part")
         if limits.ZLength() < tool_bounds.ZLength() - TOLERANCE:
             raise ValueError("Parting containment must be at least as wide as the tool")
