@@ -38,6 +38,9 @@ Parameters
   the tool width (default 1).
 - ``reentry_gap_widths``: the full-retract re-entry gap as a multiple of the tool
   width (default 1).
+- ``outline_margin``: how far the part outline may extend past the parting face
+  (default 0). Set it to the outward margin of an approximated outline so a face
+  on the model's true back face is accepted.
 
 Set the containment's minimum X to zero to part the component off completely.
 Approach and withdrawal feeds also remain inside containment. The tool withdraws
