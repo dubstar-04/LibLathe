@@ -24,7 +24,7 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_WINDOWS: AMD64
           # Keep the published CPython range aligned with the tested range.
-          CIBW_BUILD: cp310-* cp311-* cp312-* cp313-* cp314-* pp*
+          CIBW_BUILD: cp310-* cp311-* cp312-* cp313-* cp314-* cp315-* pp*
           CIBW_ENABLE: pypy
           # PyPy's macOS sysconfig passes GNU-only linker flags (-Bsymbolic-functions)
           CIBW_SKIP: pp*-macosx_*
