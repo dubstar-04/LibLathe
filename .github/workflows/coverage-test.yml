@@ -34,11 +34,11 @@ jobs:
           pytest --cov=./ --cov-report=xml --ignore=extern
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: unittests
-
-
-
+          disable_search: true
+          fail_ci_if_error: true
+          override_branch: ${{ github.ref_type == 'branch' && github.ref_name || '' }}
