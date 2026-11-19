@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11']
+        python-version: ['3.14']
 
     steps:
       - uses: actions/checkout@v4
@@ -28,17 +28,17 @@ jobs:
           pip install Pillow
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Build and install Liblathe
-        run: pip install .
+        run: pip install -e .
       - name: Generate coverage report
         run: |
           pytest --cov=./ --cov-report=xml --ignore=extern
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: unittests
-
-
-
+          disable_search: true
+          fail_ci_if_error: true
+          override_branch: ${{ github.ref_type == 'branch' && github.ref_name || '' }}
